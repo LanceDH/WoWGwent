@@ -1,0 +1,9 @@
+﻿## Interface: 60100
+## Title: Gwent
+## Notes: Play the card game from the Witcher series with your friends.
+## Author: LanceDH
+## Version: 0.1
+## OptionalDeps: Ace3
+## SavedVariablesPerCharacter:
+Gwent.xml
+Gwent.lua
