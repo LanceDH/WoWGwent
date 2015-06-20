@@ -5,5 +5,9 @@
 ## Version: 0.1
 ## OptionalDeps: Ace3
 ## SavedVariablesPerCharacter:
+
+
 Gwent.xml
 Gwent.lua
+
+CardManagement/CardList.lua
