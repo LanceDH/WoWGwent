@@ -20,41 +20,36 @@ local function round(num, idp)
 end
 
 local function DEBUGPrintCard(card)
-	local messageSender = AceGUI:Create("Label")
-	messageSender:SetRelativeWidth(1)
-	messageSender:SetText("|cFFE6D707"..card.Id .. ": " .. card.name.. "|r")
-	DEBUGWINDOW.cardScroller:AddChild(messageSender)
+	local cardName = AceGUI:Create("Label")
+	cardName:SetRelativeWidth(1)
+	cardName:SetText("|cFFE6D707"..card.Id .. ": " .. card.name.. "|r")
+	DEBUGWINDOW.cardScroller:AddChild(cardName)
 	
-	local messageText = AceGUI:Create("Label")
-	messageText:SetRelativeWidth(1)
-	messageText:SetText("> Str: "..card.strength .. " deck: "..card.deck)
-	DEBUGWINDOW.cardScroller:AddChild(messageText)
-	-- local messageSender = AceGUI:Create("SimpleGroup")
-	-- messageSender:SetRelativeWidth(1)
-	-- messageSender:SetHeight(10)
-	-- messageSender:SetLayout("fill")
-	-- messageSender.text = messageSender.frame:CreateFontString(nil, nil, "GameFontHighlightSmall")
-	-- messageSender.text:SetText("|cFFE6D707"..card.Id .. ": " .. card.name.. "|r")
-	-- messageSender.text:SetJustifyH("left")
-	-- messageSender.text:SetJustifyV("top")
-	-- messageSender.text:SetPoint("topleft", 0, 0)
-	-- messageSender.text:SetPoint("bottomright")
-	-- DEBUGWINDOW.cardScroller:AddChild(messageSender)
+	local cardStr = AceGUI:Create("Label")
+	cardStr:SetRelativeWidth(0.1)
+	cardStr:SetText(card.strength)
+	DEBUGWINDOW.cardScroller:AddChild(cardStr)
 	
+	local cardType = AceGUI:Create("Label")
+	cardType:SetRelativeWidth(0.3)
+	local text = ""
+	for cType, isType in pairs(card.cardType) do
+		if isType == 1 then
+			text = text .. cType .. " "
+		end
+	end
+	cardType:SetText(text)
+	DEBUGWINDOW.cardScroller:AddChild(cardType)
 	
+	local cardAbility = AceGUI:Create("Label")
+	cardAbility:SetRelativeWidth(0.3)
+	cardAbility:SetText(card.ability)
+	DEBUGWINDOW.cardScroller:AddChild(cardAbility)
 	
-	-- local messageText = AceGUI:Create("SimpleGroup")
-	-- messageText:SetRelativeWidth(1)
-	-- messageText:SetHeight(20)
-	-- messageText:SetLayout("fill")
-	-- messageText.text = messageText.frame:CreateFontString(nil, nil, "GameFontHighlightSmall")
-	-- messageText.text:SetText("> Str: "..card.strength .. " deck: "..card.deck)
-	-- messageText.text:SetWordWrap(true)
-	-- messageText.text:SetJustifyH("left")
-	-- messageText.text:SetJustifyV("top")
-	-- messageText.text:SetPoint("topleft", 0, 0)
-	-- messageText.text:SetPoint("bottomright")
-	-- DEBUGWINDOW.cardScroller:AddChild(messageText)
+	local cardDeck = AceGUI:Create("Label")
+	cardDeck:SetRelativeWidth(0.3)
+	cardDeck:SetText(card.deck)
+	DEBUGWINDOW.cardScroller:AddChild(cardDeck)
 end
 
 local function DEBUGAddMessage(message, sender)
@@ -66,36 +61,9 @@ local function DEBUGAddMessage(message, sender)
 	
 	local messageText = AceGUI:Create("Label")
 	messageText:SetRelativeWidth(1)
-	--messageText.label:SetWordWrap(true)
 	messageText:SetText("> "..message)
 	DEBUGWINDOW.mainScroller:AddChild(messageText)
-	
-	-- local messageSender = AceGUI:Create("SimpleGroup")
-	-- messageSender:SetRelativeWidth(1)
-	-- messageSender:SetHeight(10)
-	-- messageSender:SetLayout("fill")
-	-- messageSender.text = messageSender.frame:CreateFontString(nil, nil, "GameFontHighlightSmall")
-	-- messageSender.text:SetText("|cFFE6D707Message from "..sender .. "|r")
-	-- messageSender.text:SetJustifyH("left")
-	-- messageSender.text:SetJustifyV("top")
-	-- messageSender.text:SetPoint("topleft", 0, 0)
-	-- messageSender.text:SetPoint("bottomright")
-	-- DEBUGWINDOW.mainScroller:AddChild(messageSender)
-	
-	
-	
-	-- local messageText = AceGUI:Create("SimpleGroup")
-	-- messageText:SetRelativeWidth(1)
-	-- messageText:SetHeight(20)
-	-- messageText:SetLayout("fill")
-	-- messageText.text = messageText.frame:CreateFontString(nil, nil, "GameFontHighlightSmall")
-	-- messageText.text:SetText("> "..message)
-	-- messageText.text:SetWordWrap(true)
-	-- messageText.text:SetJustifyH("left")
-	-- messageText.text:SetJustifyV("top")
-	-- messageText.text:SetPoint("topleft", 0, 0)
-	-- messageText.text:SetPoint("bottomright")
-	-- DEBUGWINDOW.mainScroller:AddChild(messageText)
+
 end
 
 local function DEBUGMessageSuccess(sender)
@@ -148,7 +116,7 @@ local function CreateDebug()
 	DEBUGWINDOW = AceGUI:Create("Frame")
 	DEBUGWINDOW:SetTitle("Gwent Debug")
 	DEBUGWINDOW:SetLayout("Fill")
-	DEBUGWINDOW:SetWidth(250)
+	DEBUGWINDOW:SetWidth(400)
 	--DEBUGWINDOW.frame:Hide()
 
 	DEBUGWINDOW.tabs = AceGUI:Create("TabGroup");
