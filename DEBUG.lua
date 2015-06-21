@@ -5,7 +5,7 @@ GwentAddon.DEBUGWINDOW = {}
 local DEBUGMESSAGES = {}
 local TEXT_ADDONMSG_RECIEVED = "Message Recieved"
 
-function DEBUGPrintCard(card)
+local function DEBUGPrintCard(card)
 	local cardName = AceGUI:Create("Label")
 	cardName:SetRelativeWidth(1)
 	cardName:SetText("|cFFE6D707"..card.Id .. ": " .. card.name.. "|r")
@@ -38,7 +38,7 @@ function DEBUGPrintCard(card)
 	DEBUGWINDOW.cardScroller:AddChild(cardDeck)
 end
 
-function DEBUGToggleFrame()
+function GwentAddon:DEBUGToggleFrame()
 			if DEBUGWINDOW == nil then
 			return
 		end
@@ -52,36 +52,37 @@ function DEBUGToggleFrame()
 
 end
 
-function DEBUGAddMessage(message, sender)
 
-	local messageSender = AceGUI:Create("Label")
-	messageSender:SetRelativeWidth(1)
-	messageSender:SetText("|cFFE6D707Message from "..sender .. "|r")
-	DEBUGWINDOW.mainScroller:AddChild(messageSender)
-	
+local function DEBUGAddMessage(message, sender)
+
 	local messageText = AceGUI:Create("Label")
 	messageText:SetRelativeWidth(1)
-	messageText:SetText("> "..message)
+	messageText:SetText("|cFFE6D707"..sender .. "|r\n> "..message)
 	DEBUGWINDOW.mainScroller:AddChild(messageText)
 
 end
 
-function DEBUGMessageSuccess(sender)
-	
+function GwentAddon:DEBUGMessageSent(message, target)
+	DEBUGAddMessage(message, "To " .. target)
 end
 
-function DEBUGPrintMessages()
+local function DEBUGPrintMessages()
 	if DEBUGWINDOW.mainScroller == nil then return end
 	
 	DEBUGWINDOW.mainScroller:ReleaseChildren()
-
-	for k , v in ipairs(DEBUGMESSAGES) do
-			DEBUGAddMessage(v.message, v.sender)
+	
+	for i = #DEBUGMESSAGES, 1, -1 do
+		local v = DEBUGMESSAGES[i]
+		DEBUGAddMessage(v.message, v.sender)
 	end
+	
+	--for k , v in ipairs(DEBUGMESSAGES) do
+	--		DEBUGAddMessage(v.message, v.sender)
+	--end
 
 end
 
-function DEBUGShowMessageContainer(container)
+local function DEBUGShowMessageContainer(container)
 	container:SetLayout("Fill")
 	DEBUGWINDOW.mainScroller = AceGUI:Create("ScrollFrame")
 	DEBUGWINDOW.mainScroller:SetLayout("Flow")
@@ -90,7 +91,7 @@ function DEBUGShowMessageContainer(container)
 	DEBUGPrintMessages()
 end
 
-function DEBUGShowCards(container)
+local function DEBUGShowCards(container)
 	--print("Showing "..#GwentAddon.CardList.." cards")
 	container:SetLayout("Fill")
 	DEBUGWINDOW.cardScroller = AceGUI:Create("ScrollFrame")
@@ -102,7 +103,7 @@ function DEBUGShowCards(container)
 	end
 end
 
-function DEBUGSelectTab(container, event, group)
+local function DEBUGSelectTab(container, event, group)
    container:ReleaseChildren()
    if group == "messages" then
      DEBUGShowMessageContainer(container)
@@ -111,7 +112,7 @@ function DEBUGSelectTab(container, event, group)
    end
 end
 
-function CreateDebug()
+local function CreateDebug()
  
 	DEBUGWINDOW = AceGUI:Create("Frame")
 	DEBUGWINDOW:SetTitle("Gwent Debug")
@@ -133,11 +134,11 @@ function CreateDebug()
 end
 
 local L_FPS_LoadFrame = CreateFrame("FRAME", "Gwent_DEBUGEventFrame"); 
-Gwent_DEBUGEventFrame:RegisterEvent("PLAYER_ENTERING_WORLD");
+Gwent_DEBUGEventFrame:RegisterEvent("ADDON_LOADED");
 Gwent_DEBUGEventFrame:RegisterEvent("CHAT_MSG_ADDON");
 Gwent_DEBUGEventFrame:SetScript("OnEvent", function(self, event, ...) self[event](self, ...) end)
 
-function Gwent_DEBUGEventFrame:CHAT_MSG_ADDON(prefix, m, channel, s)
+function Gwent_DEBUGEventFrame:CHAT_MSG_ADDON(prefix, message, channel, sender)
 	if prefix ~= addonName then
 		return
 	end
@@ -147,7 +148,9 @@ function Gwent_DEBUGEventFrame:CHAT_MSG_ADDON(prefix, m, channel, s)
 		return
 	end
 	
-	table.insert(DEBUGMESSAGES, {sender = s, message = m})
+	--print("message "..txt.." from ".. s.. " through "..channel)
+	
+	table.insert(DEBUGMESSAGES, {["sender"] = sender, ["message"] = message})
 
 	DEBUGPrintMessages()
 	
@@ -157,6 +160,7 @@ function Gwent_DEBUGEventFrame:CHAT_MSG_ADDON(prefix, m, channel, s)
 	
 end
 
-function Gwent_DEBUGEventFrame:PLAYER_ENTERING_WORLD(loadedAddon)
+function Gwent_DEBUGEventFrame:ADDON_LOADED(ADDON_LOADED)
+	if ADDON_LOADED ~= addonName then return end
 	CreateDebug()
 end

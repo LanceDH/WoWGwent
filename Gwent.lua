@@ -3,12 +3,28 @@ local AceGUI = LibStub("AceGUI-3.0")
 
 local SIZE_CARD_HEIGHT = 75
 local SIZE_CARD_WIDTH = 50
+local SIZE_ICON = 64
+
+local TEXTURE_CARD_BG = "Interface\\DialogFrame\\UI-DialogBox-Gold-Background"
+local TEXTURE_CARD_BORDER = "Interface\\DialogFrame\\UI-DialogBox-Border"
+local TEXTURE_ICONS = {["path"]="Interface\\GUILDFRAME\\GUILDEMBLEMSLG_01", ["width"]=1024, ["height"]=1024}
+
+local COORDS_ICON_MELEE = {["x"]=64*7, ["y"]=64*7}
+local COORDS_ICON_RANGED = {["x"]=64*15, ["y"]=64*1}
+local COORDS_ICON_SIEGE = {["x"]=64*3, ["y"]=64*7}
+
+local MESSAGE_PLACEINAREA = "%s|%d"
+
+local _ChallengerName = nil
 
 local _GwentPlayFrame = {}
 local _PlayerHand = {}
 local _PlayerSiege = {}
 local _PlayerRanged = {}
 local _PlayerMelee = {}
+local _EnemySiege = {}
+local _EnemyRanged = {}
+local _EnemyMelee = {}
 local _DraggedCard = nil
 local _DragginOverFrame = nil
 local _CardNr = 1
@@ -26,10 +42,34 @@ local function round(num, idp)
 	return ret
 end
 
+local function CreateCardArea(name, parent, coords)
+	local frame = CreateFrame("frame", addonName.."PlayFrame_" .. name, parent)
+	--frame:SetPoint("bottom", PlayFrame.playerRanged, "top", 0, 10)
+	frame:SetHeight(SIZE_CARD_HEIGHT)
+	frame:SetWidth(SIZE_CARD_WIDTH * 10)
+	frame:SetBackdrop({bgFile = "Interface\\DialogFrame\\UI-DialogBox-Gold-Background",
+      edgeFile = nil,
+	  tileSize = 0, edgeSize = 16,
+      insets = { left = 0, right = 0, top = 0, bottom = 0 }
+	  })
+	frame.points = frame:CreateFontString(nil, nil, "GameFontNormal")
+	frame.points:SetPoint("right", frame, "left", -20, 0)
+	frame.points:SetText(0)
+	
+	frame.icon = frame:CreateTexture(addonName.."PlayFrame_PlayerMelee_ICON", "art")
+	frame.icon:SetTexture(TEXTURE_ICONS.path)
+	frame.icon:SetTexCoord(coords.x/TEXTURE_ICONS.width, (coords.x+SIZE_ICON)/TEXTURE_ICONS.width, coords.y/TEXTURE_ICONS.height, (coords.y+SIZE_ICON)/TEXTURE_ICONS.height)
+	frame.icon:SetVertexColor(1, 1, 1, 0.3)
+	frame.icon:SetWidth(SIZE_CARD_HEIGHT)
+	frame.icon:SetHeight(SIZE_CARD_HEIGHT)
+	frame.icon:SetPoint("center", frame)
+	
+	return frame
+end
+
 local function CreatePlayFrame()
 	
 	local PlayFrame = CreateFrame("frame", addonName.."PlayFrame", UIParent)
-	--PlayFrame:SetPoint("topleft", parent.frame, "topleft", 0, 0)
 	PlayFrame:SetHeight(750)
 	PlayFrame:SetWidth(1000)
 	PlayFrame:SetMovable(true)
@@ -37,7 +77,6 @@ local function CreatePlayFrame()
 	PlayFrame:RegisterForDrag("LeftButton")
 	PlayFrame:SetScript("OnDragStart", PlayFrame.StartMoving )
 	PlayFrame:SetScript("OnDragStop", PlayFrame.StopMovingOrSizing)
-	--PlayFrame:SetClampedToScreen(true)
 	PlayFrame:EnableMouse(true)
 	
 	PlayFrame.topleft = PlayFrame:CreateTexture(addonName.."PlayFrame_TL", "BACKGROUND")
@@ -97,9 +136,8 @@ local function CreatePlayFrame()
 	PlayFrame.center:SetTexCoord(0.5, 1, 0.5, 1)
 	PlayFrame.center:SetPoint("topleft", PlayFrame.topleft, "bottomright")
 	PlayFrame.center:SetPoint("bottomright", PlayFrame.bottomright, "topleft")
-	
-	local parentLevel = PlayFrame:GetFrameLevel()
-	
+
+	-- player hand
 	PlayFrame.playerHand = CreateFrame("frame", addonName.."PlayFrame_PlayerHand", PlayFrame)
 	PlayFrame.playerHand:SetPoint("bottom", PlayFrame, "bottom", 0, 23)
 	PlayFrame.playerHand:SetHeight(SIZE_CARD_HEIGHT)
@@ -110,44 +148,36 @@ local function CreatePlayFrame()
       insets = { left = 0, right = 0, top = 0, bottom = 0 }
 	  })
 	  
-	PlayFrame.playerSiege = CreateFrame("frame", addonName.."PlayFrame_PlayerSiege", PlayFrame)
-	PlayFrame.playerSiege:SetPoint("bottom", PlayFrame.playerHand, "top", 0, 20)
-	PlayFrame.playerSiege:SetHeight(SIZE_CARD_HEIGHT)
-	PlayFrame.playerSiege:SetWidth(SIZE_CARD_WIDTH * 10)
-	PlayFrame.playerSiege:SetBackdrop({bgFile = "Interface\\DialogFrame\\UI-DialogBox-Gold-Background",
-		edgeFile = nil,
-		tileSize = 0, edgeSize = 16,
-		insets = { left = 0, right = 0, top = 0, bottom = 0 }
-		})
-	PlayFrame.playerSiege.points = PlayFrame.playerSiege:CreateFontString(nil, nil, "GameFontNormal")
-	PlayFrame.playerSiege.points:SetPoint("right", PlayFrame.playerSiege, "left", -20, 0)
-	PlayFrame.playerSiege.points:SetText(0)
-	  
-	PlayFrame.playerRanged = CreateFrame("frame", addonName.."PlayFrame_PlayerRanged", PlayFrame)
-	PlayFrame.playerRanged:SetPoint("bottom", PlayFrame.playerSiege, "top", 0, 10)
-	PlayFrame.playerRanged:SetHeight(SIZE_CARD_HEIGHT)
-	PlayFrame.playerRanged:SetWidth(SIZE_CARD_WIDTH * 10)
-	PlayFrame.playerRanged:SetBackdrop({bgFile = "Interface\\DialogFrame\\UI-DialogBox-Gold-Background",
-      edgeFile = nil,
-	  tileSize = 0, edgeSize = 16,
-      insets = { left = 0, right = 0, top = 0, bottom = 0 }
-	  })
-	PlayFrame.playerRanged.points = PlayFrame.playerRanged:CreateFontString(nil, nil, "GameFontNormal")
-	PlayFrame.playerRanged.points:SetPoint("right", PlayFrame.playerRanged, "left", -20, 0)
-	PlayFrame.playerRanged.points:SetText(0)
-	  
-	PlayFrame.playerMelee = CreateFrame("frame", addonName.."PlayFrame_PlayerMelee", PlayFrame)
+	-- player siege
+	PlayFrame.playerSiege = CreateCardArea("PlayerRanged", PlayFrame, COORDS_ICON_SIEGE)
+	PlayFrame.playerSiege:SetPoint("bottom", PlayFrame.playerHand, "top", 0, 20) 
+	-- player ranged
+	PlayFrame.playerRanged = CreateCardArea("PlayerRanged", PlayFrame, COORDS_ICON_RANGED)
+	PlayFrame.playerRanged:SetPoint("bottom", PlayFrame.playerSiege, "top", 0, 10)  
+	-- player melee
+	PlayFrame.playerMelee = CreateCardArea("PlayerMelee", PlayFrame, COORDS_ICON_MELEE)
 	PlayFrame.playerMelee:SetPoint("bottom", PlayFrame.playerRanged, "top", 0, 10)
-	PlayFrame.playerMelee:SetHeight(SIZE_CARD_HEIGHT)
-	PlayFrame.playerMelee:SetWidth(SIZE_CARD_WIDTH * 10)
-	PlayFrame.playerMelee:SetBackdrop({bgFile = "Interface\\DialogFrame\\UI-DialogBox-Gold-Background",
+
+	-- player hand
+	PlayFrame.enemyHand = CreateFrame("frame", addonName.."PlayFrame_EnemyHand", PlayFrame)
+	PlayFrame.enemyHand:SetPoint("top", PlayFrame, "top", 0, -30)
+	PlayFrame.enemyHand:SetHeight(SIZE_CARD_HEIGHT)
+	PlayFrame.enemyHand:SetWidth(SIZE_CARD_WIDTH * 10)
+	PlayFrame.enemyHand:SetBackdrop({bgFile = "Interface\\DialogFrame\\UI-DialogBox-Gold-Background",
       edgeFile = nil,
 	  tileSize = 0, edgeSize = 16,
       insets = { left = 0, right = 0, top = 0, bottom = 0 }
 	  })
-	PlayFrame.playerMelee.points = PlayFrame.playerMelee:CreateFontString(nil, nil, "GameFontNormal")
-	PlayFrame.playerMelee.points:SetPoint("right", PlayFrame.playerMelee, "left", -20, 0)
-	PlayFrame.playerMelee.points:SetText(0)
+	  
+	-- player siege
+	PlayFrame.enemySiege = CreateCardArea("EnemyRanged", PlayFrame, COORDS_ICON_SIEGE)
+	PlayFrame.enemySiege:SetPoint("top", PlayFrame.enemyHand, "bottom", 0, -20) 
+	-- player ranged
+	PlayFrame.enemyRanged = CreateCardArea("EnemyRanged", PlayFrame, COORDS_ICON_RANGED)
+	PlayFrame.enemyRanged:SetPoint("top", PlayFrame.enemySiege, "bottom", 0, -10)  
+	-- player melee
+	PlayFrame.enemyMelee = CreateCardArea("EnemyMelee", PlayFrame, COORDS_ICON_MELEE)
+	PlayFrame.enemyMelee:SetPoint("top", PlayFrame.enemyRanged, "bottom", 0, -10)
 	
 	return PlayFrame
 end
@@ -213,6 +243,15 @@ local function AddDraggedCardToNewList(list)
 	_DraggedCard:EnableMouse(false)
 end
 
+local function IsRightTypeForArea(card, areaType)
+	for k, v in pairs(card.data.cardType) do
+		if k == areaType then
+			return v
+		end
+	end
+	return false
+end
+
 local function DroppingCardOnFrame(frame)
 	local left, bottom, width, height = frame:GetBoundsRect()
 	local mouseX, mouseY = GetCursorPosition()
@@ -228,22 +267,32 @@ local function DroppingCardOnFrame(frame)
 end
 
 local function DropCardArea(card)
-	if DroppingCardOnFrame(_GwentPlayFrame.playerSiege) then
+	if DroppingCardOnFrame(_GwentPlayFrame.playerSiege) and IsRightTypeForArea(card, "siege") then
+		print("dropped in siege")
 		AddDraggedCardToNewList(_PlayerSiege)
-		return true
-	elseif DroppingCardOnFrame(_GwentPlayFrame.playerRanged) then
+		return true, "siege"
+	elseif DroppingCardOnFrame(_GwentPlayFrame.playerRanged) and IsRightTypeForArea(card, "ranged") then
+		print("dropped in ranged")
 		AddDraggedCardToNewList(_PlayerRanged)
-		return true
-	elseif DroppingCardOnFrame(_GwentPlayFrame.playerMelee) then
+		return true, "ranged"
+	elseif DroppingCardOnFrame(_GwentPlayFrame.playerMelee) and IsRightTypeForArea(card, "melee") then
+		print("dropped in melee")
 		AddDraggedCardToNewList(_PlayerMelee)
-		return true
+		return true, "melee"
 	end
 	return false
 end
 
 local function StopDraggingCard(card)
-
-	if DropCardArea() then
+	print("dropping "..card.data.name)
+	local success, area = DropCardArea(_DraggedCard)
+	print(success and "success" or "fail")
+	if success and _DraggedCard ~= nil then
+		--local message = string.format(MESSAGE_PLACEINAREA, area, "5")
+		_DraggedCard = nil
+		--GwentAddon:DEBUGMessageSent(string.format(MESSAGE_PLACEINAREA, area, _DraggedCard.data.Id), _ChallengerName)
+		SendAddonMessage(addonName, area .. "#" .. card.data.Id, "whisper" , _ChallengerName)
+		--SendAddonMessage(addonName, "test", "whisper" , _ChallengerName)
 		
 	end
 
@@ -270,9 +319,9 @@ local function CreateCardOfId(id)
 	card:SetPoint("topleft", _GwentPlayFrame, "topleft", 0, 0)
 	card:SetHeight(SIZE_CARD_HEIGHT)
 	card:SetWidth(SIZE_CARD_WIDTH)
-	card:SetBackdrop({bgFile = "Interface\\DialogFrame\\UI-DialogBox-Gold-Background",
-      edgeFile = nil,
-	  tileSize = 0, edgeSize = 16,
+	card:SetBackdrop({bgFile = TEXTURE_CARD_BG,
+      edgeFile = TEXTURE_CARD_BORDER,
+	  tileSize = 0, edgeSize = 4,
       insets = { left = 0, right = 0, top 
 	  = 0, bottom = 0 }
 	  })
@@ -284,14 +333,14 @@ local function CreateCardOfId(id)
 	card:EnableMouse(true)
 	  
 	card.name = card:CreateFontString(nil, nil, "GameFontNormal")
-	card.name:SetPoint("topleft", card, "topleft", 0, 0)
-	card.name:SetPoint("bottomright", card, "topright", 0, -20)
+	card.name:SetPoint("topleft", card, "topleft", 2, -2)
+	card.name:SetPoint("bottomright", card, "topright", -2, -22)
 	card.name:SetJustifyH("center")
 	card.name:SetText(cardData.name)
 	
 	card.strength = card:CreateFontString(nil, nil, "GameFontNormal")
-	card.strength:SetPoint("topleft", card.name, "topleft", 0, -5)
-	card.strength:SetPoint("bottomright", card.name, "bottomright", 0, -25)
+	card.strength:SetPoint("topleft", card.name, "topleft", 2, -7)
+	card.strength:SetPoint("bottomright", card.name, "bottomright", -2, -27)
 	card.strength:SetJustifyH("left")
 	card.strength:SetText(cardData.strength)
 	  
@@ -307,7 +356,7 @@ local function DrawCard()
 end
 
 local L_FPS_LoadFrame = CreateFrame("FRAME", "Gwent_EventFrame"); 
-Gwent_EventFrame:RegisterEvent("PLAYER_ENTERING_WORLD");
+Gwent_EventFrame:RegisterEvent("ADDON_LOADED");
 Gwent_EventFrame:RegisterEvent("CHAT_MSG_ADDON");
 Gwent_EventFrame:SetScript("OnEvent", function(self, event, ...) self[event](self, ...) end)
 
@@ -317,21 +366,13 @@ function Gwent_EventFrame:CHAT_MSG_ADDON(prefix, m, channel, s)
 	end
 	
 	if message == TEXT_ADDONMSG_RECIEVED then
-		--DEBUGMessageSuccess(sender)
 		return
 	end
 	
-	--table.insert(DEBUGMESSAGES, {sender = s, message = m})
-
-	--DEBUGPrintMessages()
-	
-	-- Send Success Message
-	--SendAddonMessage(addonName, TEXT_ADDONMSG_RECIEVED , "whisper" , s)
-
-	
 end
 
-function Gwent_EventFrame:PLAYER_ENTERING_WORLD(loadedAddon)
+function Gwent_EventFrame:ADDON_LOADED(ADDON_LOADED)
+	if ADDON_LOADED ~= addonName then return end
 	
 	_GwentPlayFrame = CreatePlayFrame()
 	
@@ -347,7 +388,7 @@ SLASH_GWENTSLASH1 = '/gwent';
 local function slashcmd(msg, editbox)
 	if msg == 'debug' then
 
-		DEBUGToggleFrame()
+		GwentAddon:DEBUGToggleFrame()
 		
 	elseif msg == 'test' then
 		
@@ -357,9 +398,20 @@ local function slashcmd(msg, editbox)
 			return
 		end
 		
-		SendAddonMessage(addonName, "This is a test message "..name , "whisper" , name)
 		SendAddonMessage(addonName, "What if I type a really long text, will it wrap or not I don't know "..name , "whisper" , name)
+	
+	elseif msg == 'challenge' then
 		
+		name = GetUnitName("target", true)
+		
+		if name == nil then
+			return
+		end
+		
+		SendAddonMessage(addonName, "It's time to du-du-duel" , "whisper" , name)
+		_ChallengerName = name
+		GwentAddon:DEBUGMessageSent("duelling ".._ChallengerName, _ChallengerName)
+	
 	elseif msg == 'toggle' then
 	
 	if GwentPlayFrame ~= nil then
