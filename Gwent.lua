@@ -15,13 +15,15 @@ local COORDS_ICON_SIEGE = {["x"]=64*3, ["y"]=64*7}
 
 local MESSAGE_PLACEINAREA = "%s#%d"
 local MESSAGE_CHALLENGE = "It's time to du-du-du-duel"
+local MESSAGE_LOGOUT = "logged out"
 
 local TEXT_SIEGE = "siege"
 local TEXT_RANGED = "ranged"
 local TEXT_MELEE = "melee"
 
-local _ChallengerName = nil
+local _CardPool = {}
 
+local _ChallengerName = nil
 local _GwentPlayFrame = {}
 local _PlayerHand = {}
 local _PlayerSiege = {}
@@ -175,12 +177,27 @@ local function CreatePlayFrame()
 	PlayFrame.playerMelee:SetPoint("bottom", PlayFrame.playerRanged, "top", 0, 10)
 
 	-- player portrait
-	PlayFrame.playerPortrait = PlayFrame:CreateTexture(addonName.."PlayFrame_PlayerPortrait", "art")
+	PlayFrame.playerPortrait = PlayFrame:CreateTexture(addonName.."PlayFrame_PlayerPortrait", "ARTWORK")
+	PlayFrame.playerPortrait:SetDrawLayer("ARTWORK", -8)
 	PlayFrame.playerPortrait:SetWidth(SIZE_CARD_HEIGHT-10)
 	PlayFrame.playerPortrait:SetHeight(SIZE_CARD_HEIGHT-10)
-	PlayFrame.playerPortrait:SetPoint("right", PlayFrame.playerHand, "left", -100, 0)
+	PlayFrame.playerPortrait:SetPoint("right", PlayFrame.playerHand, "left", -150, 0)
 	SetPortraitTexture(PlayFrame.playerPortrait, "player")
-
+	
+	PlayFrame.playerPortraitborder = PlayFrame:CreateTexture(addonName.."PlayFrame_PlayerPortraitBorder", "ARTWORK")
+	PlayFrame.playerPortraitborder:SetDrawLayer("ARTWORK", -7)
+	PlayFrame.playerPortraitborder:SetTexture("Interface\\UNITPOWERBARALT\\MetalPlain_Circular_Frame")
+	PlayFrame.playerPortraitborder:SetWidth(SIZE_CARD_HEIGHT+50)
+	PlayFrame.playerPortraitborder:SetHeight(SIZE_CARD_HEIGHT+50)
+	PlayFrame.playerPortraitborder:SetPoint("center", PlayFrame.playerPortrait)
+	
+	-- player nametag
+	PlayFrame.playerNametag = PlayFrame:CreateFontString(nil, nil, "GameFontNormal")
+	PlayFrame.playerNametag:SetPoint("left", PlayFrame.playerPortrait, "right", 10, 0)
+	PlayFrame.playerNametag:SetPoint("right", PlayFrame.playerHand, "left", -10, 0)
+	PlayFrame.playerNametag:SetJustifyH("left")
+	PlayFrame.playerNametag:SetText(GetUnitName("player", false))
+	
 	
 	-- enemy hand
 	PlayFrame.enemyHand = CreateFrame("frame", addonName.."PlayFrame_EnemyHand", PlayFrame)
@@ -208,8 +225,22 @@ local function CreatePlayFrame()
 	PlayFrame.enemyPortrait:SetTexture("Interface\\CHARACTERFRAME\\TemporaryPortrait-Vehicle-Organic")
 	PlayFrame.enemyPortrait:SetWidth(SIZE_CARD_HEIGHT-10)
 	PlayFrame.enemyPortrait:SetHeight(SIZE_CARD_HEIGHT-10)
-	PlayFrame.enemyPortrait:SetPoint("right", PlayFrame.enemyHand, "left", -100, 0)
+	PlayFrame.enemyPortrait:SetPoint("right", PlayFrame.enemyHand, "left", -150, 0)
 	--SetPortraitTexture(PlayFrame.playerPortrait, "player")
+	
+	PlayFrame.enemyPortraitborder = PlayFrame:CreateTexture(addonName.."PlayFrame_EnemyPortraitBorder", "ARTWORK")
+	PlayFrame.enemyPortraitborder:SetDrawLayer("ARTWORK", -7)
+	PlayFrame.enemyPortraitborder:SetTexture("Interface\\UNITPOWERBARALT\\MetalPlain_Circular_Frame")
+	PlayFrame.enemyPortraitborder:SetWidth(SIZE_CARD_HEIGHT+50)
+	PlayFrame.enemyPortraitborder:SetHeight(SIZE_CARD_HEIGHT+50)
+	PlayFrame.enemyPortraitborder:SetPoint("center", PlayFrame.enemyPortrait)
+	
+	-- enemy nametag
+	PlayFrame.enemyNametag = PlayFrame:CreateFontString(nil, nil, "GameFontNormal")
+	PlayFrame.enemyNametag:SetPoint("left", PlayFrame.enemyPortrait, "right", 10, 0)
+	PlayFrame.enemyNametag:SetPoint("right", PlayFrame.enemyHand, "left", -10, 0)
+	PlayFrame.enemyNametag:SetJustifyH("left")
+	--PlayFrame.enemyNametag:SetText(GetUnitName("player", false))
 	
 	return PlayFrame
 end
@@ -342,6 +373,37 @@ local function StopDraggingCard(card)
 
 end
 
+local function CeateCardIcon(name, parent, coords)
+	icon = parent:CreateTexture(name, "art")
+	icon:SetTexture(TEXTURE_ICONS.path)
+	icon:SetTexCoord(coords.x/TEXTURE_ICONS.width, (coords.x+SIZE_ICON)/TEXTURE_ICONS.width, coords.y/TEXTURE_ICONS.height, (coords.y+SIZE_ICON)/TEXTURE_ICONS.height)
+	icon:SetVertexColor(1, 1, 1, 0.3)
+	icon:SetWidth(SIZE_CARD_WIDTH/2)
+	icon:SetHeight(SIZE_CARD_WIDTH/2)
+	
+	return icon
+end
+
+local function CreateCardTypeIcons(card)
+	local count = 0;
+
+	if card.data.cardType.melee then
+		card.iconMelee = CeateCardIcon(card:GetName() .. "_IconMelee", card, COORDS_ICON_MELEE)
+		card.iconMelee:SetPoint("bottomleft", card, "bottomleft", (SIZE_CARD_WIDTH/2)*count, 0)
+		count = count + 1
+	end
+	if card.data.cardType.ranged then
+		card.iconRanged = CeateCardIcon(card:GetName() .. "_IconRanged", card, COORDS_ICON_RANGED)
+		card.iconRanged:SetPoint("bottomleft", card, "bottomleft", (SIZE_CARD_WIDTH/2)*count, 0)
+		count = count + 1
+	end
+	if card.data.cardType.siege then
+		card.iconSiege = CeateCardIcon(card:GetName() .. "_IconSiege", card, COORDS_ICON_SIEGE)
+		card.iconSiege:SetPoint("bottomleft", card, "bottomleft", (SIZE_CARD_WIDTH/2)*count, 0)
+		count = count + 1
+	end
+end
+
 local function CreateCardOfId(id)
 	
 	local cardData = GetCardOfId(id)
@@ -385,6 +447,8 @@ local function CreateCardOfId(id)
 	card.strength:SetText(cardData.strength)
 	  
 	_CardNr = _CardNr + 1
+	
+	CreateCardTypeIcons(card)
 	  
 	return card
 end
@@ -413,23 +477,55 @@ end
 
 local function ChangeChallenger(sender)
 	_ChallengerName = sender
+	_GwentPlayFrame.enemyNametag:SetText(_ChallengerName)
+	for i=1,10 do
+		DrawCard()
+	end
 	
 	local challenger = GetUnitName("target", true)	
 	if challenger ~= nil then
-
 		SetPortraitTexture(_GwentPlayFrame.enemyPortrait, "target")
+		
 	end
+end
+
+local function DestroyCardsInList(list)
+	for k, card in pairs(list) do
+		table.insert(_CardPool, card)
+		card:Hide()
+		list[k] = nil
+	end
+	
+	list = {}
+end
+
+local function ResetGame() 
+	_ChallengerName = nil
+	DestroyCardsInList(_PlayerHand)
+	DestroyCardsInList(_PlayerSiege)
+	DestroyCardsInList(_PlayerRanged)
+	DestroyCardsInList(_PlayerMelee)
+	DestroyCardsInList(_EnemySiege)
+	DestroyCardsInList(_EnemyRanged)
+	DestroyCardsInList(_EnemyMelee)
+	_DraggedCard = nil
+	_DragginOverFrame = nil
+	_YourTurn = false
+	
 end
 
 local L_FPS_LoadFrame = CreateFrame("FRAME", "Gwent_EventFrame"); 
 Gwent_EventFrame:RegisterEvent("ADDON_LOADED");
 Gwent_EventFrame:RegisterEvent("CHAT_MSG_ADDON");
+Gwent_EventFrame:RegisterEvent("PLAYER_LOGOUT");
 Gwent_EventFrame:SetScript("OnEvent", function(self, event, ...) self[event](self, ...) end)
 
 function Gwent_EventFrame:CHAT_MSG_ADDON(prefix, message, channel, sender)
 	if prefix ~= addonName then
 		return
 	end
+	
+	GwentAddon:DEBUGMessageSent(message, sender)
 	
 	if message == TEXT_ADDONMSG_RECIEVED then
 		return
@@ -438,6 +534,12 @@ function Gwent_EventFrame:CHAT_MSG_ADDON(prefix, message, channel, sender)
 	if message == MESSAGE_CHALLENGE then
 		ChangeChallenger(sender)
 	end
+	
+	if message == MESSAGE_LOGOUT then
+		
+		ResetGame()
+	end
+	
 	
 	-- Enemy played card
 	if string.find(message, "#") then
@@ -453,6 +555,16 @@ function Gwent_EventFrame:ADDON_LOADED(ADDON_LOADED)
 	_GwentPlayFrame = CreatePlayFrame()
 	
 	GwentAddon:CreateCardsList()
+	
+	if not RegisterAddonMessagePrefix(addonName) then
+		print(addonName ..": Could not register prefix.")
+	end
+end
+
+function Gwent_EventFrame:PLAYER_LOGOUT(PLAYER_LOGOUT)
+	if ADDON_LOADED ~= addonName then return end
+	
+	SendAddonMessage(addonName, MESSAGE_LOGOUT, "whisper" , _ChallengerName)
 	
 	if not RegisterAddonMessagePrefix(addonName) then
 		print(addonName ..": Could not register prefix.")
@@ -505,7 +617,11 @@ local function slashcmd(msg, editbox)
 		for i=1,10 do
 			DrawCard()
 		end
+	elseif msg == 'log' then
+		SendAddonMessage(addonName, MESSAGE_LOGOUT, "whisper" , _ChallengerName)
 	else
+	
+	
 		--if ( not InterfaceOptionsFramePanelContainer.displayedPanel ) then
 		--	InterfaceOptionsFrame_OpenToCategory(CONTROLS_LABEL);
 		--end
