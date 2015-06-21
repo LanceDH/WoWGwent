@@ -55,16 +55,18 @@ end
 
 local function DEBUGAddMessage(message, sender)
 
+	if sender ~= nil then
+		message = "|cFFE6D707"..sender .. "|r\n> "..message
+	end
+
 	local messageText = AceGUI:Create("Label")
 	messageText:SetRelativeWidth(1)
-	messageText:SetText("|cFFE6D707"..sender .. "|r\n> "..message)
+	messageText:SetText(message)
 	DEBUGWINDOW.mainScroller:AddChild(messageText)
 
 end
 
-function GwentAddon:DEBUGMessageSent(message, target)
-	DEBUGAddMessage(message, "To " .. target)
-end
+
 
 local function DEBUGPrintMessages()
 	if DEBUGWINDOW.mainScroller == nil then return end
@@ -80,6 +82,12 @@ local function DEBUGPrintMessages()
 	--		DEBUGAddMessage(v.message, v.sender)
 	--end
 
+end
+
+function GwentAddon:DEBUGMessageSent(message, target)
+	table.insert(DEBUGMESSAGES, {["sender"] = target, ["message"] = message})
+	DEBUGPrintMessages()
+	--DEBUGAddMessage(message, message)
 end
 
 local function DEBUGShowMessageContainer(container)

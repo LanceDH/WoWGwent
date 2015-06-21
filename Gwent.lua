@@ -13,7 +13,10 @@ local COORDS_ICON_MELEE = {["x"]=64*7, ["y"]=64*7}
 local COORDS_ICON_RANGED = {["x"]=64*15, ["y"]=64*1}
 local COORDS_ICON_SIEGE = {["x"]=64*3, ["y"]=64*7}
 
-local MESSAGE_PLACEINAREA = "%s|%d"
+local MESSAGE_PLACEINAREA = "%s#%d"
+local TEXT_SIEGE = "siege"
+local TEXT_RANGED = "ranged"
+local TEXT_MELEE = "melee"
 
 local _ChallengerName = nil
 
@@ -204,11 +207,15 @@ local function PlaceAllCards()
 	PlayerPlaceCardsOnFrame(_PlayerSiege, _GwentPlayFrame.playerSiege)
 	PlayerPlaceCardsOnFrame(_PlayerRanged, _GwentPlayFrame.playerRanged)
 	PlayerPlaceCardsOnFrame(_PlayerMelee, _GwentPlayFrame.playerMelee)
+	-- Place enemy hand
+	PlayerPlaceCardsOnFrame(_EnemySiege, _GwentPlayFrame.enemySiege)
+	PlayerPlaceCardsOnFrame(_EnemyRanged, _GwentPlayFrame.enemyRanged)
+	PlayerPlaceCardsOnFrame(_EnemyMelee, _GwentPlayFrame.enemyMelee)
 end
 
 local function GetCardOfId(id)
 	for k, v in ipairs(GwentAddon.CardList) do
-		if v.Id == id then
+		if v.Id == tonumber(id) then
 			return v
 		end
 	end
@@ -236,11 +243,11 @@ local function StartDraggingCard(card)
 	card:StartMoving()
 end
 
-local function AddDraggedCardToNewList(list)
-	table.insert(list, _DraggedCard)
-	RemoveCardFromHand(_DraggedCard)
-	_DraggedCard:SetMovable(false)
-	_DraggedCard:EnableMouse(false)
+local function AddCardToNewList(card, list)
+	GwentAddon:DEBUGMessageSent("Trying to add card to list")
+	table.insert(list, card)
+	card:SetMovable(false)
+	card:EnableMouse(false)
 end
 
 local function IsRightTypeForArea(card, areaType)
@@ -267,26 +274,27 @@ local function DroppingCardOnFrame(frame)
 end
 
 local function DropCardArea(card)
-	if DroppingCardOnFrame(_GwentPlayFrame.playerSiege) and IsRightTypeForArea(card, "siege") then
-		print("dropped in siege")
-		AddDraggedCardToNewList(_PlayerSiege)
-		return true, "siege"
-	elseif DroppingCardOnFrame(_GwentPlayFrame.playerRanged) and IsRightTypeForArea(card, "ranged") then
-		print("dropped in ranged")
-		AddDraggedCardToNewList(_PlayerRanged)
-		return true, "ranged"
-	elseif DroppingCardOnFrame(_GwentPlayFrame.playerMelee) and IsRightTypeForArea(card, "melee") then
-		print("dropped in melee")
-		AddDraggedCardToNewList(_PlayerMelee)
-		return true, "melee"
+	if DroppingCardOnFrame(_GwentPlayFrame.playerSiege) and IsRightTypeForArea(card, TEXT_SIEGE) then
+		
+		AddCardToNewList(card, _PlayerSiege)
+		RemoveCardFromHand(card)
+		return true, TEXT_SIEGE
+	elseif DroppingCardOnFrame(_GwentPlayFrame.playerRanged) and IsRightTypeForArea(card, TEXT_RANGED) then
+		
+		AddCardToNewList(card, _PlayerRanged)
+		RemoveCardFromHand(card)
+		return true, TEXT_RANGED
+	elseif DroppingCardOnFrame(_GwentPlayFrame.playerMelee) and IsRightTypeForArea(card, TEXT_MELEE) then
+		
+		AddCardToNewList(card, _PlayerMelee)
+		RemoveCardFromHand(card)
+		return true, TEXT_MELEE
 	end
 	return false
 end
 
 local function StopDraggingCard(card)
-	print("dropping "..card.data.name)
 	local success, area = DropCardArea(_DraggedCard)
-	print(success and "success" or "fail")
 	if success and _DraggedCard ~= nil then
 		--local message = string.format(MESSAGE_PLACEINAREA, area, "5")
 		_DraggedCard = nil
@@ -307,6 +315,8 @@ end
 local function CreateCardOfId(id)
 	
 	local cardData = GetCardOfId(id)
+	
+	GwentAddon:DEBUGMessageSent("Trying to create card with id "..id)
 	
 	if not cardData then
 		print("Could not create card with Id ".. id)
@@ -355,18 +365,39 @@ local function DrawCard()
 	PlaceAllCards()
 end
 
+local function AddEnemyCard(message)
+	--print(message, string.match(message, "(%a+)#(%d+)"))
+	local areaType, id = string.match(message, "(%a+)#(%d+)")
+	GwentAddon:DEBUGMessageSent(message .. " - ".. string.match(message, "(%a+)#(%d+)"))
+	local card = CreateCardOfId(id)
+	if areaType == TEXT_SIEGE then
+		AddCardToNewList(card, _EnemySiege)
+	elseif areaType == TEXT_RANGED then
+		AddCardToNewList(card, _EnemyRanged)
+	elseif areaType == TEXT_MELEE then
+		AddCardToNewList(card, _EnemyMelee)
+	end
+	
+	PlaceAllCards()
+end
+
 local L_FPS_LoadFrame = CreateFrame("FRAME", "Gwent_EventFrame"); 
 Gwent_EventFrame:RegisterEvent("ADDON_LOADED");
 Gwent_EventFrame:RegisterEvent("CHAT_MSG_ADDON");
 Gwent_EventFrame:SetScript("OnEvent", function(self, event, ...) self[event](self, ...) end)
 
-function Gwent_EventFrame:CHAT_MSG_ADDON(prefix, m, channel, s)
+function Gwent_EventFrame:CHAT_MSG_ADDON(prefix, message, channel, sender)
 	if prefix ~= addonName then
 		return
 	end
 	
 	if message == TEXT_ADDONMSG_RECIEVED then
 		return
+	end
+	
+	-- Enemy played card
+	if string.find(message, "#") then
+		AddEnemyCard(message)
 	end
 	
 end
