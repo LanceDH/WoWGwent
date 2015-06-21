@@ -7,6 +7,8 @@ local SIZE_CARD_WIDTH = 50
 local _GwentPlayFrame = {}
 local _PlayerHand = {}
 local _PlayerSiege = {}
+local _PlayerRanged = {}
+local _PlayerMelee = {}
 local _DraggedCard = nil
 local _DragginOverFrame = nil
 local _CardNr = 1
@@ -117,6 +119,9 @@ local function CreatePlayFrame()
 		tileSize = 0, edgeSize = 16,
 		insets = { left = 0, right = 0, top = 0, bottom = 0 }
 		})
+	PlayFrame.playerSiege.points = PlayFrame.playerSiege:CreateFontString(nil, nil, "GameFontNormal")
+	PlayFrame.playerSiege.points:SetPoint("right", PlayFrame.playerSiege, "left", -20, 0)
+	PlayFrame.playerSiege.points:SetText(0)
 	  
 	PlayFrame.playerRanged = CreateFrame("frame", addonName.."PlayFrame_PlayerRanged", PlayFrame)
 	PlayFrame.playerRanged:SetPoint("bottom", PlayFrame.playerSiege, "top", 0, 10)
@@ -127,31 +132,48 @@ local function CreatePlayFrame()
 	  tileSize = 0, edgeSize = 16,
       insets = { left = 0, right = 0, top = 0, bottom = 0 }
 	  })
+	PlayFrame.playerRanged.points = PlayFrame.playerRanged:CreateFontString(nil, nil, "GameFontNormal")
+	PlayFrame.playerRanged.points:SetPoint("right", PlayFrame.playerRanged, "left", -20, 0)
+	PlayFrame.playerRanged.points:SetText(0)
+	  
+	PlayFrame.playerMelee = CreateFrame("frame", addonName.."PlayFrame_PlayerMelee", PlayFrame)
+	PlayFrame.playerMelee:SetPoint("bottom", PlayFrame.playerRanged, "top", 0, 10)
+	PlayFrame.playerMelee:SetHeight(SIZE_CARD_HEIGHT)
+	PlayFrame.playerMelee:SetWidth(SIZE_CARD_WIDTH * 10)
+	PlayFrame.playerMelee:SetBackdrop({bgFile = "Interface\\DialogFrame\\UI-DialogBox-Gold-Background",
+      edgeFile = nil,
+	  tileSize = 0, edgeSize = 16,
+      insets = { left = 0, right = 0, top = 0, bottom = 0 }
+	  })
+	PlayFrame.playerMelee.points = PlayFrame.playerMelee:CreateFontString(nil, nil, "GameFontNormal")
+	PlayFrame.playerMelee.points:SetPoint("right", PlayFrame.playerMelee, "left", -20, 0)
+	PlayFrame.playerMelee.points:SetText(0)
 	
 	return PlayFrame
 end
 
-local function PlayerPlaceHand()
-	for k, card in ipairs(_PlayerHand) do
-		card:ClearAllPoints()
-		card:SetPoint("topleft", _GwentPlayFrame.playerHand, "topleft", (k-1)*SIZE_CARD_WIDTH, 0)
-		card:SetWidth(SIZE_CARD_WIDTH)
-		card:SetHeight(SIZE_CARD_HEIGHT)
-	end
-end
+local function PlayerPlaceCardsOnFrame(list, frame)
+	local totalPoints = 0
 
-local function PlayerPlaceSiege()
-	for k, card in ipairs(_PlayerSiege) do
+	for k, card in ipairs(list) do
 		card:ClearAllPoints()
-		card:SetPoint("topleft", _GwentPlayFrame.playerSiege , "topleft", (k-1)*SIZE_CARD_WIDTH, 0)
+		card:SetPoint("topleft", frame , "topleft", (k-1)*SIZE_CARD_WIDTH, 0)
 		card:SetWidth(SIZE_CARD_WIDTH)
 		card:SetHeight(SIZE_CARD_HEIGHT)
+		
+		totalPoints = totalPoints + card.data.strength
+	end
+	
+	if frame.points ~= nil then
+		frame.points:SetText(totalPoints)
 	end
 end
 
 local function PlaceAllCards()
-	PlayerPlaceHand()
-	PlayerPlaceSiege()
+	PlayerPlaceCardsOnFrame(_PlayerHand, _GwentPlayFrame.playerHand)
+	PlayerPlaceCardsOnFrame(_PlayerSiege, _GwentPlayFrame.playerSiege)
+	PlayerPlaceCardsOnFrame(_PlayerRanged, _GwentPlayFrame.playerRanged)
+	PlayerPlaceCardsOnFrame(_PlayerMelee, _GwentPlayFrame.playerMelee)
 end
 
 local function GetCardOfId(id)
@@ -181,25 +203,23 @@ end
 
 local function StartDraggingCard(card)
 	_DraggedCard = card
-	print("dragging " .. _DraggedCard.data.name)
 	card:StartMoving()
 end
 
-local function AddDraggedCardToNewList(list, frame)
+local function AddDraggedCardToNewList(list)
 	table.insert(list, _DraggedCard)
 	RemoveCardFromHand(_DraggedCard)
 	_DraggedCard:SetMovable(false)
 	_DraggedCard:EnableMouse(false)
 end
 
-local function DroppingCardInSiege()
-	local left, bottom, width, height = _GwentPlayFrame.playerSiege:GetBoundsRect()
+local function DroppingCardOnFrame(frame)
+	local left, bottom, width, height = frame:GetBoundsRect()
 	local mouseX, mouseY = GetCursorPosition()
-	local s = _GwentPlayFrame.playerSiege:GetEffectiveScale();
+	local s = frame:GetEffectiveScale();
 	mouseX, mouseY = mouseX/s, mouseY/s
 
 	if mouseX > left and mouseX < left + width and mouseY > bottom and mouseY < bottom + height then
-		print("Dropping in siege")
 		return true
 	end
 	
@@ -208,8 +228,14 @@ local function DroppingCardInSiege()
 end
 
 local function DropCardArea(card)
-	if DroppingCardInSiege() then
-		AddDraggedCardToNewList(_PlayerSiege, _GwentPlayFrame.playerSiege)
+	if DroppingCardOnFrame(_GwentPlayFrame.playerSiege) then
+		AddDraggedCardToNewList(_PlayerSiege)
+		return true
+	elseif DroppingCardOnFrame(_GwentPlayFrame.playerRanged) then
+		AddDraggedCardToNewList(_PlayerRanged)
+		return true
+	elseif DroppingCardOnFrame(_GwentPlayFrame.playerMelee) then
+		AddDraggedCardToNewList(_PlayerMelee)
 		return true
 	end
 	return false
@@ -222,7 +248,6 @@ local function StopDraggingCard(card)
 	end
 
 	_DraggedCard = nil
-	print("stopped dragging ")
 	card:StopMovingOrSizing()
 	PlaceAllCards()
 	
@@ -256,15 +281,19 @@ local function CreateCardOfId(id)
 	card:RegisterForDrag("LeftButton")
 	card:SetScript("OnDragStart", function(self) StartDraggingCard(self) end)
 	card:SetScript("OnDragStop", function(self) StopDraggingCard(self) end)
-	card:SetClampedToScreen(true)
 	card:EnableMouse(true)
 	  
 	card.name = card:CreateFontString(nil, nil, "GameFontNormal")
 	card.name:SetPoint("topleft", card, "topleft", 0, 0)
-	card.name:SetPoint("topright", card, "topright", 0, 0)
-	card.name:SetHeight(15)
+	card.name:SetPoint("bottomright", card, "topright", 0, -20)
 	card.name:SetJustifyH("center")
 	card.name:SetText(cardData.name)
+	
+	card.strength = card:CreateFontString(nil, nil, "GameFontNormal")
+	card.strength:SetPoint("topleft", card.name, "topleft", 0, -5)
+	card.strength:SetPoint("bottomright", card.name, "bottomright", 0, -25)
+	card.strength:SetJustifyH("left")
+	card.strength:SetText(cardData.strength)
 	  
 	_CardNr = _CardNr + 1
 	  
@@ -343,7 +372,9 @@ local function slashcmd(msg, editbox)
 	end
 	
 	elseif msg == 'draw' then
-		DrawCard()
+		for i=1,10 do
+			DrawCard()
+		end
 	else
 		--if ( not InterfaceOptionsFramePanelContainer.displayedPanel ) then
 		--	InterfaceOptionsFrame_OpenToCategory(CONTROLS_LABEL);

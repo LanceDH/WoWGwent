@@ -17,7 +17,7 @@ function GwentAddon:CreateCardsList()
 	table.insert(GwentAddon.CardList, {
 				name = "Foltest, King of Temeria"
 				,deck = DECK_NORTH
-				,strength = false
+				,strength = 0
 				,cardType = {melee = false, ranged = false, siege = false, hero = false, leader = true}
 				,ability = "NYI"
 			})
@@ -25,7 +25,7 @@ function GwentAddon:CreateCardsList()
 	table.insert(GwentAddon.CardList, {
 				name = "Foltest, Lord Commander Of The North"
 				,deck = DECK_NORTH
-				,strength = false
+				,strength = 0
 				,cardType = {melee = false, ranged = false, siege = false, hero = false, leader = true}
 				,ability = "NYI"
 			})
@@ -33,7 +33,7 @@ function GwentAddon:CreateCardsList()
 	table.insert(GwentAddon.CardList, {
 				name = "Foltest The Steel-forged"
 				,deck = DECK_NORTH
-				,strength = false
+				,strength = 0
 				,cardType = {melee = false, ranged = false, siege = false, hero = false, leader = true}
 				,ability = "NYI"
 			})
@@ -41,7 +41,7 @@ function GwentAddon:CreateCardsList()
 	table.insert(GwentAddon.CardList, {
 				name = "Foltest The Siegemaster"
 				,deck = DECK_NORTH
-				,strength = false
+				,strength = 0
 				,cardType = {melee = false, ranged = false, siege = false, hero = false, leader = true}
 				,ability = "NYI"
 			})
