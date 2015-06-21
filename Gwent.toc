@@ -9,5 +9,6 @@
 
 Gwent.xml
 Gwent.lua
+DEBUG.lua
 
 CardManagement/CardList.lua
