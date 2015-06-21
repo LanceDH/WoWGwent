@@ -14,6 +14,8 @@ local COORDS_ICON_RANGED = {["x"]=64*15, ["y"]=64*1}
 local COORDS_ICON_SIEGE = {["x"]=64*3, ["y"]=64*7}
 
 local MESSAGE_PLACEINAREA = "%s#%d"
+local MESSAGE_CHALLENGE = "It's time to du-du-du-duel"
+
 local TEXT_SIEGE = "siege"
 local TEXT_RANGED = "ranged"
 local TEXT_MELEE = "melee"
@@ -32,6 +34,8 @@ local _DraggedCard = nil
 local _DragginOverFrame = nil
 local _CardNr = 1
 
+local _YourTurn = false
+
 local function isInteger(x)
 	return math.floor(x)==x
 end
@@ -43,6 +47,15 @@ local function round(num, idp)
 		ret = tonumber(string.format("%." .. (idp or 0) .. "f", num))
 	end
 	return ret
+end
+
+local function IsYourTurn(bool)
+	_YourTurn = bool
+	
+	for k, card in ipairs(_PlayerHand) do
+		card:SetMovable(bool)
+		card:EnableMouse(bool)
+	end
 end
 
 local function CreateCardArea(name, parent, coords)
@@ -59,7 +72,7 @@ local function CreateCardArea(name, parent, coords)
 	frame.points:SetPoint("right", frame, "left", -20, 0)
 	frame.points:SetText(0)
 	
-	frame.icon = frame:CreateTexture(addonName.."PlayFrame_PlayerMelee_ICON", "art")
+	frame.icon = frame:CreateTexture(addonName.."PlayFrame_"..name.."_ICON", "art")
 	frame.icon:SetTexture(TEXTURE_ICONS.path)
 	frame.icon:SetTexCoord(coords.x/TEXTURE_ICONS.width, (coords.x+SIZE_ICON)/TEXTURE_ICONS.width, coords.y/TEXTURE_ICONS.height, (coords.y+SIZE_ICON)/TEXTURE_ICONS.height)
 	frame.icon:SetVertexColor(1, 1, 1, 0.3)
@@ -161,7 +174,15 @@ local function CreatePlayFrame()
 	PlayFrame.playerMelee = CreateCardArea("PlayerMelee", PlayFrame, COORDS_ICON_MELEE)
 	PlayFrame.playerMelee:SetPoint("bottom", PlayFrame.playerRanged, "top", 0, 10)
 
-	-- player hand
+	-- player portrait
+	PlayFrame.playerPortrait = PlayFrame:CreateTexture(addonName.."PlayFrame_PlayerPortrait", "art")
+	PlayFrame.playerPortrait:SetWidth(SIZE_CARD_HEIGHT-10)
+	PlayFrame.playerPortrait:SetHeight(SIZE_CARD_HEIGHT-10)
+	PlayFrame.playerPortrait:SetPoint("right", PlayFrame.playerHand, "left", -100, 0)
+	SetPortraitTexture(PlayFrame.playerPortrait, "player")
+
+	
+	-- enemy hand
 	PlayFrame.enemyHand = CreateFrame("frame", addonName.."PlayFrame_EnemyHand", PlayFrame)
 	PlayFrame.enemyHand:SetPoint("top", PlayFrame, "top", 0, -30)
 	PlayFrame.enemyHand:SetHeight(SIZE_CARD_HEIGHT)
@@ -172,15 +193,23 @@ local function CreatePlayFrame()
       insets = { left = 0, right = 0, top = 0, bottom = 0 }
 	  })
 	  
-	-- player siege
+	-- enemy siege
 	PlayFrame.enemySiege = CreateCardArea("EnemyRanged", PlayFrame, COORDS_ICON_SIEGE)
 	PlayFrame.enemySiege:SetPoint("top", PlayFrame.enemyHand, "bottom", 0, -20) 
-	-- player ranged
+	-- enemy ranged
 	PlayFrame.enemyRanged = CreateCardArea("EnemyRanged", PlayFrame, COORDS_ICON_RANGED)
 	PlayFrame.enemyRanged:SetPoint("top", PlayFrame.enemySiege, "bottom", 0, -10)  
-	-- player melee
+	-- enemy melee
 	PlayFrame.enemyMelee = CreateCardArea("EnemyMelee", PlayFrame, COORDS_ICON_MELEE)
 	PlayFrame.enemyMelee:SetPoint("top", PlayFrame.enemyRanged, "bottom", 0, -10)
+	
+	-- player portrait
+	PlayFrame.enemyPortrait = PlayFrame:CreateTexture(addonName.."PlayFrame_EnemyPortrait", "art")
+	PlayFrame.enemyPortrait:SetTexture("Interface\\CHARACTERFRAME\\TemporaryPortrait-Vehicle-Organic")
+	PlayFrame.enemyPortrait:SetWidth(SIZE_CARD_HEIGHT-10)
+	PlayFrame.enemyPortrait:SetHeight(SIZE_CARD_HEIGHT-10)
+	PlayFrame.enemyPortrait:SetPoint("right", PlayFrame.enemyHand, "left", -100, 0)
+	--SetPortraitTexture(PlayFrame.playerPortrait, "player")
 	
 	return PlayFrame
 end
@@ -299,6 +328,7 @@ local function StopDraggingCard(card)
 		--local message = string.format(MESSAGE_PLACEINAREA, area, "5")
 		_DraggedCard = nil
 		--GwentAddon:DEBUGMessageSent(string.format(MESSAGE_PLACEINAREA, area, _DraggedCard.data.Id), _ChallengerName)
+		IsYourTurn(false)
 		SendAddonMessage(addonName, area .. "#" .. card.data.Id, "whisper" , _ChallengerName)
 		--SendAddonMessage(addonName, "test", "whisper" , _ChallengerName)
 		
@@ -336,11 +366,11 @@ local function CreateCardOfId(id)
 	  = 0, bottom = 0 }
 	  })
 	  
-	card:SetMovable(true)
+	card:SetMovable(false)
 	card:RegisterForDrag("LeftButton")
 	card:SetScript("OnDragStart", function(self) StartDraggingCard(self) end)
 	card:SetScript("OnDragStop", function(self) StopDraggingCard(self) end)
-	card:EnableMouse(true)
+	card:EnableMouse(false)
 	  
 	card.name = card:CreateFontString(nil, nil, "GameFontNormal")
 	card.name:SetPoint("topleft", card, "topleft", 2, -2)
@@ -381,6 +411,16 @@ local function AddEnemyCard(message)
 	PlaceAllCards()
 end
 
+local function ChangeChallenger(sender)
+	_ChallengerName = sender
+	
+	local challenger = GetUnitName("target", true)	
+	if challenger ~= nil then
+
+		SetPortraitTexture(_GwentPlayFrame.enemyPortrait, "target")
+	end
+end
+
 local L_FPS_LoadFrame = CreateFrame("FRAME", "Gwent_EventFrame"); 
 Gwent_EventFrame:RegisterEvent("ADDON_LOADED");
 Gwent_EventFrame:RegisterEvent("CHAT_MSG_ADDON");
@@ -395,9 +435,14 @@ function Gwent_EventFrame:CHAT_MSG_ADDON(prefix, message, channel, sender)
 		return
 	end
 	
+	if message == MESSAGE_CHALLENGE then
+		ChangeChallenger(sender)
+	end
+	
 	-- Enemy played card
 	if string.find(message, "#") then
 		AddEnemyCard(message)
+		IsYourTurn(true)
 	end
 	
 end
@@ -431,7 +476,7 @@ local function slashcmd(msg, editbox)
 		
 		SendAddonMessage(addonName, "What if I type a really long text, will it wrap or not I don't know "..name , "whisper" , name)
 	
-	elseif msg == 'challenge' then
+	elseif msg == 'duel' then
 		
 		name = GetUnitName("target", true)
 		
@@ -439,8 +484,10 @@ local function slashcmd(msg, editbox)
 			return
 		end
 		
-		SendAddonMessage(addonName, "It's time to du-du-duel" , "whisper" , name)
-		_ChallengerName = name
+		SendAddonMessage(addonName, ""..MESSAGE_CHALLENGE , "whisper" , name)
+		ChangeChallenger(name)
+		IsYourTurn(true)
+		
 		GwentAddon:DEBUGMessageSent("duelling ".._ChallengerName, _ChallengerName)
 	
 	elseif msg == 'toggle' then
