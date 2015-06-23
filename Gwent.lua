@@ -1,27 +1,34 @@
 ﻿local addonName, GwentAddon = ...
 local AceGUI = LibStub("AceGUI-3.0")
 
-local SIZE_CARD_HEIGHT = 75
-local SIZE_CARD_WIDTH = 50
+-- local SIZE_CARD_HEIGHT = 72
+-- local SIZE_CARD_WIDTH = 40
+local SIZE_CARD_HEIGHT = 79
+local SIZE_CARD_WIDTH = 49
 local SIZE_ICON = 64
 local SIZE_BORDER_TOTAL = 100
 
 local TEXTURE_CARD_BG = "Interface\\DialogFrame\\UI-DialogBox-Gold-Background"
 local TEXTURE_CARD_BORDER = "Interface\\DialogFrame\\UI-DialogBox-Border"
+--local TEXTURE_CARD_ICONBG = "Interface\\COMMON\\Indicator-Gray"
+local TEXTURE_CARD_ICONBG = "Interface\\COMMON\\Indicator-Yellow" 
 local TEXTURE_ICONS = {["path"]="Interface\\GUILDFRAME\\GUILDEMBLEMSLG_01", ["width"]=1024, ["height"]=1024}
 local TEXTURE_TOTAL_BORDERNORMAL = "Interface\\UNITPOWERBARALT\\MetalPlain_Circular_Frame"
 local TEXTURE_TOTAL_BORDERWINNING = "Interface\\UNITPOWERBARALT\\Mechanical_Circular_Frame"
 local TEXTURE_ARROWDOWN = "Interface\\ICONS\\misc_arrowdown"
 local TEXTURE_ARROWUP = "Interface\\ICONS\\misc_arrowlup"
+local TEXTURE_CUSTOM_PATH = "Interface\\AddOns\\Gwent\\CardTextures\\"
 
 
 local COORDS_ICON_MELEE = {["x"]=64*7, ["y"]=64*7}
 local COORDS_ICON_RANGED = {["x"]=64*15, ["y"]=64*1}
 local COORDS_ICON_SIEGE = {["x"]=64*3, ["y"]=64*7}
+local COORDS_SMALLCARD = {["left"]=76/256, ["right"]=244/256, ["top"]=30/512, ["bottom"]=300/512}
 
 local MESSAGE_PLACEINAREA = "%s#%d"
 local MESSAGE_CHALLENGE = "It's time to du-du-du-duel"
 local MESSAGE_LOGOUT = "logged out"
+local MESSAGE_PASS = "passing"
 
 local TEXT_SIEGE = "siege"
 local TEXT_RANGED = "ranged"
@@ -43,6 +50,7 @@ local _DragginOverFrame = nil
 local _CardNr = 1
 
 local _YourTurn = false
+local _EnemyPassed = false
 
 local function isInteger(x)
 	return math.floor(x)==x
@@ -65,13 +73,19 @@ local function IsYourTurn(bool)
 		card:EnableMouse(bool)
 	end
 	
+	_GwentPlayFrame.playerTurn:Hide()
+	_GwentPlayFrame.enemyTurn:Hide()
+	
 	if _YourTurn then
-		_GwentPlayFrame.playerTurn:SetTexture(TEXTURE_ARROWDOWN)
-		_GwentPlayFrame.enemyTurn:SetTexture()
+		_GwentPlayFrame.playerTurn:Show()
 	else
-		_GwentPlayFrame.playerTurn:SetTexture()
-		_GwentPlayFrame.enemyTurn:SetTexture(TEXTURE_ARROWUP)
+		_GwentPlayFrame.enemyTurn:Show()
 	end
+end
+
+local function PassTurn()
+	SendAddonMessage(addonName, MESSAGE_PASS , "whisper" , _ChallengerName)
+	IsYourTurn(false)
 end
 
 local function CreateCardArea(name, parent, coords)
@@ -102,7 +116,7 @@ end
 local function CreatePlayFrame()
 	
 	local PlayFrame = CreateFrame("frame", addonName.."PlayFrame", UIParent)
-	PlayFrame:SetHeight(750)
+	PlayFrame:SetHeight(780)
 	PlayFrame:SetWidth(1000)
 	PlayFrame:SetMovable(true)
 	PlayFrame:SetPoint("Center", 250, 0)
@@ -180,6 +194,13 @@ local function CreatePlayFrame()
       insets = { left = 0, right = 0, top = 0, bottom = 0 }
 	  })
 	  
+	PlayFrame.passButton = CreateFrame("button", addonName.."PlayFrame_PassButton", PlayFrame, "UIPanelButtonTemplate")
+	PlayFrame.passButton:SetPoint("left", PlayFrame.playerHand, "right", 20, 0)
+	PlayFrame.passButton:SetSize(100, 25)
+	PlayFrame.passButton:SetText("Pass")
+	PlayFrame.passButton:SetScript("OnClick", PassTurn)
+	
+	  
 	-- player siege
 	PlayFrame.playerSiege = CreateCardArea("PlayerRanged", PlayFrame, COORDS_ICON_SIEGE)
 	PlayFrame.playerSiege:SetPoint("bottom", PlayFrame.playerHand, "top", 0, 20) 
@@ -198,7 +219,7 @@ local function CreatePlayFrame()
 	PlayFrame.playerTotal:SetHeight(SIZE_BORDER_TOTAL)
 	PlayFrame.playerTotal:SetPoint("right", PlayFrame.playerRanged, "left", -75, 0)
 	
-	PlayFrame.playerTotal.points = PlayFrame:CreateFontString(nil, nil, "GameFontNormal")
+	PlayFrame.playerTotal.points = PlayFrame:CreateFontString(nil, nil, "QuestTitleFontBlackShadow")
 	PlayFrame.playerTotal.points:SetPoint("topleft", PlayFrame.playerTotal)
 	PlayFrame.playerTotal.points:SetPoint("bottomright", PlayFrame.playerTotal)
 	PlayFrame.playerTotal.points:SetText(0)
@@ -228,10 +249,11 @@ local function CreatePlayFrame()
 	-- player turn arrow
 	PlayFrame.playerTurn = PlayFrame:CreateTexture(addonName.."PlayFrame_PlayerTurn", "ARTWORK")
 	PlayFrame.playerTurn:SetDrawLayer("ARTWORK", -7)
-	PlayFrame.playerTurn:SetTexture()
+	PlayFrame.playerTurn:SetTexture(TEXTURE_ARROWDOWN)
 	PlayFrame.playerTurn:SetWidth(SIZE_ICON)
 	PlayFrame.playerTurn:SetHeight(SIZE_ICON)
 	PlayFrame.playerTurn:SetPoint("right", PlayFrame.playerSiege, "left", -75, 0)
+	PlayFrame.playerTurn:Hide()
 	
 	
 	
@@ -265,7 +287,7 @@ local function CreatePlayFrame()
 	PlayFrame.enemyTotal:SetHeight(SIZE_BORDER_TOTAL)
 	PlayFrame.enemyTotal:SetPoint("right", PlayFrame.enemyRanged, "left", -75, 0)
 	
-	PlayFrame.enemyTotal.points = PlayFrame:CreateFontString(nil, nil, "GameFontNormal")
+	PlayFrame.enemyTotal.points = PlayFrame:CreateFontString(nil, nil, "QuestTitleFontBlackShadow")
 	PlayFrame.enemyTotal.points:SetPoint("topleft", PlayFrame.enemyTotal)
 	PlayFrame.enemyTotal.points:SetPoint("bottomright", PlayFrame.enemyTotal)
 	PlayFrame.enemyTotal.points:SetText(0)
@@ -295,10 +317,11 @@ local function CreatePlayFrame()
 	-- player turn arrow
 	PlayFrame.enemyTurn = PlayFrame:CreateTexture(addonName.."PlayFrame_EnemyTurn", "ARTWORK")
 	PlayFrame.enemyTurn:SetDrawLayer("ARTWORK", -7)
-	PlayFrame.enemyTurn:SetTexture()
+	PlayFrame.enemyTurn:SetTexture(TEXTURE_ARROWUP)
 	PlayFrame.enemyTurn:SetWidth(SIZE_ICON)
 	PlayFrame.enemyTurn:SetHeight(SIZE_ICON)
 	PlayFrame.enemyTurn:SetPoint("right", PlayFrame.enemySiege, "left", -75, 0)
+	PlayFrame.enemyTurn:Hide()
 	
 	return PlayFrame
 end
@@ -386,7 +409,6 @@ local function StartDraggingCard(card)
 end
 
 local function AddCardToNewList(card, list)
-	GwentAddon:DEBUGMessageSent("Trying to add card to list")
 	table.insert(list, card)
 	card:SetMovable(false)
 	card:EnableMouse(false)
@@ -442,8 +464,8 @@ local function StopDraggingCard(card)
 		_DraggedCard = nil
 		--GwentAddon:DEBUGMessageSent(string.format(MESSAGE_PLACEINAREA, area, _DraggedCard.data.Id), _ChallengerName)
 		IsYourTurn(false)
-		SendAddonMessage(addonName, area .. "#" .. card.data.Id, "whisper" , _ChallengerName)
-		--SendAddonMessage(addonName, "test", "whisper" , _ChallengerName)
+		--SendAddonMessage(addonName, area .. "#" .. card.data.Id, "whisper" , _ChallengerName)
+		SendAddonMessage(addonName, string.format(MESSAGE_PLACEINAREA, area, card.data.Id), "whisper" , _ChallengerName)
 		
 	end
 
@@ -457,9 +479,10 @@ end
 
 local function CeateCardIcon(name, parent, coords)
 	icon = parent:CreateTexture(name, "art")
+	icon:SetDrawLayer("ARTWORK", 2)
 	icon:SetTexture(TEXTURE_ICONS.path)
 	icon:SetTexCoord(coords.x/TEXTURE_ICONS.width, (coords.x+SIZE_ICON)/TEXTURE_ICONS.width, coords.y/TEXTURE_ICONS.height, (coords.y+SIZE_ICON)/TEXTURE_ICONS.height)
-	icon:SetVertexColor(1, 1, 1, 0.3)
+	--icon:SetVertexColor(1, 1, 1, 0.3)
 	icon:SetWidth(SIZE_CARD_WIDTH/2)
 	icon:SetHeight(SIZE_CARD_WIDTH/2)
 	
@@ -470,18 +493,48 @@ local function CreateCardTypeIcons(card)
 	local count = 0;
 
 	if card.data.cardType.melee then
+		card.iconMeleeBG = card:CreateTexture(addonName.."_Card_".._CardNr.."_IconMeleeBG", "ARTWORK")
+		card.iconMeleeBG:SetDrawLayer("ARTWORK", 1)
+		card.iconMeleeBG:SetTexture(TEXTURE_CARD_ICONBG)
+		card.iconMeleeBG:SetVertexColor(0, 0, 0, .75)
+		card.iconMeleeBG:SetTexCoord(4/32, 28/32, 4/32, 28/32)
+		card.iconMeleeBG:SetPoint("bottomleft", card, "bottomleft", (SIZE_CARD_WIDTH/2)*count, 0)
+		card.iconMeleeBG:SetHeight(SIZE_CARD_WIDTH/2)
+		card.iconMeleeBG:SetWidth(SIZE_CARD_WIDTH/2)
+		
 		card.iconMelee = CeateCardIcon(card:GetName() .. "_IconMelee", card, COORDS_ICON_MELEE)
-		card.iconMelee:SetPoint("bottomleft", card, "bottomleft", (SIZE_CARD_WIDTH/2)*count, 0)
+		card.iconMelee:SetPoint("center", card.iconMeleeBG)
+		--card.iconMelee:SetPoint("bottomleft", card, "bottomleft", (SIZE_CARD_WIDTH/2)*count, 0)
 		count = count + 1
 	end
 	if card.data.cardType.ranged then
+		card.iconRangedBG = card:CreateTexture(addonName.."_Card_".._CardNr.."_IconRangedBG", "ARTWORK")
+		card.iconRangedBG:SetDrawLayer("ARTWORK", 1)
+		card.iconRangedBG:SetTexture(TEXTURE_CARD_ICONBG)
+		card.iconRangedBG:SetVertexColor(0, 0, 0, .75)
+		card.iconRangedBG:SetTexCoord(4/32, 28/32, 4/32, 28/32)
+		card.iconRangedBG:SetPoint("bottomleft", card, "bottomleft", (SIZE_CARD_WIDTH/2)*count, 0)
+		card.iconRangedBG:SetHeight(SIZE_CARD_WIDTH/2)
+		card.iconRangedBG:SetWidth(SIZE_CARD_WIDTH/2)
+	
 		card.iconRanged = CeateCardIcon(card:GetName() .. "_IconRanged", card, COORDS_ICON_RANGED)
-		card.iconRanged:SetPoint("bottomleft", card, "bottomleft", (SIZE_CARD_WIDTH/2)*count, 0)
+		card.iconRanged:SetPoint("center", card.iconRangedBG)
+		--card.iconRanged:SetPoint("bottomleft", card, "bottomleft", (SIZE_CARD_WIDTH/2)*count, 0)
 		count = count + 1
 	end
 	if card.data.cardType.siege then
+		card.iconSiegeBG = card:CreateTexture(addonName.."_Card_".._CardNr.."_IconSiegeBG", "ARTWORK")
+		card.iconSiegeBG:SetDrawLayer("ARTWORK", 1)
+		card.iconSiegeBG:SetTexture(TEXTURE_CARD_ICONBG)
+		card.iconSiegeBG:SetVertexColor(0, 0, 0, .75)
+		card.iconSiegeBG:SetTexCoord(4/32, 28/32, 4/32, 28/32)
+		card.iconSiegeBG:SetPoint("bottomleft", card, "bottomleft", (SIZE_CARD_WIDTH/2)*count, 0)
+		card.iconSiegeBG:SetHeight(SIZE_CARD_WIDTH/2)
+		card.iconSiegeBG:SetWidth(SIZE_CARD_WIDTH/2)
+	
 		card.iconSiege = CeateCardIcon(card:GetName() .. "_IconSiege", card, COORDS_ICON_SIEGE)
-		card.iconSiege:SetPoint("bottomleft", card, "bottomleft", (SIZE_CARD_WIDTH/2)*count, 0)
+		card.iconSiege:SetPoint("center", card.iconSiegeBG)
+		--card.iconSiege:SetPoint("bottomleft", card, "bottomleft", (SIZE_CARD_WIDTH/2)*count, 0)
 		count = count + 1
 	end
 end
@@ -504,33 +557,58 @@ local function CreateCardOfId(id)
 	card:SetHeight(SIZE_CARD_HEIGHT)
 	card:SetWidth(SIZE_CARD_WIDTH)
 	card:SetBackdrop({bgFile = TEXTURE_CARD_BG,
-      edgeFile = TEXTURE_CARD_BORDER,
+		edgeFile = TEXTURE_CARD_BORDER,
+
 	  tileSize = 0, edgeSize = 4,
       insets = { left = 0, right = 0, top 
 	  = 0, bottom = 0 }
 	  })
-	  
+	
+	-- card.texture = card:CreateTexture(addonName.."_Card_".._CardNr.."_Texture", "ARTWORK")
+	-- card.texture:SetDrawLayer("ARTWORK", 0)
+	-- card.texture:SetTexture(TEXTURE_CUSTOM_PATH..cardData.texture)
+	-- card.texture:SetTexCoord(COORDS_SMALLCARD.left, COORDS_SMALLCARD.right, COORDS_SMALLCARD.top, COORDS_SMALLCARD.bottom)
+	-- card.texture:SetPoint("topleft", card, 2, -2)
+	-- card.texture:SetPoint("bottomright", card, -2, 2)
+	
 	card:SetMovable(false)
 	card:RegisterForDrag("LeftButton")
 	card:SetScript("OnDragStart", function(self) StartDraggingCard(self) end)
 	card:SetScript("OnDragStop", function(self) StopDraggingCard(self) end)
 	card:EnableMouse(false)
 	  
-	card.name = card:CreateFontString(nil, nil, "GameFontNormal")
-	card.name:SetPoint("topleft", card, "topleft", 2, -2)
-	card.name:SetPoint("bottomright", card, "topright", -2, -22)
-	card.name:SetJustifyH("center")
-	card.name:SetText(cardData.name)
+	-- card.name = card:CreateFontString(nil, nil, "GameFontNormal")
+	-- card.name:SetPoint("topleft", card, "topleft", 2, -2)
+	-- card.name:SetPoint("bottomright", card, "topright", -2, -22)
+	-- card.name:SetJustifyH("center")
+	-- card.name:SetText(cardData.name)
 	
-	card.strength = card:CreateFontString(nil, nil, "GameFontNormal")
-	card.strength:SetPoint("topleft", card.name, "topleft", 2, -7)
-	card.strength:SetPoint("bottomright", card.name, "bottomright", -2, -27)
-	card.strength:SetJustifyH("left")
+	
+	card.strengthBG = card:CreateTexture(addonName.."_Card_".._CardNr.."_StrengthBG", "ARTWORK")
+	card.strengthBG:SetDrawLayer("ARTWORK", 1)
+	card.strengthBG:SetTexture(TEXTURE_CARD_ICONBG)
+	card.strengthBG:SetVertexColor(0, 0, 0, .75)
+	card.strengthBG:SetTexCoord(4/32, 28/32, 4/32, 28/32)
+	card.strengthBG:SetPoint("topleft", card, 0, 0)
+	card.strengthBG:SetHeight(SIZE_CARD_WIDTH/2)
+	card.strengthBG:SetWidth(SIZE_CARD_WIDTH/2)
+	
+	--card.strengthBG:SetPoint("bottomright", card, -2, 2)
+	
+	card.strength = card:CreateFontString(nil, nil, "GameFontWhite")
+	--card.strength:SetDrawLayer("ARTWORK", 1)
+	card.strength:SetPoint("topleft", card.strengthBG)
+	card.strength:SetPoint("bottomright", card.strengthBG)
+	--card.strength:SetPoint("bottomright", card, "bottomright", -2, -7)
+	card.strength:SetJustifyH("center")
+	card.strength:SetJustifyV("middle")
 	card.strength:SetText(cardData.strength)
+	  
+	CreateCardTypeIcons(card)
 	  
 	_CardNr = _CardNr + 1
 	
-	CreateCardTypeIcons(card)
+	
 	  
 	return card
 end
@@ -590,9 +668,15 @@ local function ResetGame()
 	DestroyCardsInList(_EnemySiege)
 	DestroyCardsInList(_EnemyRanged)
 	DestroyCardsInList(_EnemyMelee)
+	PlaceAllCards()
 	_DraggedCard = nil
 	_DragginOverFrame = nil
 	_YourTurn = false
+
+	_GwentPlayFrame.playerTurn:Hide()
+	
+	_GwentPlayFrame.enemyNametag:SetText("")
+	_GwentPlayFrame.enemyTurn:Hide()
 	
 end
 
@@ -643,14 +727,11 @@ function Gwent_EventFrame:ADDON_LOADED(ADDON_LOADED)
 	end
 end
 
-function Gwent_EventFrame:PLAYER_LOGOUT(PLAYER_LOGOUT)
-	if ADDON_LOADED ~= addonName then return end
+function Gwent_EventFrame:PLAYER_LOGOUT(ADDON_LOADED)
+	--if ADDON_LOADED ~= addonName then return end
 	
 	SendAddonMessage(addonName, MESSAGE_LOGOUT, "whisper" , _ChallengerName)
-	
-	if not RegisterAddonMessagePrefix(addonName) then
-		print(addonName ..": Could not register prefix.")
-	end
+
 end
 
 

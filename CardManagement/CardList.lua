@@ -20,6 +20,7 @@ function GwentAddon:CreateCardsList()
 				,strength = 0
 				,cardType = {melee = false, ranged = false, siege = false, hero = false, leader = true}
 				,ability = "NYI"
+				,texture = "peasant"
 			})
 			
 	table.insert(GwentAddon.CardList, {
@@ -28,6 +29,7 @@ function GwentAddon:CreateCardsList()
 				,strength = 0
 				,cardType = {melee = false, ranged = false, siege = false, hero = false, leader = true}
 				,ability = "NYI"
+				,texture = "peasant"
 			})
 			
 	table.insert(GwentAddon.CardList, {
@@ -36,6 +38,7 @@ function GwentAddon:CreateCardsList()
 				,strength = 0
 				,cardType = {melee = false, ranged = false, siege = false, hero = false, leader = true}
 				,ability = "NYI"
+				,texture = "peasant"
 			})
 	
 	table.insert(GwentAddon.CardList, {
@@ -44,6 +47,7 @@ function GwentAddon:CreateCardsList()
 				,strength = 0
 				,cardType = {melee = false, ranged = false, siege = false, hero = false, leader = true}
 				,ability = "NYI"
+				,texture = "peasant"
 			})
 			
 	table.insert(GwentAddon.CardList, {
@@ -52,6 +56,7 @@ function GwentAddon:CreateCardsList()
 				,strength = 10
 				,cardType = {melee = false, ranged = true, siege = false, hero = true, leader = false}
 				,ability = ABILITY_Hero
+				,texture = "peasant"
 			})
 			
 	table.insert(GwentAddon.CardList, {
@@ -60,6 +65,7 @@ function GwentAddon:CreateCardsList()
 				,strength = 10
 				,cardType = {melee = true, ranged = false, siege = false, hero = true, leader = false}
 				,ability = ABILITY_Hero
+				,texture = "peasant"
 			})
 	
 	table.insert(GwentAddon.CardList, {
@@ -68,6 +74,7 @@ function GwentAddon:CreateCardsList()
 				,strength = 10
 				,cardType = {melee = true, ranged = false, siege = false, hero = true, leader = false}
 				,ability = ABILITY_Hero
+				,texture = "peasant"
 			})
 	
 	table.insert(GwentAddon.CardList, {
@@ -76,6 +83,7 @@ function GwentAddon:CreateCardsList()
 				,strength = 10
 				,cardType = {melee = true, ranged = false, siege = false, hero = true, leader = false}
 				,ability = ABILITY_Hero
+				,texture = "peasant"
 			})
 	
 	table.insert(GwentAddon.CardList, {
@@ -84,6 +92,7 @@ function GwentAddon:CreateCardsList()
 				,strength = 1
 				,cardType = {melee = false, ranged = false, siege = true, hero = false, leader = false}
 				,ability = ABILITY_Spy
+				,texture = "peasant"
 			})
 			
 	table.insert(GwentAddon.CardList, {
@@ -92,6 +101,7 @@ function GwentAddon:CreateCardsList()
 				,strength = 1
 				,cardType = {melee = true, ranged = false, siege = false, hero = false, leader = false}
 				,ability = nil
+				,texture = "peasant"
 			})
 			
 	table.insert(GwentAddon.CardList, {
@@ -100,6 +110,7 @@ function GwentAddon:CreateCardsList()
 				,strength = 1
 				,cardType = {melee = true, ranged = false, siege = false, hero = false, leader = false}
 				,ability = ABILITY_Bond
+				,texture = "peasant"
 			})
 			
 	table.insert(GwentAddon.CardList, {
@@ -108,6 +119,7 @@ function GwentAddon:CreateCardsList()
 				,strength = 1
 				,cardType = {melee = false, ranged = false, siege = true, hero = false, leader = false}
 				,ability = ABILITY_Morale
+				,texture = "balista"
 			})
 			
 	table.insert(GwentAddon.CardList, {
@@ -116,6 +128,7 @@ function GwentAddon:CreateCardsList()
 				,strength = 2
 				,cardType = {melee = true, ranged = false, siege = false, hero = false, leader = false}
 				,ability = nil
+				,texture = "balista"
 			})
 			
 	table.insert(GwentAddon.CardList, {
@@ -124,6 +137,7 @@ function GwentAddon:CreateCardsList()
 				,strength = 4
 				,cardType = {melee = true, ranged = false, siege = false, hero = false, leader = false}
 				,ability = ABILITY_Spy
+				,texture = "balista"
 			})
 			
 	table.insert(GwentAddon.CardList, {
@@ -132,6 +146,7 @@ function GwentAddon:CreateCardsList()
 				,strength = 4
 				,cardType = {melee = false, ranged = true, siege = false, hero = false, leader = false}
 				,ability = nil
+				,texture = "balista"
 			})
 			
 	table.insert(GwentAddon.CardList, {
@@ -140,6 +155,7 @@ function GwentAddon:CreateCardsList()
 				,strength = 4
 				,cardType = {melee = true, ranged = false, siege = false, hero = false, leader = false}
 				,ability = ABILITY_Bond
+				,texture = "balista"
 			})
 			
 	table.insert(GwentAddon.CardList, {
@@ -148,6 +164,7 @@ function GwentAddon:CreateCardsList()
 				,strength = 4
 				,cardType = {melee = false, ranged = true, siege = false, hero = false, leader = false}
 				,ability = nil
+				,texture = "balista"
 			})
 	
 	table.insert(GwentAddon.CardList, {
@@ -156,6 +173,7 @@ function GwentAddon:CreateCardsList()
 				,strength = 5
 				,cardType = {melee = true, ranged = false, siege = false, hero = false, leader = false}
 				,ability = nil
+				,texture = "peasant"
 			})
 			
 	table.insert(GwentAddon.CardList, {
@@ -164,6 +182,7 @@ function GwentAddon:CreateCardsList()
 				,strength = 5
 				,cardType = {melee = true, ranged = false, siege = false, hero = false, leader = false}
 				,ability = nil
+				,texture = "peasant"
 			})
 			
 	table.insert(GwentAddon.CardList, {
@@ -172,6 +191,7 @@ function GwentAddon:CreateCardsList()
 				,strength = 5
 				,cardType = {melee = true, ranged = false, siege = false, hero = false, leader = false}
 				,ability = ABILITY_Spy
+				,texture = "balista"
 			})
 			
 	table.insert(GwentAddon.CardList, {
@@ -180,6 +200,7 @@ function GwentAddon:CreateCardsList()
 				,strength = 5
 				,cardType = {melee = false, ranged = true, siege = false, hero = false, leader = false}
 				,ability = ABILITY_Bond
+				,texture = "balista"
 			})
 			
 	table.insert(GwentAddon.CardList, {
@@ -188,6 +209,7 @@ function GwentAddon:CreateCardsList()
 				,strength = 5
 				,cardType = {melee = false, ranged = true, siege = false, hero = false, leader = false}
 				,ability = nil
+				,texture = "balista"
 			})
 			
 	table.insert(GwentAddon.CardList, {
@@ -196,6 +218,7 @@ function GwentAddon:CreateCardsList()
 				,strength = 5
 				,cardType = {melee = false, ranged = false, siege = true, hero = false, leader = false}
 				,ability = ABILITY_Medic
+				,texture = "balista"
 			})
 			
 	table.insert(GwentAddon.CardList, {
@@ -204,6 +227,7 @@ function GwentAddon:CreateCardsList()
 				,strength = 5
 				,cardType = {melee = false, ranged = true, siege = false, hero = false, leader = false}
 				,ability = nil
+				,texture = "balista"
 			})
 			
 	table.insert(GwentAddon.CardList, {
@@ -212,6 +236,7 @@ function GwentAddon:CreateCardsList()
 				,strength = 6
 				,cardType = {melee = false, ranged = false, siege = true, hero = false, leader = false}
 				,ability = nil
+				,texture = "peasant"
 			})
 			
 	table.insert(GwentAddon.CardList, {
@@ -220,6 +245,7 @@ function GwentAddon:CreateCardsList()
 				,strength = 6
 				,cardType = {melee = false, ranged = false, siege = true, hero = false, leader = false}
 				,ability = nil
+				,texture = "peasant"
 			})
 			
 	table.insert(GwentAddon.CardList, {
@@ -228,6 +254,7 @@ function GwentAddon:CreateCardsList()
 				,strength = 6
 				,cardType = {melee = false, ranged = false, siege = true, hero = false, leader = false}
 				,ability = nil
+				,texture = "balista"
 			})
 			
 	table.insert(GwentAddon.CardList, {
@@ -236,6 +263,7 @@ function GwentAddon:CreateCardsList()
 				,strength = 8
 				,cardType = {melee = false, ranged = false, siege = true, hero = false, leader = false}
 				,ability = ABILITY_Bond
+				,texture = "peasant"
 			})
 
 	for k, v in ipairs(GwentAddon.CardList) do
