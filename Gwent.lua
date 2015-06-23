@@ -4,10 +4,16 @@ local AceGUI = LibStub("AceGUI-3.0")
 local SIZE_CARD_HEIGHT = 75
 local SIZE_CARD_WIDTH = 50
 local SIZE_ICON = 64
+local SIZE_BORDER_TOTAL = 100
 
 local TEXTURE_CARD_BG = "Interface\\DialogFrame\\UI-DialogBox-Gold-Background"
 local TEXTURE_CARD_BORDER = "Interface\\DialogFrame\\UI-DialogBox-Border"
 local TEXTURE_ICONS = {["path"]="Interface\\GUILDFRAME\\GUILDEMBLEMSLG_01", ["width"]=1024, ["height"]=1024}
+local TEXTURE_TOTAL_BORDERNORMAL = "Interface\\UNITPOWERBARALT\\MetalPlain_Circular_Frame"
+local TEXTURE_TOTAL_BORDERWINNING = "Interface\\UNITPOWERBARALT\\Mechanical_Circular_Frame"
+local TEXTURE_ARROWDOWN = "Interface\\ICONS\\misc_arrowdown"
+local TEXTURE_ARROWUP = "Interface\\ICONS\\misc_arrowlup"
+
 
 local COORDS_ICON_MELEE = {["x"]=64*7, ["y"]=64*7}
 local COORDS_ICON_RANGED = {["x"]=64*15, ["y"]=64*1}
@@ -57,6 +63,14 @@ local function IsYourTurn(bool)
 	for k, card in ipairs(_PlayerHand) do
 		card:SetMovable(bool)
 		card:EnableMouse(bool)
+	end
+	
+	if _YourTurn then
+		_GwentPlayFrame.playerTurn:SetTexture(TEXTURE_ARROWDOWN)
+		_GwentPlayFrame.enemyTurn:SetTexture()
+	else
+		_GwentPlayFrame.playerTurn:SetTexture()
+		_GwentPlayFrame.enemyTurn:SetTexture(TEXTURE_ARROWUP)
 	end
 end
 
@@ -175,6 +189,19 @@ local function CreatePlayFrame()
 	-- player melee
 	PlayFrame.playerMelee = CreateCardArea("PlayerMelee", PlayFrame, COORDS_ICON_MELEE)
 	PlayFrame.playerMelee:SetPoint("bottom", PlayFrame.playerRanged, "top", 0, 10)
+	
+	-- player total Points
+	PlayFrame.playerTotal = PlayFrame:CreateTexture(addonName.."PlayFrame_PlayerTotal", "ARTWORK")
+	PlayFrame.playerTotal:SetDrawLayer("ARTWORK", -7)
+	PlayFrame.playerTotal:SetTexture(TEXTURE_TOTAL_BORDERNORMAL)
+	PlayFrame.playerTotal:SetWidth(SIZE_BORDER_TOTAL)
+	PlayFrame.playerTotal:SetHeight(SIZE_BORDER_TOTAL)
+	PlayFrame.playerTotal:SetPoint("right", PlayFrame.playerRanged, "left", -75, 0)
+	
+	PlayFrame.playerTotal.points = PlayFrame:CreateFontString(nil, nil, "GameFontNormal")
+	PlayFrame.playerTotal.points:SetPoint("topleft", PlayFrame.playerTotal)
+	PlayFrame.playerTotal.points:SetPoint("bottomright", PlayFrame.playerTotal)
+	PlayFrame.playerTotal.points:SetText(0)
 
 	-- player portrait
 	PlayFrame.playerPortrait = PlayFrame:CreateTexture(addonName.."PlayFrame_PlayerPortrait", "ARTWORK")
@@ -186,7 +213,7 @@ local function CreatePlayFrame()
 	
 	PlayFrame.playerPortraitborder = PlayFrame:CreateTexture(addonName.."PlayFrame_PlayerPortraitBorder", "ARTWORK")
 	PlayFrame.playerPortraitborder:SetDrawLayer("ARTWORK", -7)
-	PlayFrame.playerPortraitborder:SetTexture("Interface\\UNITPOWERBARALT\\MetalPlain_Circular_Frame")
+	PlayFrame.playerPortraitborder:SetTexture(TEXTURE_TOTAL_BORDERNORMAL)
 	PlayFrame.playerPortraitborder:SetWidth(SIZE_CARD_HEIGHT+50)
 	PlayFrame.playerPortraitborder:SetHeight(SIZE_CARD_HEIGHT+50)
 	PlayFrame.playerPortraitborder:SetPoint("center", PlayFrame.playerPortrait)
@@ -197,6 +224,16 @@ local function CreatePlayFrame()
 	PlayFrame.playerNametag:SetPoint("right", PlayFrame.playerHand, "left", -10, 0)
 	PlayFrame.playerNametag:SetJustifyH("left")
 	PlayFrame.playerNametag:SetText(GetUnitName("player", false))
+	
+	-- player turn arrow
+	PlayFrame.playerTurn = PlayFrame:CreateTexture(addonName.."PlayFrame_PlayerTurn", "ARTWORK")
+	PlayFrame.playerTurn:SetDrawLayer("ARTWORK", -7)
+	PlayFrame.playerTurn:SetTexture()
+	PlayFrame.playerTurn:SetWidth(SIZE_ICON)
+	PlayFrame.playerTurn:SetHeight(SIZE_ICON)
+	PlayFrame.playerTurn:SetPoint("right", PlayFrame.playerSiege, "left", -75, 0)
+	
+	
 	
 	
 	-- enemy hand
@@ -220,6 +257,19 @@ local function CreatePlayFrame()
 	PlayFrame.enemyMelee = CreateCardArea("EnemyMelee", PlayFrame, COORDS_ICON_MELEE)
 	PlayFrame.enemyMelee:SetPoint("top", PlayFrame.enemyRanged, "bottom", 0, -10)
 	
+	-- player total Points
+	PlayFrame.enemyTotal = PlayFrame:CreateTexture(addonName.."PlayFrame_EnemyTotal", "ARTWORK")
+	PlayFrame.enemyTotal:SetDrawLayer("ARTWORK", -7)
+	PlayFrame.enemyTotal:SetTexture(TEXTURE_TOTAL_BORDERNORMAL)
+	PlayFrame.enemyTotal:SetWidth(SIZE_BORDER_TOTAL)
+	PlayFrame.enemyTotal:SetHeight(SIZE_BORDER_TOTAL)
+	PlayFrame.enemyTotal:SetPoint("right", PlayFrame.enemyRanged, "left", -75, 0)
+	
+	PlayFrame.enemyTotal.points = PlayFrame:CreateFontString(nil, nil, "GameFontNormal")
+	PlayFrame.enemyTotal.points:SetPoint("topleft", PlayFrame.enemyTotal)
+	PlayFrame.enemyTotal.points:SetPoint("bottomright", PlayFrame.enemyTotal)
+	PlayFrame.enemyTotal.points:SetText(0)
+	
 	-- player portrait
 	PlayFrame.enemyPortrait = PlayFrame:CreateTexture(addonName.."PlayFrame_EnemyPortrait", "art")
 	PlayFrame.enemyPortrait:SetTexture("Interface\\CHARACTERFRAME\\TemporaryPortrait-Vehicle-Organic")
@@ -230,7 +280,7 @@ local function CreatePlayFrame()
 	
 	PlayFrame.enemyPortraitborder = PlayFrame:CreateTexture(addonName.."PlayFrame_EnemyPortraitBorder", "ARTWORK")
 	PlayFrame.enemyPortraitborder:SetDrawLayer("ARTWORK", -7)
-	PlayFrame.enemyPortraitborder:SetTexture("Interface\\UNITPOWERBARALT\\MetalPlain_Circular_Frame")
+	PlayFrame.enemyPortraitborder:SetTexture(TEXTURE_TOTAL_BORDERNORMAL)
 	PlayFrame.enemyPortraitborder:SetWidth(SIZE_CARD_HEIGHT+50)
 	PlayFrame.enemyPortraitborder:SetHeight(SIZE_CARD_HEIGHT+50)
 	PlayFrame.enemyPortraitborder:SetPoint("center", PlayFrame.enemyPortrait)
@@ -241,6 +291,14 @@ local function CreatePlayFrame()
 	PlayFrame.enemyNametag:SetPoint("right", PlayFrame.enemyHand, "left", -10, 0)
 	PlayFrame.enemyNametag:SetJustifyH("left")
 	--PlayFrame.enemyNametag:SetText(GetUnitName("player", false))
+	
+	-- player turn arrow
+	PlayFrame.enemyTurn = PlayFrame:CreateTexture(addonName.."PlayFrame_EnemyTurn", "ARTWORK")
+	PlayFrame.enemyTurn:SetDrawLayer("ARTWORK", -7)
+	PlayFrame.enemyTurn:SetTexture()
+	PlayFrame.enemyTurn:SetWidth(SIZE_ICON)
+	PlayFrame.enemyTurn:SetHeight(SIZE_ICON)
+	PlayFrame.enemyTurn:SetPoint("right", PlayFrame.enemySiege, "left", -75, 0)
 	
 	return PlayFrame
 end
@@ -259,18 +317,42 @@ local function PlayerPlaceCardsOnFrame(list, frame)
 	
 	if frame.points ~= nil then
 		frame.points:SetText(totalPoints)
+		return totalPoints
 	end
 end
 
+local function UpdateTotalBorders(playerPoints, enemyPoints)
+	_GwentPlayFrame.playerTotal:SetTexture(TEXTURE_TOTAL_BORDERNORMAL)
+	_GwentPlayFrame.enemyTotal:SetTexture(TEXTURE_TOTAL_BORDERNORMAL)
+	
+	if playerPoints > enemyPoints  then
+		_GwentPlayFrame.playerTotal:SetTexture(TEXTURE_TOTAL_BORDERWINNING)
+	elseif enemyPoints > playerPoints then
+		_GwentPlayFrame.enemyTotal:SetTexture(TEXTURE_TOTAL_BORDERWINNING)
+	end
+	
+end
+
+local function UpdateTotalPoints(playerPoints, enemyPoints)
+	_GwentPlayFrame.playerTotal.points:SetText(playerPoints)
+	_GwentPlayFrame.enemyTotal.points:SetText(enemyPoints)
+end
+
 local function PlaceAllCards()
+	local playerPoints = 0
 	PlayerPlaceCardsOnFrame(_PlayerHand, _GwentPlayFrame.playerHand)
-	PlayerPlaceCardsOnFrame(_PlayerSiege, _GwentPlayFrame.playerSiege)
-	PlayerPlaceCardsOnFrame(_PlayerRanged, _GwentPlayFrame.playerRanged)
-	PlayerPlaceCardsOnFrame(_PlayerMelee, _GwentPlayFrame.playerMelee)
+	playerPoints = playerPoints + PlayerPlaceCardsOnFrame(_PlayerSiege, _GwentPlayFrame.playerSiege)
+	playerPoints = playerPoints + PlayerPlaceCardsOnFrame(_PlayerRanged, _GwentPlayFrame.playerRanged)
+	playerPoints = playerPoints + PlayerPlaceCardsOnFrame(_PlayerMelee, _GwentPlayFrame.playerMelee)
+	
+	local enemyPoints = 0
 	-- Place enemy hand
-	PlayerPlaceCardsOnFrame(_EnemySiege, _GwentPlayFrame.enemySiege)
-	PlayerPlaceCardsOnFrame(_EnemyRanged, _GwentPlayFrame.enemyRanged)
-	PlayerPlaceCardsOnFrame(_EnemyMelee, _GwentPlayFrame.enemyMelee)
+	enemyPoints = enemyPoints + PlayerPlaceCardsOnFrame(_EnemySiege, _GwentPlayFrame.enemySiege)
+	enemyPoints = enemyPoints + PlayerPlaceCardsOnFrame(_EnemyRanged, _GwentPlayFrame.enemyRanged)
+	enemyPoints = enemyPoints + PlayerPlaceCardsOnFrame(_EnemyMelee, _GwentPlayFrame.enemyMelee)
+	
+	UpdateTotalPoints(playerPoints, enemyPoints)
+	UpdateTotalBorders(playerPoints, enemyPoints)
 end
 
 local function GetCardOfId(id)
