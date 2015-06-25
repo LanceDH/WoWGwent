@@ -29,6 +29,8 @@ local MESSAGE_PLACEINAREA = "%s#%d"
 local MESSAGE_CHALLENGE = "It's time to du-du-du-duel"
 local MESSAGE_LOGOUT = "logged out"
 local MESSAGE_PASS = "passing"
+local MESSAGE_WON = "win: "
+local MESSAGE_TIE = "tie"
 
 local TEXT_SIEGE = "siege"
 local TEXT_RANGED = "ranged"
@@ -51,6 +53,7 @@ local _CardNr = 1
 
 local _YourTurn = false
 local _EnemyPassed = false
+local _PlayerPassed = false
 
 local function isInteger(x)
 	return math.floor(x)==x
@@ -84,13 +87,16 @@ local function IsYourTurn(bool)
 end
 
 local function PassTurn()
-	SendAddonMessage(addonName, MESSAGE_PASS , "whisper" , _ChallengerName)
-	IsYourTurn(false)
+	if _YourTurn then
+		_PlayerPassed = true
+		_GwentPlayFrame.passButton:Disable()
+		SendAddonMessage(addonName, MESSAGE_PASS , "whisper" , _ChallengerName)
+		IsYourTurn(false)
+	end
 end
 
 local function CreateCardArea(name, parent, coords)
 	local frame = CreateFrame("frame", addonName.."PlayFrame_" .. name, parent)
-	--frame:SetPoint("bottom", PlayFrame.playerRanged, "top", 0, 10)
 	frame:SetHeight(SIZE_CARD_HEIGHT)
 	frame:SetWidth(SIZE_CARD_WIDTH * 10)
 	frame:SetBackdrop({bgFile = "Interface\\DialogFrame\\UI-DialogBox-Gold-Background",
@@ -358,7 +364,9 @@ end
 
 local function UpdateTotalPoints(playerPoints, enemyPoints)
 	_GwentPlayFrame.playerTotal.points:SetText(playerPoints)
+	_GwentPlayFrame.playerTotal.amount = playerPoints
 	_GwentPlayFrame.enemyTotal.points:SetText(enemyPoints)
+	_GwentPlayFrame.enemyTotal.amount = enemyPoints
 end
 
 local function PlaceAllCards()
@@ -460,12 +468,14 @@ end
 local function StopDraggingCard(card)
 	local success, area = DropCardArea(_DraggedCard)
 	if success and _DraggedCard ~= nil then
-		--local message = string.format(MESSAGE_PLACEINAREA, area, "5")
 		_DraggedCard = nil
-		--GwentAddon:DEBUGMessageSent(string.format(MESSAGE_PLACEINAREA, area, _DraggedCard.data.Id), _ChallengerName)
-		IsYourTurn(false)
-		--SendAddonMessage(addonName, area .. "#" .. card.data.Id, "whisper" , _ChallengerName)
+
 		SendAddonMessage(addonName, string.format(MESSAGE_PLACEINAREA, area, card.data.Id), "whisper" , _ChallengerName)
+		
+		-- don't end your turn if enemy passed
+		if not _EnemyPassed then
+			IsYourTurn(false)
+		end
 		
 	end
 
@@ -672,12 +682,33 @@ local function ResetGame()
 	_DraggedCard = nil
 	_DragginOverFrame = nil
 	_YourTurn = false
+	_EnemyPassed = false
 
 	_GwentPlayFrame.playerTurn:Hide()
 	
 	_GwentPlayFrame.enemyNametag:SetText("")
 	_GwentPlayFrame.enemyTurn:Hide()
 	
+	_GwentPlayFrame.playerTotal.amount = 0
+	_GwentPlayFrame.enemyTotal.amount = 0
+	
+end
+
+local function FinishBattle() 
+	local playerWon = false
+	
+	if _GwentPlayFrame.playerTotal.amount == _GwentPlayFrame.enemyTotal.amount then 
+		SendAddonMessage(addonName, MESSAGE_TIE, "whisper" , _ChallengerName)
+		return
+	end
+	
+	if _GwentPlayFrame.playerTotal.amount > _GwentPlayFrame.enemyTotal.amount then
+		playerWon = true
+	end
+
+	SendAddonMessage(addonName, MESSAGE_WON.. (playerWon and "false" or "true"), "whisper" , _ChallengerName)
+	
+	ResetGame()
 end
 
 local L_FPS_LoadFrame = CreateFrame("FRAME", "Gwent_EventFrame"); 
@@ -691,7 +722,7 @@ function Gwent_EventFrame:CHAT_MSG_ADDON(prefix, message, channel, sender)
 		return
 	end
 	
-	GwentAddon:DEBUGMessageSent(message, sender)
+	--GwentAddon:DEBUGMessageSent(message, sender)
 	
 	if message == TEXT_ADDONMSG_RECIEVED then
 		return
@@ -706,11 +737,23 @@ function Gwent_EventFrame:CHAT_MSG_ADDON(prefix, message, channel, sender)
 		ResetGame()
 	end
 	
+	if message == MESSAGE_PASS then
+		IsYourTurn(true)
+		_EnemyPassed = true
+		
+		if _PlayerPassed then
+			FinishBattle()
+		end
+	end
 	
 	-- Enemy played card
 	if string.find(message, "#") then
 		AddEnemyCard(message)
 		IsYourTurn(true)
+	end
+	
+	if string.find(message, MESSAGE_WON) then
+		ResetGame()
 	end
 	
 end
@@ -743,13 +786,7 @@ local function slashcmd(msg, editbox)
 		
 	elseif msg == 'test' then
 		
-		name = GetUnitName("target", true)
-		
-		if name == nil then
-			return
-		end
-		
-		SendAddonMessage(addonName, "What if I type a really long text, will it wrap or not I don't know "..name , "whisper" , name)
+		print(_GwentPlayFrame.enemyPortrait:GetTexture())
 	
 	elseif msg == 'duel' then
 		
