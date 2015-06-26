@@ -99,7 +99,7 @@ function GwentAddon:CreateAbilities()
 	
 end
 
-local function GetAbilitydataByName(name)
+function GwentAddon:GetAbilitydataByName(name)
 	
 	for k, v in pairs(GwentAddon.Abilities) do
 		--GwentAddon:DEBUGMessageSent(name .. " - ".. v.name)
@@ -112,7 +112,7 @@ end
 
 function GwentAddon:SetAblityIcon(card)
 
-	local ability = GetAbilitydataByName(card.data.ability)
+	local ability = GwentAddon:GetAbilitydataByName(card.data.ability)
 		
 	if ability == nil then return end
 	
