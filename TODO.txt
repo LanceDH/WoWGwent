@@ -1,0 +1,18 @@
+Prevent from duelling self
+Prevent challenging if already in a game
+Random coin flip start
+Deck creation
+- Save deck
+- Add card
+- Remove card
+Add more cards
+
+
+Abilities
+- Spy 
+- Tight Bond 
+- Morale Boost 
+- Medic 
+- Muster 
+- Agile 
+- Scorch

@@ -1,23 +1,29 @@
 ﻿local addonName, GwentAddon = ...
 local AceGUI = LibStub("AceGUI-3.0")
 
--- local SIZE_CARD_HEIGHT = 72
--- local SIZE_CARD_WIDTH = 40
-local SIZE_CARD_HEIGHT = 79
-local SIZE_CARD_WIDTH = 49
-local SIZE_ICON = 64
-local SIZE_BORDER_TOTAL = 100
+-- local GwentAddon.NUM_CARD_HEIGHT = 72
+-- local GwentAddon.NUM_CARD_WIDTH = 40
+GwentAddon.NUM_CARD_HEIGHT = 79
+GwentAddon.NUM_CARD_WIDTH = 49
+local NUM_SIZE_ICON = 64
+local NUM_BORDERSIZE_TOTAL = 100
+local NUM_ICON_OPACITY = 0.1
+local NUM_VERTEXCOLOR_NORMAL = 1
+local NUM_VERTEXCOLOR_NORMAL = 0
 
 local TEXTURE_CARD_BG = "Interface\\DialogFrame\\UI-DialogBox-Gold-Background"
 local TEXTURE_CARD_BORDER = "Interface\\DialogFrame\\UI-DialogBox-Border"
 --local TEXTURE_CARD_ICONBG = "Interface\\COMMON\\Indicator-Gray"
-local TEXTURE_CARD_ICONBG = "Interface\\COMMON\\Indicator-Yellow" 
+local TEXTURE_CARD_ICONBG2 = "Interface\\COMMON\\Indicator-Yellow" 
+local TEXTURE_CARD_ICONBG = "Interface\\FriendsFrame\\UI-Toast-ToastIcons" 
 local TEXTURE_ICONS = {["path"]="Interface\\GUILDFRAME\\GUILDEMBLEMSLG_01", ["width"]=1024, ["height"]=1024}
 local TEXTURE_TOTAL_BORDERNORMAL = "Interface\\UNITPOWERBARALT\\MetalPlain_Circular_Frame"
 local TEXTURE_TOTAL_BORDERWINNING = "Interface\\UNITPOWERBARALT\\Mechanical_Circular_Frame"
 local TEXTURE_ARROWDOWN = "Interface\\ICONS\\misc_arrowdown"
 local TEXTURE_ARROWUP = "Interface\\ICONS\\misc_arrowlup"
 local TEXTURE_CUSTOM_PATH = "Interface\\AddOns\\Gwent\\CardTextures\\"
+local TEXTURE_PORTAITDEFAULT = "Interface\\CHARACTERFRAME\\TemporaryPortrait-Vehicle-Organic"
+local TEXTURE_COMMANDERICON = "Interface\\PVPFrame\\Icons\\PVP-Banner-Emblem-18"
 
 
 local COORDS_ICON_MELEE = {["x"]=64*7, ["y"]=64*7}
@@ -97,23 +103,44 @@ end
 
 local function CreateCardArea(name, parent, coords)
 	local frame = CreateFrame("frame", addonName.."PlayFrame_" .. name, parent)
-	frame:SetHeight(SIZE_CARD_HEIGHT)
-	frame:SetWidth(SIZE_CARD_WIDTH * 10)
+	frame:SetHeight(GwentAddon.NUM_CARD_HEIGHT)
+	frame:SetWidth(GwentAddon.NUM_CARD_WIDTH * 10)
 	frame:SetBackdrop({bgFile = "Interface\\DialogFrame\\UI-DialogBox-Gold-Background",
       edgeFile = nil,
 	  tileSize = 0, edgeSize = 16,
       insets = { left = 0, right = 0, top = 0, bottom = 0 }
 	  })
+	 
+	frame.commander = CreateFrame("frame", addonName.."PlayFrame_" .. name .."_Commander", parent)
+	frame.commander:SetHeight(GwentAddon.NUM_CARD_HEIGHT)
+	frame.commander:SetWidth(GwentAddon.NUM_CARD_HEIGHT)
+	frame.commander:SetPoint("right", frame, "left", -5, 0)
+	frame.commander:SetBackdrop({bgFile = "Interface\\DialogFrame\\UI-DialogBox-Gold-Background",
+      edgeFile = nil,
+	  tileSize = 0, edgeSize = 16,
+      insets = { left = 0, right = 0, top = 0, bottom = 0 }
+	  })
+	 
+	frame.commander.icon = frame.commander:CreateTexture(addonName.."PlayFrame_"..name.."_ICONCOMMANDER", "art")
+	frame.commander.icon:SetTexture(TEXTURE_COMMANDERICON)
+	--frame.commander.icon:SetTexCoord(coords.x/TEXTURE_ICONS.width, (coords.x+NUM_SIZE_ICON)/TEXTURE_ICONS.width, coords.y/TEXTURE_ICONS.height, (coords.y+NUM_SIZE_ICON)/TEXTURE_ICONS.height)
+	frame.commander.icon:SetVertexColor(1, 1, 1, NUM_ICON_OPACITY)
+	frame.commander.icon:SetWidth(GwentAddon.NUM_CARD_HEIGHT)
+	frame.commander.icon:SetHeight(GwentAddon.NUM_CARD_HEIGHT)
+	frame.commander.icon:SetPoint("center", frame.commander)
+	  
 	frame.points = frame:CreateFontString(nil, nil, "GameFontNormal")
-	frame.points:SetPoint("right", frame, "left", -20, 0)
+	frame.points:SetPoint("right", frame.commander, "left", -20, 0)
 	frame.points:SetText(0)
+	
+	
 	
 	frame.icon = frame:CreateTexture(addonName.."PlayFrame_"..name.."_ICON", "art")
 	frame.icon:SetTexture(TEXTURE_ICONS.path)
-	frame.icon:SetTexCoord(coords.x/TEXTURE_ICONS.width, (coords.x+SIZE_ICON)/TEXTURE_ICONS.width, coords.y/TEXTURE_ICONS.height, (coords.y+SIZE_ICON)/TEXTURE_ICONS.height)
-	frame.icon:SetVertexColor(1, 1, 1, 0.3)
-	frame.icon:SetWidth(SIZE_CARD_HEIGHT)
-	frame.icon:SetHeight(SIZE_CARD_HEIGHT)
+	frame.icon:SetTexCoord(coords.x/TEXTURE_ICONS.width, (coords.x+NUM_SIZE_ICON)/TEXTURE_ICONS.width, coords.y/TEXTURE_ICONS.height, (coords.y+NUM_SIZE_ICON)/TEXTURE_ICONS.height)
+	frame.icon:SetVertexColor(1, 1, 1, NUM_ICON_OPACITY)
+	frame.icon:SetWidth(GwentAddon.NUM_CARD_HEIGHT)
+	frame.icon:SetHeight(GwentAddon.NUM_CARD_HEIGHT)
 	frame.icon:SetPoint("center", frame)
 	
 	return frame
@@ -192,8 +219,8 @@ local function CreatePlayFrame()
 	-- player hand
 	PlayFrame.playerHand = CreateFrame("frame", addonName.."PlayFrame_PlayerHand", PlayFrame)
 	PlayFrame.playerHand:SetPoint("bottom", PlayFrame, "bottom", 0, 23)
-	PlayFrame.playerHand:SetHeight(SIZE_CARD_HEIGHT)
-	PlayFrame.playerHand:SetWidth(SIZE_CARD_WIDTH * 10)
+	PlayFrame.playerHand:SetHeight(GwentAddon.NUM_CARD_HEIGHT)
+	PlayFrame.playerHand:SetWidth(GwentAddon.NUM_CARD_WIDTH * 10)
 	PlayFrame.playerHand:SetBackdrop({bgFile = "Interface\\DialogFrame\\UI-DialogBox-Gold-Background",
       edgeFile = nil,
 	  tileSize = 0, edgeSize = 16,
@@ -221,8 +248,8 @@ local function CreatePlayFrame()
 	PlayFrame.playerTotal = PlayFrame:CreateTexture(addonName.."PlayFrame_PlayerTotal", "ARTWORK")
 	PlayFrame.playerTotal:SetDrawLayer("ARTWORK", -7)
 	PlayFrame.playerTotal:SetTexture(TEXTURE_TOTAL_BORDERNORMAL)
-	PlayFrame.playerTotal:SetWidth(SIZE_BORDER_TOTAL)
-	PlayFrame.playerTotal:SetHeight(SIZE_BORDER_TOTAL)
+	PlayFrame.playerTotal:SetWidth(NUM_BORDERSIZE_TOTAL)
+	PlayFrame.playerTotal:SetHeight(NUM_BORDERSIZE_TOTAL)
 	PlayFrame.playerTotal:SetPoint("right", PlayFrame.playerRanged, "left", -75, 0)
 	
 	PlayFrame.playerTotal.points = PlayFrame:CreateFontString(nil, nil, "QuestTitleFontBlackShadow")
@@ -233,16 +260,16 @@ local function CreatePlayFrame()
 	-- player portrait
 	PlayFrame.playerPortrait = PlayFrame:CreateTexture(addonName.."PlayFrame_PlayerPortrait", "ARTWORK")
 	PlayFrame.playerPortrait:SetDrawLayer("ARTWORK", -8)
-	PlayFrame.playerPortrait:SetWidth(SIZE_CARD_HEIGHT-10)
-	PlayFrame.playerPortrait:SetHeight(SIZE_CARD_HEIGHT-10)
+	PlayFrame.playerPortrait:SetWidth(GwentAddon.NUM_CARD_HEIGHT-10)
+	PlayFrame.playerPortrait:SetHeight(GwentAddon.NUM_CARD_HEIGHT-10)
 	PlayFrame.playerPortrait:SetPoint("right", PlayFrame.playerHand, "left", -150, 0)
 	SetPortraitTexture(PlayFrame.playerPortrait, "player")
 	
 	PlayFrame.playerPortraitborder = PlayFrame:CreateTexture(addonName.."PlayFrame_PlayerPortraitBorder", "ARTWORK")
 	PlayFrame.playerPortraitborder:SetDrawLayer("ARTWORK", -7)
 	PlayFrame.playerPortraitborder:SetTexture(TEXTURE_TOTAL_BORDERNORMAL)
-	PlayFrame.playerPortraitborder:SetWidth(SIZE_CARD_HEIGHT+50)
-	PlayFrame.playerPortraitborder:SetHeight(SIZE_CARD_HEIGHT+50)
+	PlayFrame.playerPortraitborder:SetWidth(GwentAddon.NUM_CARD_HEIGHT+50)
+	PlayFrame.playerPortraitborder:SetHeight(GwentAddon.NUM_CARD_HEIGHT+50)
 	PlayFrame.playerPortraitborder:SetPoint("center", PlayFrame.playerPortrait)
 	
 	-- player nametag
@@ -256,9 +283,9 @@ local function CreatePlayFrame()
 	PlayFrame.playerTurn = PlayFrame:CreateTexture(addonName.."PlayFrame_PlayerTurn", "ARTWORK")
 	PlayFrame.playerTurn:SetDrawLayer("ARTWORK", -7)
 	PlayFrame.playerTurn:SetTexture(TEXTURE_ARROWDOWN)
-	PlayFrame.playerTurn:SetWidth(SIZE_ICON)
-	PlayFrame.playerTurn:SetHeight(SIZE_ICON)
-	PlayFrame.playerTurn:SetPoint("right", PlayFrame.playerSiege, "left", -75, 0)
+	PlayFrame.playerTurn:SetWidth(NUM_SIZE_ICON)
+	PlayFrame.playerTurn:SetHeight(NUM_SIZE_ICON)
+	PlayFrame.playerTurn:SetPoint("right", PlayFrame.playerSiege.commander, "left", -75, 0)
 	PlayFrame.playerTurn:Hide()
 	
 	
@@ -267,8 +294,8 @@ local function CreatePlayFrame()
 	-- enemy hand
 	PlayFrame.enemyHand = CreateFrame("frame", addonName.."PlayFrame_EnemyHand", PlayFrame)
 	PlayFrame.enemyHand:SetPoint("top", PlayFrame, "top", 0, -30)
-	PlayFrame.enemyHand:SetHeight(SIZE_CARD_HEIGHT)
-	PlayFrame.enemyHand:SetWidth(SIZE_CARD_WIDTH * 10)
+	PlayFrame.enemyHand:SetHeight(GwentAddon.NUM_CARD_HEIGHT)
+	PlayFrame.enemyHand:SetWidth(GwentAddon.NUM_CARD_WIDTH * 10)
 	PlayFrame.enemyHand:SetBackdrop({bgFile = "Interface\\DialogFrame\\UI-DialogBox-Gold-Background",
       edgeFile = nil,
 	  tileSize = 0, edgeSize = 16,
@@ -289,8 +316,8 @@ local function CreatePlayFrame()
 	PlayFrame.enemyTotal = PlayFrame:CreateTexture(addonName.."PlayFrame_EnemyTotal", "ARTWORK")
 	PlayFrame.enemyTotal:SetDrawLayer("ARTWORK", -7)
 	PlayFrame.enemyTotal:SetTexture(TEXTURE_TOTAL_BORDERNORMAL)
-	PlayFrame.enemyTotal:SetWidth(SIZE_BORDER_TOTAL)
-	PlayFrame.enemyTotal:SetHeight(SIZE_BORDER_TOTAL)
+	PlayFrame.enemyTotal:SetWidth(NUM_BORDERSIZE_TOTAL)
+	PlayFrame.enemyTotal:SetHeight(NUM_BORDERSIZE_TOTAL)
 	PlayFrame.enemyTotal:SetPoint("right", PlayFrame.enemyRanged, "left", -75, 0)
 	
 	PlayFrame.enemyTotal.points = PlayFrame:CreateFontString(nil, nil, "QuestTitleFontBlackShadow")
@@ -300,17 +327,17 @@ local function CreatePlayFrame()
 	
 	-- player portrait
 	PlayFrame.enemyPortrait = PlayFrame:CreateTexture(addonName.."PlayFrame_EnemyPortrait", "art")
-	PlayFrame.enemyPortrait:SetTexture("Interface\\CHARACTERFRAME\\TemporaryPortrait-Vehicle-Organic")
-	PlayFrame.enemyPortrait:SetWidth(SIZE_CARD_HEIGHT-10)
-	PlayFrame.enemyPortrait:SetHeight(SIZE_CARD_HEIGHT-10)
+	PlayFrame.enemyPortrait:SetTexture(TEXTURE_PORTAITDEFAULT)
+	PlayFrame.enemyPortrait:SetWidth(GwentAddon.NUM_CARD_HEIGHT-10)
+	PlayFrame.enemyPortrait:SetHeight(GwentAddon.NUM_CARD_HEIGHT-10)
 	PlayFrame.enemyPortrait:SetPoint("right", PlayFrame.enemyHand, "left", -150, 0)
 	--SetPortraitTexture(PlayFrame.playerPortrait, "player")
 	
 	PlayFrame.enemyPortraitborder = PlayFrame:CreateTexture(addonName.."PlayFrame_EnemyPortraitBorder", "ARTWORK")
 	PlayFrame.enemyPortraitborder:SetDrawLayer("ARTWORK", -7)
 	PlayFrame.enemyPortraitborder:SetTexture(TEXTURE_TOTAL_BORDERNORMAL)
-	PlayFrame.enemyPortraitborder:SetWidth(SIZE_CARD_HEIGHT+50)
-	PlayFrame.enemyPortraitborder:SetHeight(SIZE_CARD_HEIGHT+50)
+	PlayFrame.enemyPortraitborder:SetWidth(GwentAddon.NUM_CARD_HEIGHT+50)
+	PlayFrame.enemyPortraitborder:SetHeight(GwentAddon.NUM_CARD_HEIGHT+50)
 	PlayFrame.enemyPortraitborder:SetPoint("center", PlayFrame.enemyPortrait)
 	
 	-- enemy nametag
@@ -324,9 +351,9 @@ local function CreatePlayFrame()
 	PlayFrame.enemyTurn = PlayFrame:CreateTexture(addonName.."PlayFrame_EnemyTurn", "ARTWORK")
 	PlayFrame.enemyTurn:SetDrawLayer("ARTWORK", -7)
 	PlayFrame.enemyTurn:SetTexture(TEXTURE_ARROWUP)
-	PlayFrame.enemyTurn:SetWidth(SIZE_ICON)
-	PlayFrame.enemyTurn:SetHeight(SIZE_ICON)
-	PlayFrame.enemyTurn:SetPoint("right", PlayFrame.enemySiege, "left", -75, 0)
+	PlayFrame.enemyTurn:SetWidth(NUM_SIZE_ICON)
+	PlayFrame.enemyTurn:SetHeight(NUM_SIZE_ICON)
+	PlayFrame.enemyTurn:SetPoint("right", PlayFrame.enemySiege.commander, "left", -75, 0)
 	PlayFrame.enemyTurn:Hide()
 	
 	return PlayFrame
@@ -337,9 +364,9 @@ local function PlayerPlaceCardsOnFrame(list, frame)
 
 	for k, card in ipairs(list) do
 		card:ClearAllPoints()
-		card:SetPoint("topleft", frame , "topleft", (k-1)*SIZE_CARD_WIDTH, 0)
-		card:SetWidth(SIZE_CARD_WIDTH)
-		card:SetHeight(SIZE_CARD_HEIGHT)
+		card:SetPoint("topleft", frame , "topleft", (k-1)*GwentAddon.NUM_CARD_WIDTH, 0)
+		card:SetWidth(GwentAddon.NUM_CARD_WIDTH)
+		card:SetHeight(GwentAddon.NUM_CARD_HEIGHT)
 		
 		totalPoints = totalPoints + card.data.strength
 	end
@@ -487,64 +514,76 @@ local function StopDraggingCard(card)
 
 end
 
-local function CeateCardIcon(name, parent, coords)
-	icon = parent:CreateTexture(name, "art")
+local function CeateCardIcon(name, card, coords)
+	local vc = 0
+	if card.data.cardType.hero then
+		vc = 1
+	end
+
+	icon = card:CreateTexture(name, "art")
 	icon:SetDrawLayer("ARTWORK", 2)
 	icon:SetTexture(TEXTURE_ICONS.path)
-	icon:SetTexCoord(coords.x/TEXTURE_ICONS.width, (coords.x+SIZE_ICON)/TEXTURE_ICONS.width, coords.y/TEXTURE_ICONS.height, (coords.y+SIZE_ICON)/TEXTURE_ICONS.height)
-	--icon:SetVertexColor(1, 1, 1, 0.3)
-	icon:SetWidth(SIZE_CARD_WIDTH/2)
-	icon:SetHeight(SIZE_CARD_WIDTH/2)
+	icon:SetTexCoord(coords.x/TEXTURE_ICONS.width, (coords.x+NUM_SIZE_ICON)/TEXTURE_ICONS.width, coords.y/TEXTURE_ICONS.height, (coords.y+NUM_SIZE_ICON)/TEXTURE_ICONS.height)
+	icon:SetVertexColor(vc, vc, vc)
+	icon:SetWidth(GwentAddon.NUM_CARD_WIDTH*0.5)
+	icon:SetHeight(GwentAddon.NUM_CARD_WIDTH*0.5)
 	
 	return icon
 end
 
 local function CreateCardTypeIcons(card)
 	local count = 0;
+	local vc = 1
+	if card.data.cardType.hero then
+		vc = 0
+	end
 
 	if card.data.cardType.melee then
 		card.iconMeleeBG = card:CreateTexture(addonName.."_Card_".._CardNr.."_IconMeleeBG", "ARTWORK")
 		card.iconMeleeBG:SetDrawLayer("ARTWORK", 1)
 		card.iconMeleeBG:SetTexture(TEXTURE_CARD_ICONBG)
-		card.iconMeleeBG:SetVertexColor(0, 0, 0, .75)
-		card.iconMeleeBG:SetTexCoord(4/32, 28/32, 4/32, 28/32)
-		card.iconMeleeBG:SetPoint("bottomleft", card, "bottomleft", (SIZE_CARD_WIDTH/2)*count, 0)
-		card.iconMeleeBG:SetHeight(SIZE_CARD_WIDTH/2)
-		card.iconMeleeBG:SetWidth(SIZE_CARD_WIDTH/2)
+		card.iconMeleeBG:SetVertexColor(vc, vc, vc, .75)
+		--card.iconMeleeBG:SetTexCoord(4/32, 28/32, 4/32, 28/32)
+		card.iconMeleeBG:SetTexCoord(0.3, 0.45,0.1, 0.4)
+		card.iconMeleeBG:SetPoint("bottomleft", card, "bottomleft", (GwentAddon.NUM_CARD_WIDTH/2)*count, 0)
+		card.iconMeleeBG:SetHeight(GwentAddon.NUM_CARD_WIDTH/2)
+		card.iconMeleeBG:SetWidth(GwentAddon.NUM_CARD_WIDTH/2)
 		
 		card.iconMelee = CeateCardIcon(card:GetName() .. "_IconMelee", card, COORDS_ICON_MELEE)
 		card.iconMelee:SetPoint("center", card.iconMeleeBG)
-		--card.iconMelee:SetPoint("bottomleft", card, "bottomleft", (SIZE_CARD_WIDTH/2)*count, 0)
+		--card.iconMelee:SetPoint("bottomleft", card, "bottomleft", (GwentAddon.NUM_CARD_WIDTH/2)*count, 0)
 		count = count + 1
 	end
 	if card.data.cardType.ranged then
 		card.iconRangedBG = card:CreateTexture(addonName.."_Card_".._CardNr.."_IconRangedBG", "ARTWORK")
 		card.iconRangedBG:SetDrawLayer("ARTWORK", 1)
 		card.iconRangedBG:SetTexture(TEXTURE_CARD_ICONBG)
-		card.iconRangedBG:SetVertexColor(0, 0, 0, .75)
-		card.iconRangedBG:SetTexCoord(4/32, 28/32, 4/32, 28/32)
-		card.iconRangedBG:SetPoint("bottomleft", card, "bottomleft", (SIZE_CARD_WIDTH/2)*count, 0)
-		card.iconRangedBG:SetHeight(SIZE_CARD_WIDTH/2)
-		card.iconRangedBG:SetWidth(SIZE_CARD_WIDTH/2)
+		card.iconRangedBG:SetVertexColor(vc, vc, vc, .75)
+		--card.iconRangedBG:SetTexCoord(4/32, 28/32, 4/32, 28/32)
+		card.iconRangedBG:SetTexCoord(0.3, 0.45,0.1, 0.4)
+		card.iconRangedBG:SetPoint("bottomleft", card, "bottomleft", (GwentAddon.NUM_CARD_WIDTH/2)*count, 0)
+		card.iconRangedBG:SetHeight(GwentAddon.NUM_CARD_WIDTH/2)
+		card.iconRangedBG:SetWidth(GwentAddon.NUM_CARD_WIDTH/2)
 	
 		card.iconRanged = CeateCardIcon(card:GetName() .. "_IconRanged", card, COORDS_ICON_RANGED)
 		card.iconRanged:SetPoint("center", card.iconRangedBG)
-		--card.iconRanged:SetPoint("bottomleft", card, "bottomleft", (SIZE_CARD_WIDTH/2)*count, 0)
+		--card.iconRanged:SetPoint("bottomleft", card, "bottomleft", (GwentAddon.NUM_CARD_WIDTH/2)*count, 0)
 		count = count + 1
 	end
 	if card.data.cardType.siege then
 		card.iconSiegeBG = card:CreateTexture(addonName.."_Card_".._CardNr.."_IconSiegeBG", "ARTWORK")
 		card.iconSiegeBG:SetDrawLayer("ARTWORK", 1)
 		card.iconSiegeBG:SetTexture(TEXTURE_CARD_ICONBG)
-		card.iconSiegeBG:SetVertexColor(0, 0, 0, .75)
-		card.iconSiegeBG:SetTexCoord(4/32, 28/32, 4/32, 28/32)
-		card.iconSiegeBG:SetPoint("bottomleft", card, "bottomleft", (SIZE_CARD_WIDTH/2)*count, 0)
-		card.iconSiegeBG:SetHeight(SIZE_CARD_WIDTH/2)
-		card.iconSiegeBG:SetWidth(SIZE_CARD_WIDTH/2)
+		card.iconSiegeBG:SetVertexColor(vc, vc, vc, .75)
+		--card.iconSiegeBG:SetTexCoord(4/32, 28/32, 4/32, 28/32)
+		card.iconSiegeBG:SetTexCoord(0.3, 0.45,0.1, 0.4)
+		card.iconSiegeBG:SetPoint("bottomleft", card, "bottomleft", (GwentAddon.NUM_CARD_WIDTH/2)*count, 0)
+		card.iconSiegeBG:SetHeight(GwentAddon.NUM_CARD_WIDTH/2)
+		card.iconSiegeBG:SetWidth(GwentAddon.NUM_CARD_WIDTH/2)
 	
 		card.iconSiege = CeateCardIcon(card:GetName() .. "_IconSiege", card, COORDS_ICON_SIEGE)
 		card.iconSiege:SetPoint("center", card.iconSiegeBG)
-		--card.iconSiege:SetPoint("bottomleft", card, "bottomleft", (SIZE_CARD_WIDTH/2)*count, 0)
+		--card.iconSiege:SetPoint("bottomleft", card, "bottomleft", (GwentAddon.NUM_CARD_WIDTH/2)*count, 0)
 		count = count + 1
 	end
 end
@@ -564,8 +603,8 @@ local function CreateCardOfId(id)
 	card.data = cardData
 	card.nr = _CardNr
 	card:SetPoint("topleft", _GwentPlayFrame, "topleft", 0, 0)
-	card:SetHeight(SIZE_CARD_HEIGHT)
-	card:SetWidth(SIZE_CARD_WIDTH)
+	card:SetHeight(GwentAddon.NUM_CARD_HEIGHT)
+	card:SetWidth(GwentAddon.NUM_CARD_WIDTH)
 	card:SetBackdrop({bgFile = TEXTURE_CARD_BG,
 		edgeFile = TEXTURE_CARD_BORDER,
 
@@ -593,19 +632,46 @@ local function CreateCardOfId(id)
 	-- card.name:SetJustifyH("center")
 	-- card.name:SetText(cardData.name)
 	
+	local vc = 1
+	local font = "GameFontWhite"
+	if card.data.cardType.hero then
+		vc = 0
+	end
 	
 	card.strengthBG = card:CreateTexture(addonName.."_Card_".._CardNr.."_StrengthBG", "ARTWORK")
 	card.strengthBG:SetDrawLayer("ARTWORK", 1)
 	card.strengthBG:SetTexture(TEXTURE_CARD_ICONBG)
-	card.strengthBG:SetVertexColor(0, 0, 0, .75)
-	card.strengthBG:SetTexCoord(4/32, 28/32, 4/32, 28/32)
+	card.strengthBG:SetVertexColor(vc, vc, vc, .75)
+	card.strengthBG:SetTexCoord(0.3, 0.45,0.1, 0.4)
 	card.strengthBG:SetPoint("topleft", card, 0, 0)
-	card.strengthBG:SetHeight(SIZE_CARD_WIDTH/2)
-	card.strengthBG:SetWidth(SIZE_CARD_WIDTH/2)
+	card.strengthBG:SetHeight(GwentAddon.NUM_CARD_WIDTH/2)
+	card.strengthBG:SetWidth(GwentAddon.NUM_CARD_WIDTH/2)
+	
+	card.abilityBG = card:CreateTexture(addonName.."_Card_".._CardNr.."_AbilityBG", "ARTWORK")
+	card.abilityBG:SetDrawLayer("ARTWORK", 1)
+	card.abilityBG:SetTexture(TEXTURE_CARD_ICONBG)
+	card.abilityBG:SetVertexColor(vc, vc, vc, .75)
+	card.abilityBG:SetTexCoord(0.3, 0.45,0.1, 0.4)
+	card.abilityBG:SetPoint("left", card)
+	card.abilityBG:SetHeight(GwentAddon.NUM_CARD_WIDTH/2)
+	card.abilityBG:SetWidth(GwentAddon.NUM_CARD_WIDTH/2)
+	card.abilityBG:Hide()
+	
+	card.iconAbility = card:CreateTexture(addonName.."_Card_".._CardNr.."_AbilityIcon", "ARTWORK")
+	card.iconAbility:SetDrawLayer("ARTWORK", 2)
+	card.iconAbility:SetPoint("center", card.abilityBG)
+	card.iconAbility:SetHeight(GwentAddon.NUM_CARD_WIDTH/2)
+	card.iconAbility:SetWidth(GwentAddon.NUM_CARD_WIDTH/2)
+	card.iconAbility:SetVertexColor(0, 0, 0)
+	
+	if card.data.ability ~= nil then
+		GwentAddon:SetAblityIcon(card)
+	end
+	
 	
 	--card.strengthBG:SetPoint("bottomright", card, -2, 2)
 	
-	card.strength = card:CreateFontString(nil, nil, "GameFontWhite")
+	card.strength = card:CreateFontString(nil, nil, font)
 	--card.strength:SetDrawLayer("ARTWORK", 1)
 	card.strength:SetPoint("topleft", card.strengthBG)
 	card.strength:SetPoint("bottomright", card.strengthBG)
@@ -613,6 +679,10 @@ local function CreateCardOfId(id)
 	card.strength:SetJustifyH("center")
 	card.strength:SetJustifyV("middle")
 	card.strength:SetText(cardData.strength)
+	card.strength:SetTextColor(0,0,0)
+	if card.data.cardType.hero then
+		card.strength:SetTextColor(1,1,1)
+	end
 	  
 	CreateCardTypeIcons(card)
 	  
@@ -688,7 +758,7 @@ local function ResetGame()
 	
 	_GwentPlayFrame.enemyNametag:SetText("")
 	_GwentPlayFrame.enemyTurn:Hide()
-	
+	_GwentPlayFrame.enemyPortrait:SetTexture(TEXTURE_PORTAITDEFAULT)
 	_GwentPlayFrame.playerTotal.amount = 0
 	_GwentPlayFrame.enemyTotal.amount = 0
 	
@@ -763,7 +833,9 @@ function Gwent_EventFrame:ADDON_LOADED(ADDON_LOADED)
 	
 	_GwentPlayFrame = CreatePlayFrame()
 	
+	GwentAddon:CreateAbilities()
 	GwentAddon:CreateCardsList()
+	
 	
 	if not RegisterAddonMessagePrefix(addonName) then
 		print(addonName ..": Could not register prefix.")
@@ -813,10 +885,12 @@ local function slashcmd(msg, editbox)
 		end
 	end
 	
-	elseif msg == 'draw' then
-		for i=1,10 do
-			DrawCard()
-		end
+	elseif string.find(msg, "draw") then
+		local nr = string.match(msg, "draw (%d+)")
+		
+		table.insert(_PlayerHand, CreateCardOfId(nr))
+		PlaceAllCards()
+		
 	elseif msg == 'log' then
 		SendAddonMessage(addonName, MESSAGE_LOGOUT, "whisper" , _ChallengerName)
 	else

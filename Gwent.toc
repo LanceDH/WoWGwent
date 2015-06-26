@@ -2,7 +2,7 @@
 ## Title: Gwent
 ## Notes: Play the card game from the Witcher series with your friends.
 ## Author: LanceDH
-## Version: 0.12
+## Version: 0.13
 ## OptionalDeps: Ace3
 ## SavedVariablesPerCharacter:
 
@@ -12,3 +12,4 @@ Gwent.lua
 DEBUG.lua
 
 CardManagement/CardList.lua
+CardManagement/Abilities.lua
