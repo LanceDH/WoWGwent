@@ -31,47 +31,52 @@ local TEXTURE_TYPE_RANGED = TEXTURE_CUSTOM_PATH.."TypeRanged"
 local TEXTURE_TYPE_SIEGE = TEXTURE_CUSTOM_PATH.."TypeSiege"
 local TEXTURE_ABILITY_COMMANDER = TEXTURE_CUSTOM_PATH.."AbilityCommander"
 
-local STATE_NOGAME = 0
-local STATE_INITIALDRAW = 1
-local STATE_ROUND = 2
-local STATE_BETWEENROUNDS = 3
-
 local COORDS_ICON_MELEE = {["x"]=64*7, ["y"]=64*7}
 local COORDS_ICON_RANGED = {["x"]=64*15, ["y"]=64*1}
 local COORDS_ICON_SIEGE = {["x"]=64*3, ["y"]=64*7}
 local COORDS_SMALLCARD = {["left"]=76/256, ["right"]=244/256, ["top"]=30/512, ["bottom"]=300/512}
 
-local MESSAGE_PLACEINAREA = "%s#%d"
-local MESSAGE_CHALLENGE = "It's time to du-du-du-duel"
-local MESSAGE_LOGOUT = "logged out"
-local MESSAGE_PASS = "passing"
-local MESSAGE_WON = "win: "
-local MESSAGE_TIE = "tie"
+GwentAddon.messages = {["placeInArea"] = "%s#%d"
+						,["challenge"] = "It's time to du-du-du-duel"
+						,["logout"] = "logged out"
+						,["pass"] = "passing"
+						,["won"] = "win: "
+						,["tie"] = "tie"
+						,["discarded"] = "Done discarding"}
 
-local TEXT_SIEGE = "siege"
-local TEXT_RANGED = "ranged"
-local TEXT_MELEE = "melee"
+	local TEXT_SIEGE = "siege"
+	local TEXT_RANGED = "ranged"
+	local TEXT_MELEE = "melee"
 
 local _CardPool = {}
 
-local _ChallengerName = nil
-local _GwentPlayFrame = {}
-local _PlayerHand = {}
-local _PlayerSiege = {}
-local _PlayerRanged = {}
-local _PlayerMelee = {}
-local _EnemySiege = {}
-local _EnemyRanged = {}
-local _EnemyMelee = {}
-local _PlayerDeck = {}
-local _InitialDiscardSelected = {}
+GwentAddon.challengerName = nil
+--local GwentAddon.playFrame = {}
+GwentAddon.lists = {["player"] = {["hand"] = {}
+								,["siege"] = {}
+								,["ranged"] = {}
+								,["melee"] = {}
+								,["deck"] = {}}
+					,["enemy"] = {["hand"] = {}
+								,["siege"] = {}
+								,["ranged"] = {}
+								,["melee"] = {}}
+								}
+
 --local _PlayerGraveyard = {}
 local _DraggedCard = nil
 local _DragginOverFrame = nil
 local _CardNr = 1
 
-local _State = 0
 
+GwentAddon.currentState = 0
+GwentAddon.states = {["noGame"] = 0
+					,["playerDiscard"] = 1
+					,["round"] = 2
+					,["betweenRounds"] = 3
+					,["waitEnemyDiscard"] = 4
+					,["enemyDoneDiscarding"] = 5} 
+					
 local _YourTurn = false
 local _EnemyPassed = false
 local _PlayerPassed = false
@@ -88,50 +93,43 @@ local function round(num, idp)
 	return ret
 end
 
-local function GetTypeIcon(card)
-	local types = card.data.cardType
-	
-	if types.melee and types.ranged then
-		return TEXTURE_TYPE_AGILE
-	elseif types.melee then
-		return TEXTURE_TYPE_MELEE
-	elseif types.ranged then
-		return TEXTURE_TYPE_RANGED
-	elseif types.siege then
-		return TEXTURE_TYPE_SIEGE
+function GwentAddon:GetStateName(state)
+	for name, nr in pairs(GwentAddon.states) do
+		if nr == state then
+			return name
+		end
 	end
-
-	return nil
+	return "Unknown"
 end
 
-local function IsYourTurn(bool)
+function GwentAddon:IsYourTurn(bool)
 	_YourTurn = bool
 	
-	for k, card in ipairs(_PlayerHand) do
+	for k, card in ipairs(GwentAddon.lists.player.hand) do
 		card:SetMovable(bool)
 		--card:EnableMouse(bool)
 	end
 	
-	_GwentPlayFrame.playerTurn:Hide()
-	_GwentPlayFrame.enemyTurn:Hide()
+	GwentAddon.playFrame.playerTurn:Hide()
+	GwentAddon.playFrame.enemyTurn:Hide()
 	
 	if _YourTurn then
-		_GwentPlayFrame.playerTurn:Show()
+		GwentAddon.playFrame.playerTurn:Show()
 	else
-		_GwentPlayFrame.enemyTurn:Show()
+		GwentAddon.playFrame.enemyTurn:Show()
 	end
 end
 
 local function PassTurn()
 	if _YourTurn then
 		_PlayerPassed = true
-		_GwentPlayFrame.passButton:Disable()
-		SendAddonMessage(addonName, MESSAGE_PASS , "whisper" , _ChallengerName)
-		IsYourTurn(false)
+		GwentAddon.playFrame.passButton:Disable()
+		SendAddonMessage(addonName, GwentAddon.messages.pass , "whisper" , GwentAddon.challengerName)
+		GwentAddon:IsYourTurn(false)
 	end
 end
 
-local function PlayerPlaceCardsOnFrame(list, frame)
+function GwentAddon:PlayerPlaceCardsOnFrame(list, frame)
 	local totalPoints = 0
 
 	for k, card in ipairs(list) do
@@ -149,43 +147,28 @@ local function PlayerPlaceCardsOnFrame(list, frame)
 	end
 end
 
-local function UpdateTotalBorders(playerPoints, enemyPoints)
-	_GwentPlayFrame.playerTotal:SetTexture(TEXTURE_TOTAL_BORDERNORMAL)
-	_GwentPlayFrame.enemyTotal:SetTexture(TEXTURE_TOTAL_BORDERNORMAL)
+function GwentAddon:UpdateTotalBorders(playerPoints, enemyPoints)
+	GwentAddon.playFrame.playerTotal:SetTexture(TEXTURE_TOTAL_BORDERNORMAL)
+	GwentAddon.playFrame.enemyTotal:SetTexture(TEXTURE_TOTAL_BORDERNORMAL)
 	
 	if playerPoints > enemyPoints  then
-		_GwentPlayFrame.playerTotal:SetTexture(TEXTURE_TOTAL_BORDERWINNING)
+		GwentAddon.playFrame.playerTotal:SetTexture(TEXTURE_TOTAL_BORDERWINNING)
 	elseif enemyPoints > playerPoints then
-		_GwentPlayFrame.enemyTotal:SetTexture(TEXTURE_TOTAL_BORDERWINNING)
+		GwentAddon.playFrame.enemyTotal:SetTexture(TEXTURE_TOTAL_BORDERWINNING)
 	end
 	
 end
 
-local function UpdateTotalPoints(playerPoints, enemyPoints)
-	_GwentPlayFrame.playerTotal.points:SetText(playerPoints)
-	_GwentPlayFrame.playerTotal.amount = playerPoints
-	_GwentPlayFrame.enemyTotal.points:SetText(enemyPoints)
-	_GwentPlayFrame.enemyTotal.amount = enemyPoints
+function GwentAddon:UpdateTotalPoints(playerPoints, enemyPoints)
+	GwentAddon.playFrame.playerTotal.points:SetText(playerPoints)
+	GwentAddon.playFrame.playerTotal.amount = playerPoints
+	GwentAddon.playFrame.enemyTotal.points:SetText(enemyPoints)
+	GwentAddon.playFrame.enemyTotal.amount = enemyPoints
 end
 
-local function PlaceAllCards()
-	local playerPoints = 0
-	PlayerPlaceCardsOnFrame(_PlayerHand, _GwentPlayFrame.playerHand)
-	playerPoints = playerPoints + PlayerPlaceCardsOnFrame(_PlayerSiege, _GwentPlayFrame.playerSiege)
-	playerPoints = playerPoints + PlayerPlaceCardsOnFrame(_PlayerRanged, _GwentPlayFrame.playerRanged)
-	playerPoints = playerPoints + PlayerPlaceCardsOnFrame(_PlayerMelee, _GwentPlayFrame.playerMelee)
-	
-	local enemyPoints = 0
-	-- Place enemy hand
-	enemyPoints = enemyPoints + PlayerPlaceCardsOnFrame(_EnemySiege, _GwentPlayFrame.enemySiege)
-	enemyPoints = enemyPoints + PlayerPlaceCardsOnFrame(_EnemyRanged, _GwentPlayFrame.enemyRanged)
-	enemyPoints = enemyPoints + PlayerPlaceCardsOnFrame(_EnemyMelee, _GwentPlayFrame.enemyMelee)
-	
-	UpdateTotalPoints(playerPoints, enemyPoints)
-	UpdateTotalBorders(playerPoints, enemyPoints)
-end
 
-local function DestroyCardsInList(list)
+
+function GwentAddon:DestroyCardsInList(list)
 	for k, card in pairs(list) do
 		table.insert(_CardPool, card)
 		card:Hide()
@@ -195,42 +178,8 @@ local function DestroyCardsInList(list)
 	list = {}
 end
 
-local function RemoveCardFromHand(card)
-	local cardToRemove = nil
-	for k, v in ipairs(_PlayerHand) do
-		if v.nr == card.nr then
-			cardToRemove = k
-			break
-		end
-	end
-	
-	if cardToRemove ~= nil then
-		table.remove(_PlayerHand, cardToRemove)
-	end
-	
-end
-
-local function DiscardSelectedCards() 
-
-	for k, card in ipairs(_InitialDiscardSelected) do
-		RemoveCardFromHand(card)
-	end
-	
-	local discAmm = #_InitialDiscardSelected
-	
-	DestroyCardsInList(_InitialDiscardSelected)
-	
-	PlaceAllCards()
-	
-	GwentPlayFrame.discardButton:Hide()
-	--for i = 0, i < discAmm do
-	--	DrawCard()
-	--end
-	
-end
-
-local function SetCardTooltip(card)
-	local tp = _GwentPlayFrame.cardTooltip
+function GwentAddon:SetCardTooltip(card)
+	local tp = GwentAddon.playFrame.cardTooltip
 	
 	local vcBG = 1
 	local vc = 0
@@ -254,7 +203,7 @@ local function SetCardTooltip(card)
 	
 	
 	
-	local typeIcon = GetTypeIcon(card)
+	local typeIcon = GwentAddon.cards:GetTypeIcon(card)
 	if typeIcon ~= nil then
 		tp.type:SetTexture(typeIcon)
 		tp.typeBG:Show()
@@ -500,7 +449,7 @@ local function CreatePlayFrame()
 	CreateWeatherArea(PlayFrame)
 	
 	-- player hand
-	PlayFrame.playerHand = CreateFrame("frame", addonName.."PlayFrame_PlayerHand", PlayFrame)
+	PlayFrame.playerHand = CreateFrame("frame", addonName.."PlayFrameGwentAddon.lists.player.hand", PlayFrame)
 	PlayFrame.playerHand:SetPoint("bottom", PlayFrame, "bottom", 0, 23)
 	PlayFrame.playerHand:SetHeight(GwentAddon.NUM_CARD_HEIGHT)
 	PlayFrame.playerHand:SetWidth(GwentAddon.NUM_CARD_WIDTH * 10)
@@ -529,11 +478,6 @@ local function CreatePlayFrame()
 	PlayFrame.playerDetailsBG:SetTexture("Interface\\DialogFrame\\UI-DialogBox-Gold-Background")
 	PlayFrame.playerDetailsBG:SetPoint("topleft", PlayFrame.playerDetails)
 	PlayFrame.playerDetailsBG:SetPoint("bottomright", PlayFrame.playerDetails)
-	-- PlayFrame.playerDetails:SetBackdrop({bgFile = "Interface\\DialogFrame\\UI-DialogBox-Gold-Background",
-      -- edgeFile = nil,
-	  -- tileSize = 0, edgeSize = 16,
-      -- insets = { left = 0, right = 0, top = 0, bottom = 0 }
-	  -- })
 	
 	-- player total Points
 	PlayFrame.playerTotal = PlayFrame:CreateTexture(addonName.."PlayFrame_PlayerTotal", "ARTWORK")
@@ -616,7 +560,7 @@ local function CreatePlayFrame()
 	PlayFrame.discardButton:SetPoint("bottomleft", PlayFrame.playerHand, "bottomright", 15, 10)
 	PlayFrame.discardButton:SetSize(100, 25)
 	PlayFrame.discardButton:SetText("Discard")
-	PlayFrame.discardButton:SetScript("OnClick", DiscardSelectedCards)	
+	PlayFrame.discardButton:SetScript("OnClick", function() GwentAddon.cards:DiscardSelectedCards() end)	
 	PlayFrame.discardButton:Hide()
 	
 	
@@ -726,31 +670,6 @@ local function CreatePlayFrame()
 	return PlayFrame
 end
 
-
-
-local function GetCardOfId(id)
-	for k, v in ipairs(GwentAddon.CardList) do
-		if v.Id == tonumber(id) then
-			return v
-		end
-	end
-	
-	return nil
-end
-
-local function StartDraggingCard(card)
-	_DraggedCard = card
-	card:StartMoving()
-end
-
-local function AddCardToNewList(card, list)
-	table.insert(list, card)
-	card:SetMovable(false)
-	card:SetScript("OnDragStart", function(self) end)
-	card:SetScript("OnDragStop", function(self)  end)
-	--card:EnableMouse(false)
-end
-
 local function IsRightTypeForArea(card, areaType)
 	for k, v in pairs(card.data.cardType) do
 		if k == areaType then
@@ -774,49 +693,29 @@ local function DroppingCardOnFrame(frame)
 	
 end
 
-local function DropCardArea(card)
-	if DroppingCardOnFrame(_GwentPlayFrame.playerSiege) and IsRightTypeForArea(card, TEXT_SIEGE) then
+function GwentAddon:DropCardArea(card)
+	if DroppingCardOnFrame(GwentAddon.playFrame.playerSiege) and IsRightTypeForArea(card, TEXT_SIEGE) then
 		
-		AddCardToNewList(card, _PlayerSiege)
-		RemoveCardFromHand(card)
+		GwentAddon.cards:AddCardToNewList(card, GwentAddon.lists.player.siege)
+		GwentAddon.cards:RemoveCardFromHand(card)
 		return true, TEXT_SIEGE
-	elseif DroppingCardOnFrame(_GwentPlayFrame.playerRanged) and IsRightTypeForArea(card, TEXT_RANGED) then
+	elseif DroppingCardOnFrame(GwentAddon.playFrame.playerRanged) and IsRightTypeForArea(card, TEXT_RANGED) then
 		
-		AddCardToNewList(card, _PlayerRanged)
-		RemoveCardFromHand(card)
+		GwentAddon.cards:AddCardToNewList(card, GwentAddon.lists.player.ranged)
+		GwentAddon.cards:RemoveCardFromHand(card)
 		return true, TEXT_RANGED
-	elseif DroppingCardOnFrame(_GwentPlayFrame.playerMelee) and IsRightTypeForArea(card, TEXT_MELEE) then
+	elseif DroppingCardOnFrame(GwentAddon.playFrame.playerMelee) and IsRightTypeForArea(card, TEXT_MELEE) then
 		
-		AddCardToNewList(card, _PlayerMelee)
-		RemoveCardFromHand(card)
+		GwentAddon.cards:AddCardToNewList(card, GwentAddon.lists.player.melee)
+		GwentAddon.cards:RemoveCardFromHand(card)
 		return true, TEXT_MELEE
 	end
 	return false
 end
 
-local function StopDraggingCard(card)
-	local success, area = DropCardArea(_DraggedCard)
-	if success and _DraggedCard ~= nil then
-		_DraggedCard = nil
 
-		SendAddonMessage(addonName, string.format(MESSAGE_PLACEINAREA, area, card.data.Id), "whisper" , _ChallengerName)
-		
-		-- don't end your turn if enemy passed
-		if not _EnemyPassed then
-			IsYourTurn(false)
-		end
-		
-	end
 
-	_DraggedCard = nil
-	card:StopMovingOrSizing()
-	PlaceAllCards()
-	
-	
-
-end
-
-local function NumberInList(card, list)
+function GwentAddon:NumberInList(card, list)
 	for k, v in ipairs(list) do
 		if v.data.Id == card.data.Id then
 			return k
@@ -826,207 +725,18 @@ local function NumberInList(card, list)
 	return -1
 end
 
-local function SelectForDiscard(card)
-	local nr = NumberInList(card, _InitialDiscardSelected)
-	if nr > -1 then
-		-- Already selected
-		card.darken:Hide()
-		table.remove(_InitialDiscardSelected, nr)
-	else
-		-- Not yet selected
-		if #_InitialDiscardSelected < 2 then
-			table.insert(_InitialDiscardSelected, card)
-			card.darken:Show()
-		end
-	end
-end
 
-local function CreateCardTypeIcons(card)
-	local count = 0;
-	local vcBG = 1
-	local vc = 0
-	if card.data.cardType.hero then
-		vcBG = 0
-		vc = 1
-	end
-	
-	card.iconTypeBG = card:CreateTexture(addonName.."_Card_".._CardNr.."_TypeBG", "ARTWORK")
-	card.iconTypeBG:SetDrawLayer("ARTWORK", 1)
-	card.iconTypeBG:SetTexture(TEXTURE_CARD_ICONBG)
-	card.iconTypeBG:SetVertexColor(vcBG, vcBG, vcBG, .75)
-		-- card.iconMeleeBG:SetTexCoord(4/32, 28/32, 4/32, 28/32)
-	card.iconTypeBG:SetTexCoord(0.3, 0.45,0.1, 0.4)
-	card.iconTypeBG:SetPoint("left", card)
-	card.iconTypeBG:SetHeight(GwentAddon.NUM_CARD_WIDTH/2)
-	card.iconTypeBG:SetWidth(GwentAddon.NUM_CARD_WIDTH/2)
-		
-	card.iconType = card:CreateTexture(addonName.."_Card_".._CardNr.."_Type", "art")
-	card.iconType:SetDrawLayer("ARTWORK", 2)
-	card.iconType:SetTexture(GetTypeIcon(card))
-	card.iconType:SetVertexColor(vc, vc, vc)
-	card.iconType:SetWidth(GwentAddon.NUM_CARD_WIDTH*0.5)
-	card.iconType:SetHeight(GwentAddon.NUM_CARD_WIDTH*0.5)
-	card.iconType:SetPoint("center", card.iconTypeBG)
-		-- card.iconMelee:SetPoint("bottomleft", card, "bottomleft", (GwentAddon.NUM_CARD_WIDTH/2)*count, 0)
-	count = count + 1
-
-end
-
-local function CreateCardOfId(id)
-	
-	local cardData = GetCardOfId(id)
-	
-	GwentAddon:DEBUGMessageSent("Trying to create card with id "..id)
-	
-	if not cardData then
-		print("Could not create card with Id ".. id)
-		return
-	end
-
-	local card = CreateFrame("frame", addonName.."_Card_".._CardNr, _GwentPlayFrame)
-	card.data = cardData
-	card.nr = _CardNr
-	card:SetPoint("topleft", _GwentPlayFrame, "topleft", 0, 0)
-	card:SetHeight(GwentAddon.NUM_CARD_HEIGHT)
-	card:SetWidth(GwentAddon.NUM_CARD_WIDTH)
-	card:SetBackdrop({bgFile = TEXTURE_CARD_BG,
-		edgeFile = TEXTURE_CARD_BORDER,
-
-	  tileSize = 0, edgeSize = 4,
-      insets = { left = 0, right = 0, top 
-	  = 0, bottom = 0 }
-	  })
-	
-	-- card.texture = card:CreateTexture(addonName.."_Card_".._CardNr.."_Texture", "ARTWORK")
-	-- card.texture:SetDrawLayer("ARTWORK", 0)
-	-- card.texture:SetTexture(TEXTURE_CUSTOM_PATH..cardData.texture)
-	-- card.texture:SetTexCoord(COORDS_SMALLCARD.left, COORDS_SMALLCARD.right, COORDS_SMALLCARD.top, COORDS_SMALLCARD.bottom)
-	-- card.texture:SetPoint("topleft", card, 2, -2)
-	-- card.texture:SetPoint("bottomright", card, -2, 2)
-	
-	card.darken = card:CreateTexture(addonName.."_Card_".._CardNr.."_Darken", "ARTWORK")
-	card.darken:SetDrawLayer("ARTWORK", 7)
-	card.darken:SetTexture(TEXTURE_CARD_DARKEN)
-	card.darken:SetVertexColor(0, 0, 0, 1)
-	card.darken:SetPoint("topleft", card, 0, 0)
-	card.darken:SetPoint("bottomright", card, 0, 0)
-	card.darken:Hide()
-	
-	card:SetMovable(false)
-	card:RegisterForDrag("LeftButton")
-	card:SetScript("OnDragStart", function(self) if self:IsMovable() and  _State == STATE_ROUND then StartDraggingCard(self) end end)
-	card:SetScript("OnDragStop", function(self) if self:IsMovable() and _State == STATE_ROUND then StopDraggingCard(self) end end)
-	card:SetScript("OnMouseDown", function(self) if _State == STATE_INITIALDRAW then SelectForDiscard(self) end end)
-	--card:SetScript("OnLeave", function(self) _GwentPlayFrame.cardTooltip:Hide() end)
-	card:SetScript("OnEnter", function(self) SetCardTooltip(self) end)
-	card:SetScript("OnLeave", function(self) _GwentPlayFrame.cardTooltip:Hide() end)
-	--card:EnableMouse(false)
-	  
-	
-	local vc = 1
-	local font = "GameFontBlack"
-	if card.data.cardType.hero then
-		font = "GameFontWhite"
-		vc = 0
-	end
-	
-	card.strengthBG = card:CreateTexture(addonName.."_Card_".._CardNr.."_StrengthBG", "ARTWORK")
-	card.strengthBG:SetDrawLayer("ARTWORK", 1)
-	card.strengthBG:SetTexture(TEXTURE_CARD_ICONBG)
-	card.strengthBG:SetVertexColor(vc, vc, vc, .75)
-	card.strengthBG:SetTexCoord(0.3, 0.45,0.1, 0.4)
-	card.strengthBG:SetPoint("topleft", card, 0, 0)
-	card.strengthBG:SetHeight(GwentAddon.NUM_CARD_WIDTH/2)
-	card.strengthBG:SetWidth(GwentAddon.NUM_CARD_WIDTH/2)
-	
-	card.abilityBG = card:CreateTexture(addonName.."_Card_".._CardNr.."_AbilityBG", "ARTWORK")
-	card.abilityBG:SetDrawLayer("ARTWORK", 1)
-	card.abilityBG:SetTexture(TEXTURE_CARD_ICONBG)
-	card.abilityBG:SetVertexColor(vc, vc, vc, .75)
-	card.abilityBG:SetTexCoord(0.3, 0.45,0.1, 0.4)
-	card.abilityBG:SetPoint("bottomleft", card)
-	card.abilityBG:SetHeight(GwentAddon.NUM_CARD_WIDTH/2)
-	card.abilityBG:SetWidth(GwentAddon.NUM_CARD_WIDTH/2)
-	card.abilityBG:Hide()
-	
-	card.iconAbility = card:CreateTexture(addonName.."_Card_".._CardNr.."_AbilityIcon", "ARTWORK")
-	card.iconAbility:SetDrawLayer("ARTWORK", 2)
-	card.iconAbility:SetPoint("center", card.abilityBG)
-	card.iconAbility:SetHeight(GwentAddon.NUM_CARD_WIDTH/2)
-	card.iconAbility:SetWidth(GwentAddon.NUM_CARD_WIDTH/2)
-	card.iconAbility:SetVertexColor(0, 0, 0)
-	
-	if card.data.ability ~= nil then
-		GwentAddon:SetAblityIcon(card)
-	end
-	
-	
-	--card.strengthBG:SetPoint("bottomright", card, -2, 2)
-	
-	card.strength = card:CreateFontString(nil, nil, font)
-	--card.strength:SetDrawLayer("ARTWORK", 1)
-	card.strength:SetPoint("topleft", card.strengthBG)
-	card.strength:SetPoint("bottomright", card.strengthBG)
-	--card.strength:SetPoint("bottomright", card, "bottomright", -2, -7)
-	card.strength:SetJustifyH("center")
-	card.strength:SetJustifyV("middle")
-	card.strength:SetText(cardData.strength)
-	--card.strength:SetTextColor(0,0,0)
-	if card.data.cardType.hero then
-		--card.strength:SetTextColor(1,1,1)
-	end
-	  
-	CreateCardTypeIcons(card)
-	  
-	_CardNr = _CardNr + 1
-	
-	
-	  
-	return card
-end
-
-local function DrawCard()
-
-	local deckCardNr = math.random(#_playerDeck)
-
-	table.insert(_PlayerHand, CreateCardOfId(_playerDeck[deckCardNr].Id))
-	
-	table.remove(_playerDeck, deckCardNr)
-	
-	PlaceAllCards()
-end
-
-local function AddEnemyCard(message)
-	--print(message, string.match(message, "(%a+)#(%d+)"))
-	local areaType, id = string.match(message, "(%a+)#(%d+)")
-	--GwentAddon:DEBUGMessageSent(message .. " - ".. string.match(message, "(%a+)#(%d+)"))
-	local card = CreateCardOfId(id)
-	if areaType == TEXT_SIEGE then
-		AddCardToNewList(card, _EnemySiege)
-	elseif areaType == TEXT_RANGED then
-		AddCardToNewList(card, _EnemyRanged)
-	elseif areaType == TEXT_MELEE then
-		AddCardToNewList(card, _EnemyMelee)
-	end
-	
-	card:SetScript("OnDragStart", function(self) end)
-	card:SetScript("OnDragStop", function(self)  end)
-	card:SetScript("OnEnter", function(self) SetCardTooltip(self) end)
-	card:SetScript("OnLeave", function(self) _GwentPlayFrame.cardTooltip:Hide() end)
-	
-	PlaceAllCards()
-end
 
 local function ChangeChallenger(sender)
-	_ChallengerName = sender
-	_GwentPlayFrame.enemyNametag:SetText(_ChallengerName)
+	GwentAddon.challengerName = sender
+	GwentAddon.playFrame.enemyNametag:SetText(GwentAddon.challengerName)
 	for i=1,10 do
-		DrawCard()
+		GwentAddon.cards:DrawCard()
 	end
 	
 	local challenger = GetUnitName("target", true)	
 	if challenger ~= nil then
-		SetPortraitTexture(_GwentPlayFrame.enemyPortrait, "target")
+		SetPortraitTexture(GwentAddon.playFrame.enemyPortrait, "target")
 		
 	end
 end
@@ -1034,53 +744,55 @@ end
 
 
 local function ResetGame() 
-	_ChallengerName = nil
-	DestroyCardsInList(_PlayerHand)
-	DestroyCardsInList(_PlayerSiege)
-	DestroyCardsInList(_PlayerRanged)
-	DestroyCardsInList(_PlayerMelee)
-	DestroyCardsInList(_EnemySiege)
-	DestroyCardsInList(_EnemyRanged)
-	DestroyCardsInList(_EnemyMelee)
-	PlaceAllCards()
+	GwentAddon.challengerName = nil
+	GwentAddon:DestroyCardsInList(GwentAddon.lists.player.hand)
+	GwentAddon:DestroyCardsInList(GwentAddon.lists.player.siege)
+	GwentAddon:DestroyCardsInList(GwentAddon.lists.player.ranged)
+	GwentAddon:DestroyCardsInList(GwentAddon.lists.player.melee)
+	GwentAddon:DestroyCardsInList(GwentAddon.lists.enemy.siege)
+	GwentAddon:DestroyCardsInList(GwentAddon.lists.enemy.ranged)
+	GwentAddon:DestroyCardsInList(GwentAddon.lists.enemy.melee)
+	GwentAddon.cards:PlaceAllCards()
 	_DraggedCard = nil
 	_DragginOverFrame = nil
 	_YourTurn = false
 	_EnemyPassed = false
-
-	_GwentPlayFrame.playerTurn:Hide()
 	
-	_GwentPlayFrame.enemyNametag:SetText("")
-	_GwentPlayFrame.enemyTurn:Hide()
-	_GwentPlayFrame.enemyPortrait:SetTexture(TEXTURE_PORTAITDEFAULT)
-	_GwentPlayFrame.playerTotal.amount = 0
-	_GwentPlayFrame.enemyTotal.amount = 0
+	GwentAddon.currentState = GwentAddon.states.noGame
+
+	GwentAddon.playFrame.playerTurn:Hide()
+	
+	GwentAddon.playFrame.enemyNametag:SetText("")
+	GwentAddon.playFrame.enemyTurn:Hide()
+	GwentAddon.playFrame.enemyPortrait:SetTexture(TEXTURE_PORTAITDEFAULT)
+	GwentAddon.playFrame.playerTotal.amount = 0
+	GwentAddon.playFrame.enemyTotal.amount = 0
 	
 end
 
 local function FinishBattle() 
 	local playerWon = false
 	
-	if _GwentPlayFrame.playerTotal.amount == _GwentPlayFrame.enemyTotal.amount then 
-		SendAddonMessage(addonName, MESSAGE_TIE, "whisper" , _ChallengerName)
+	if GwentAddon.playFrame.playerTotal.amount == GwentAddon.playFrame.enemyTotal.amount then 
+		SendAddonMessage(addonName, GwentAddon.messages.tie, "whisper" , GwentAddon.challengerName)
 		return
 	end
 	
-	if _GwentPlayFrame.playerTotal.amount > _GwentPlayFrame.enemyTotal.amount then
+	if GwentAddon.playFrame.playerTotal.amount > GwentAddon.playFrame.enemyTotal.amount then
 		playerWon = true
 	end
 
-	SendAddonMessage(addonName, MESSAGE_WON.. (playerWon and "false" or "true"), "whisper" , _ChallengerName)
+	SendAddonMessage(addonName, GwentAddon.messages.won.. (playerWon and "false" or "true"), "whisper" , GwentAddon.challengerName)
 	
 	ResetGame()
 end
 
-local function ChangeState(state)
-	_State = state
-	_GwentPlayFrame.discardButton:Hide()
+function GwentAddon:ChangeState(state)
+	GwentAddon.currentState = state
+	GwentAddon.playFrame.discardButton:Hide()
 	
-	if _State == STATE_INITIALDRAW then
-		_GwentPlayFrame.discardButton:Show()
+	if GwentAddon.currentState == GwentAddon.states.playerDiscard or GwentAddon.currentState == GwentAddon.states.enemyDoneDiscarding then
+		GwentAddon.playFrame.discardButton:Show()
 	end
 end
 
@@ -1101,18 +813,26 @@ function Gwent_EventFrame:CHAT_MSG_ADDON(prefix, message, channel, sender)
 		return
 	end
 	
-	if message == MESSAGE_CHALLENGE then
+	if message == GwentAddon.messages.challenge then
 		ChangeChallenger(sender)
-		ChangeState(STATE_INITIALDRAW)
+		GwentAddon:ChangeState(GwentAddon.states.playerDiscard)
 	end
 	
-	if message == MESSAGE_LOGOUT then
+	if message == GwentAddon.messages.logout then
 		
 		ResetGame()
 	end
 	
-	if message == MESSAGE_PASS then
-		IsYourTurn(true)
+	if message == GwentAddon.messages.discarded then
+		if GwentAddon.currentState == GwentAddon.states.waitEnemyDiscard then
+			GwentAddon:ChangeState(GwentAddon.states.round)
+		else
+			GwentAddon:ChangeState(GwentAddon.states.enemyDoneDiscarding)
+		end
+	end
+	
+	if message == GwentAddon.messages.pass then
+		GwentAddon:IsYourTurn(true)
 		_EnemyPassed = true
 		
 		if _PlayerPassed then
@@ -1122,11 +842,11 @@ function Gwent_EventFrame:CHAT_MSG_ADDON(prefix, message, channel, sender)
 	
 	-- Enemy played card
 	if string.find(message, "#") then
-		AddEnemyCard(message)
-		IsYourTurn(true)
+		GwentAddon.cards:AddEnemyCard(message)
+		GwentAddon:IsYourTurn(true)
 	end
 	
-	if string.find(message, MESSAGE_WON) then
+	if string.find(message, GwentAddon.messages.won) then
 		ResetGame()
 	end
 	
@@ -1135,11 +855,12 @@ end
 function Gwent_EventFrame:ADDON_LOADED(ADDON_LOADED)
 	if ADDON_LOADED ~= addonName then return end
 	
-	_GwentPlayFrame = CreatePlayFrame()
+	GwentAddon.playFrame = CreatePlayFrame()
 	
 	GwentAddon:CreateAbilitieList()
-	GwentAddon:CreateCardsList()
-	_playerDeck = GwentAddon:CreateTestDeck()
+	GwentAddon:CreateCardsClass()
+	--GwentAddon:CreateCardsList()
+	GwentAddon.lists.player.deck = GwentAddon:CreateTestDeck()
 	
 	
 	if not RegisterAddonMessagePrefix(addonName) then
@@ -1150,7 +871,7 @@ end
 function Gwent_EventFrame:PLAYER_LOGOUT(ADDON_LOADED)
 	--if ADDON_LOADED ~= addonName then return end
 	
-	SendAddonMessage(addonName, MESSAGE_LOGOUT, "whisper" , _ChallengerName)
+	SendAddonMessage(addonName, GwentAddon.messages.logout, "whisper" , GwentAddon.challengerName)
 
 end
 
@@ -1158,12 +879,14 @@ end
 SLASH_GWENTSLASH1 = '/gwent';
 local function slashcmd(msg, editbox)
 	if msg == 'debug' then
-
+	
 		GwentAddon:DEBUGToggleFrame()
 		
 	elseif msg == 'test' then
 		
-		print(_GwentPlayFrame.enemyPortrait:GetTexture())
+		
+		print(#class.list)
+		--print(GwentAddon.cards.test)
 	
 	elseif msg == 'duel' then
 		
@@ -1173,12 +896,12 @@ local function slashcmd(msg, editbox)
 			return
 		end
 		
-		SendAddonMessage(addonName, ""..MESSAGE_CHALLENGE , "whisper" , name)
+		SendAddonMessage(addonName, ""..GwentAddon.messages.challenge , "whisper" , name)
 		ChangeChallenger(name)
-		IsYourTurn(true)
-		ChangeState(STATE_INITIALDRAW)
+		GwentAddon:IsYourTurn(true)
+		GwentAddon:ChangeState(GwentAddon.states.playerDiscard)
 		
-		GwentAddon:DEBUGMessageSent("duelling ".._ChallengerName, _ChallengerName)
+		GwentAddon:DEBUGMessageSent("duelling "..GwentAddon.challengerName, GwentAddon.challengerName)
 	
 	elseif msg == 'toggle' then
 	
@@ -1194,19 +917,23 @@ local function slashcmd(msg, editbox)
 	elseif string.find(msg, "draw") then
 		local nr = string.match(msg, "draw (%d+)")
 		
-		table.insert(_PlayerHand, CreateCardOfId(nr))
-		PlaceAllCards()
+		table.insert(GwentAddon.lists.player.hand, CreateCardOfId(nr))
+		GwentAddon.cards:PlaceAllCards()
 		
 	elseif msg == 'log' then
-		SendAddonMessage(addonName, MESSAGE_LOGOUT, "whisper" , _ChallengerName)
+		SendAddonMessage(addonName, GwentAddon.messages.logout, "whisper" , GwentAddon.challengerName)
 	elseif msg == 'center' then
 		print("centering")
-		_GwentPlayFrame:ClearAllPoints()
-		_GwentPlayFrame:SetPoint("center", UIParent)
-		_GwentPlayFrame:Show()
+		GwentAddon.playFrame:ClearAllPoints()
+		GwentAddon.playFrame:SetPoint("center", UIParent)
+		GwentAddon.playFrame:Show()
 	else
 	
 		
    end
 end
 SlashCmdList["GWENTSLASH"] = slashcmd
+
+
+
+

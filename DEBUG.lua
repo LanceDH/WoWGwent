@@ -105,7 +105,7 @@ local function DEBUGShowCards(container)
 	DEBUGWINDOW.cardScroller = AceGUI:Create("ScrollFrame")
 	DEBUGWINDOW.cardScroller:SetLayout("Flow")
 	container:AddChild(DEBUGWINDOW.cardScroller)
-	for k , v in ipairs(GwentAddon.CardList) do
+	for k , v in ipairs(GwentAddon.cards.list) do
 
 			DEBUGPrintCard(v)
 	end
@@ -114,11 +114,19 @@ end
 local function DEBUGSelectTab(container, event, group)
    container:ReleaseChildren()
    if group == "messages" then
-     DEBUGShowMessageContainer(container)
+		DEBUGShowMessageContainer(container)
    elseif group == "cards" then
-     DEBUGShowCards(container)
+		DEBUGShowCards(container)
    end
 end
+
+local function debug_updatext()
+		local text = ""
+
+		text = text .. "state: \n  " .. GwentAddon:GetStateName(GwentAddon.currentState).." ("..GwentAddon.currentState .. ")" .."\n"
+		
+		GwentDEBUGVariables.text:SetText(text)
+	end
 
 local function CreateDebug()
  
@@ -135,6 +143,32 @@ local function CreateDebug()
 	DEBUGWINDOW.tabs:SelectTab("messages")
 	DEBUGWINDOW:AddChild(DEBUGWINDOW.tabs)
 	
+	local _updateTimer = 0
+
+	local L_GwentDEBUGVariables = CreateFrame("frame", "GwentDEBUGVariables", DEBUGWINDOW.frame)
+
+	GwentDEBUGVariables:SetBackdrop({bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background",
+		edgeFile = nil,
+		tileSize = 0, edgeSize = 16,
+		insets = { left = 0, right = 0, top = 0, bottom = 0 }
+		})
+
+	GwentDEBUGVariables:SetFrameLevel(5)
+	GwentDEBUGVariables:SetPoint("topleft", DEBUGWINDOW.frame, "topright", 0, -10)
+	GwentDEBUGVariables:SetPoint("bottomleft", DEBUGWINDOW.frame, "bottomright", 0, 10)GwentDEBUGVariables:SetPoint("Center", 250, 0)
+	GwentDEBUGVariables.text = GwentDEBUGVariables:CreateFontString(nil, nil, "GameFontNormal")
+	GwentDEBUGVariables.text:SetPoint("topleft", 10, -10)
+	GwentDEBUGVariables.text:SetText("blqh")
+	GwentDEBUGVariables.text:SetJustifyH("left")
+	GwentDEBUGVariables:SetWidth(175)
+	GwentDEBUGVariables:SetScript("OnUpdate", function(self,elapsed) 
+		_updateTimer = _updateTimer + elapsed
+		if _updateTimer >= 0.5 then
+			debug_updatext()
+			_updateTimer = 0
+		end
+		end)
+	GwentDEBUGVariables:Show()
 	
 	
 	--DEBUGWINDOW:AddChild(DEBUGWINDOW.mainScroller)
@@ -172,3 +206,10 @@ function Gwent_DEBUGEventFrame:ADDON_LOADED(ADDON_LOADED)
 	if ADDON_LOADED ~= addonName then return end
 	CreateDebug()
 end
+
+
+
+
+-- Debug help
+--------------------------------------------
+
