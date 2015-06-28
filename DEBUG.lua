@@ -8,7 +8,7 @@ local TEXT_ADDONMSG_RECIEVED = "Message Recieved"
 local function DEBUGPrintCard(card)
 	local cardName = AceGUI:Create("Label")
 	cardName:SetRelativeWidth(1)
-	cardName:SetText("|cFFE6D707"..card.Id .. ": " .. card.name.. "|r")
+	cardName:SetText("|cFFE6D707"..card.Id .. ": " .. card.name.. (card.subText and " ("..card.subText..")" or "") .."|r")
 	DEBUGWINDOW.cardScroller:AddChild(cardName)
 	
 	local cardStr = AceGUI:Create("Label")
@@ -34,7 +34,7 @@ local function DEBUGPrintCard(card)
 	
 	local cardDeck = AceGUI:Create("Label")
 	cardDeck:SetRelativeWidth(0.3)
-	cardDeck:SetText(card.deck)
+	cardDeck:SetText(card.faction)
 	DEBUGWINDOW.cardScroller:AddChild(cardDeck)
 end
 

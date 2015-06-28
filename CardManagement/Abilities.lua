@@ -18,7 +18,7 @@ local NUM_SIZE_ICON = 64
 local TEXTURE_CARD_BG = "Interface\\DialogFrame\\UI-DialogBox-Gold-Background"
 local TEXTURE_SPY = {["path"]="Interface\\PVPFrame\\Icons\\PVP-Banner-Emblem-14", ["width"]=128, ["height"]=128}
 
-function GwentAddon:CreateAbilities()
+function GwentAddon:CreateAbilitieList()
 
 	GwentAddon.Abilities = {}
 

@@ -2,21 +2,25 @@
 
 GwentAddon.CardList = {}
 
-local DECK_NORTH = "Northern Realms"
+local faction_NORTH = "Northern Realms"
+local faction_NEUTRAL = "Neutral"
 
 local ABILITY_Spy = "Spy"
 local ABILITY_Bond = "Tight Bond"
 local ABILITY_Morale = "Morale Boost"
 local ABILITY_Medic = "Medic"
+local ABILITY_Command = "Commander's Horn"
+local ABILITY_SCORCH = "Scorch"
 local ABILITY_Hero = "Immune to special cards"
 
-function GwentAddon:CreateCardsList()
-
-	GwentAddon.CardList = {}
-
+local function AddNorthCards()
+	-----------------------------------------------------------------------------------------------
+	-- Northern Realms
+	-----------------------------------------------------------------------------------------------
+	
 	table.insert(GwentAddon.CardList, {
 				name = "Foltest, King of Temeria"
-				,deck = DECK_NORTH
+				,faction = faction_NORTH
 				,strength = 0
 				,cardType = {melee = false, ranged = false, siege = false, hero = false, leader = true}
 				,ability = "NYI"
@@ -25,7 +29,7 @@ function GwentAddon:CreateCardsList()
 			
 	table.insert(GwentAddon.CardList, {
 				name = "Foltest, Lord Commander Of The North"
-				,deck = DECK_NORTH
+				,faction = faction_NORTH
 				,strength = 0
 				,cardType = {melee = false, ranged = false, siege = false, hero = false, leader = true}
 				,ability = "NYI"
@@ -34,7 +38,7 @@ function GwentAddon:CreateCardsList()
 			
 	table.insert(GwentAddon.CardList, {
 				name = "Foltest The Steel-forged"
-				,deck = DECK_NORTH
+				,faction = faction_NORTH
 				,strength = 0
 				,cardType = {melee = false, ranged = false, siege = false, hero = false, leader = true}
 				,ability = "NYI"
@@ -43,7 +47,7 @@ function GwentAddon:CreateCardsList()
 	
 	table.insert(GwentAddon.CardList, {
 				name = "Foltest The Siegemaster"
-				,deck = DECK_NORTH
+				,faction = faction_NORTH
 				,strength = 0
 				,cardType = {melee = false, ranged = false, siege = false, hero = false, leader = true}
 				,ability = "NYI"
@@ -52,7 +56,7 @@ function GwentAddon:CreateCardsList()
 			
 	table.insert(GwentAddon.CardList, {
 				name = "Philippa Eilhart"
-				,deck = DECK_NORTH
+				,faction = faction_NORTH
 				,strength = 10
 				,cardType = {melee = false, ranged = true, siege = false, hero = true, leader = false}
 				,ability = ABILITY_Hero
@@ -61,7 +65,7 @@ function GwentAddon:CreateCardsList()
 			
 	table.insert(GwentAddon.CardList, {
 				name = "Vernon Roche"
-				,deck = DECK_NORTH
+				,faction = faction_NORTH
 				,strength = 10
 				,cardType = {melee = true, ranged = false, siege = false, hero = true, leader = false}
 				,ability = ABILITY_Hero
@@ -70,7 +74,7 @@ function GwentAddon:CreateCardsList()
 	
 	table.insert(GwentAddon.CardList, {
 				name = "Esterad Thyssen"
-				,deck = DECK_NORTH
+				,faction = faction_NORTH
 				,strength = 10
 				,cardType = {melee = true, ranged = false, siege = false, hero = true, leader = false}
 				,ability = ABILITY_Hero
@@ -79,7 +83,7 @@ function GwentAddon:CreateCardsList()
 	
 	table.insert(GwentAddon.CardList, {
 				name = "John Natalis"
-				,deck = DECK_NORTH
+				,faction = faction_NORTH
 				,strength = 10
 				,cardType = {melee = true, ranged = false, siege = false, hero = true, leader = false}
 				,ability = ABILITY_Hero
@@ -88,7 +92,7 @@ function GwentAddon:CreateCardsList()
 	
 	table.insert(GwentAddon.CardList, {
 				name = "Thaler"
-				,deck = DECK_NORTH
+				,faction = faction_NORTH
 				,strength = 1
 				,cardType = {melee = false, ranged = false, siege = true, hero = false, leader = false}
 				,ability = ABILITY_Spy
@@ -97,34 +101,87 @@ function GwentAddon:CreateCardsList()
 			
 	table.insert(GwentAddon.CardList, {
 			name = "Redanian Foot Soldier"
-				,deck = DECK_NORTH
+				,faction = faction_NORTH
 				,strength = 1
 				,cardType = {melee = true, ranged = false, siege = false, hero = false, leader = false}
 				,ability = nil
 				,texture = "peasant"
+				,subText = "1/2"
+			})
+			
+	table.insert(GwentAddon.CardList, {
+			name = "Redanian Foot Soldier"
+				,faction = faction_NORTH
+				,strength = 1
+				,cardType = {melee = true, ranged = false, siege = false, hero = false, leader = false}
+				,ability = nil
+				,texture = "peasant"
+				,subText = "2/2"
 			})
 			
 	table.insert(GwentAddon.CardList, {
 				name = "Poor Fucking Infantry"
-				,deck = DECK_NORTH
+				,faction = faction_NORTH
 				,strength = 1
 				,cardType = {melee = true, ranged = false, siege = false, hero = false, leader = false}
 				,ability = ABILITY_Bond
 				,texture = "peasant"
+				,subText = "1/3"
+			})
+			
+	table.insert(GwentAddon.CardList, {
+				name = "Poor Fucking Infantry"
+				,faction = faction_NORTH
+				,strength = 1
+				,cardType = {melee = true, ranged = false, siege = false, hero = false, leader = false}
+				,ability = ABILITY_Bond
+				,texture = "peasant"
+				,subText = "2/3"
+			})
+			
+	table.insert(GwentAddon.CardList, {
+				name = "Poor Fucking Infantry"
+				,faction = faction_NORTH
+				,strength = 1
+				,cardType = {melee = true, ranged = false, siege = false, hero = false, leader = false}
+				,ability = ABILITY_Bond
+				,texture = "peasant"
+				,subText = "3/3"
 			})
 			
 	table.insert(GwentAddon.CardList, {
 				name = "Kaedweni Siege Expert"
-				,deck = DECK_NORTH
+				,faction = faction_NORTH
 				,strength = 1
 				,cardType = {melee = false, ranged = false, siege = true, hero = false, leader = false}
 				,ability = ABILITY_Morale
 				,texture = "balista"
+				,subText = "1/3"
+			})
+			
+	table.insert(GwentAddon.CardList, {
+				name = "Kaedweni Siege Expert"
+				,faction = faction_NORTH
+				,strength = 1
+				,cardType = {melee = false, ranged = false, siege = true, hero = false, leader = false}
+				,ability = ABILITY_Morale
+				,texture = "balista"
+				,subText = "2/3"
+			})
+			
+	table.insert(GwentAddon.CardList, {
+				name = "Kaedweni Siege Expert"
+				,faction = faction_NORTH
+				,strength = 1
+				,cardType = {melee = false, ranged = false, siege = true, hero = false, leader = false}
+				,ability = ABILITY_Morale
+				,texture = "balista"
+				,subText = "3/3"
 			})
 			
 	table.insert(GwentAddon.CardList, {
 				name = "Yarpen Zigrin"
-				,deck = DECK_NORTH
+				,faction = faction_NORTH
 				,strength = 2
 				,cardType = {melee = true, ranged = false, siege = false, hero = false, leader = false}
 				,ability = nil
@@ -133,7 +190,7 @@ function GwentAddon:CreateCardsList()
 			
 	table.insert(GwentAddon.CardList, {
 				name = "Sigismund Dijkstra"
-				,deck = DECK_NORTH
+				,faction = faction_NORTH
 				,strength = 4
 				,cardType = {melee = true, ranged = false, siege = false, hero = false, leader = false}
 				,ability = ABILITY_Spy
@@ -142,7 +199,7 @@ function GwentAddon:CreateCardsList()
 			
 	table.insert(GwentAddon.CardList, {
 				name = "Sheldon Skaggs"
-				,deck = DECK_NORTH
+				,faction = faction_NORTH
 				,strength = 4
 				,cardType = {melee = false, ranged = true, siege = false, hero = false, leader = false}
 				,ability = nil
@@ -151,16 +208,37 @@ function GwentAddon:CreateCardsList()
 			
 	table.insert(GwentAddon.CardList, {
 				name = "Blue Stripes Commando"
-				,deck = DECK_NORTH
+				,faction = faction_NORTH
 				,strength = 4
 				,cardType = {melee = true, ranged = false, siege = false, hero = false, leader = false}
 				,ability = ABILITY_Bond
 				,texture = "balista"
+				,subText = "1/3"
+			})
+			
+	table.insert(GwentAddon.CardList, {
+				name = "Blue Stripes Commando"
+				,faction = faction_NORTH
+				,strength = 4
+				,cardType = {melee = true, ranged = false, siege = false, hero = false, leader = false}
+				,ability = ABILITY_Bond
+				,texture = "balista"
+				,subText = "2/3"
+			})
+			
+	table.insert(GwentAddon.CardList, {
+				name = "Blue Stripes Commando"
+				,faction = faction_NORTH
+				,strength = 4
+				,cardType = {melee = true, ranged = false, siege = false, hero = false, leader = false}
+				,ability = ABILITY_Bond
+				,texture = "balista"
+				,subText = "3/3"
 			})
 			
 	table.insert(GwentAddon.CardList, {
 				name = "Sabrina Gevissig"
-				,deck = DECK_NORTH
+				,faction = faction_NORTH
 				,strength = 4
 				,cardType = {melee = false, ranged = true, siege = false, hero = false, leader = false}
 				,ability = nil
@@ -169,7 +247,7 @@ function GwentAddon:CreateCardsList()
 	
 	table.insert(GwentAddon.CardList, {
 				name = "Ves"
-				,deck = DECK_NORTH
+				,faction = faction_NORTH
 				,strength = 5
 				,cardType = {melee = true, ranged = false, siege = false, hero = false, leader = false}
 				,ability = nil
@@ -178,16 +256,27 @@ function GwentAddon:CreateCardsList()
 			
 	table.insert(GwentAddon.CardList, {
 				name = "Siegfried of Denesle"
-				,deck = DECK_NORTH
+				,faction = faction_NORTH
 				,strength = 5
 				,cardType = {melee = true, ranged = false, siege = false, hero = false, leader = false}
 				,ability = nil
 				,texture = "peasant"
+				,subText = "1/2"
+			})
+			
+	table.insert(GwentAddon.CardList, {
+				name = "Siegfried of Denesle"
+				,faction = faction_NORTH
+				,strength = 5
+				,cardType = {melee = true, ranged = false, siege = false, hero = false, leader = false}
+				,ability = nil
+				,texture = "peasant"
+				,subText = "2/2"
 			})
 			
 	table.insert(GwentAddon.CardList, {
 				name = "Prince Stennis"
-				,deck = DECK_NORTH
+				,faction = faction_NORTH
 				,strength = 5
 				,cardType = {melee = true, ranged = false, siege = false, hero = false, leader = false}
 				,ability = ABILITY_Spy
@@ -196,16 +285,37 @@ function GwentAddon:CreateCardsList()
 			
 	table.insert(GwentAddon.CardList, {
 				name = "Crinfrid Reavers Dragon Hunter"
-				,deck = DECK_NORTH
+				,faction = faction_NORTH
 				,strength = 5
 				,cardType = {melee = false, ranged = true, siege = false, hero = false, leader = false}
 				,ability = ABILITY_Bond
 				,texture = "balista"
+				,subText = "1/3"
+			})
+			
+	table.insert(GwentAddon.CardList, {
+				name = "Crinfrid Reavers Dragon Hunter"
+				,faction = faction_NORTH
+				,strength = 5
+				,cardType = {melee = false, ranged = true, siege = false, hero = false, leader = false}
+				,ability = ABILITY_Bond
+				,texture = "balista"
+				,subText = "2/3"
+			})
+			
+	table.insert(GwentAddon.CardList, {
+				name = "Crinfrid Reavers Dragon Hunter"
+				,faction = faction_NORTH
+				,strength = 5
+				,cardType = {melee = false, ranged = true, siege = false, hero = false, leader = false}
+				,ability = ABILITY_Bond
+				,texture = "balista"
+				,subText = "3/3"
 			})
 			
 	table.insert(GwentAddon.CardList, {
 				name = "Keira Metz"
-				,deck = DECK_NORTH
+				,faction = faction_NORTH
 				,strength = 5
 				,cardType = {melee = false, ranged = true, siege = false, hero = false, leader = false}
 				,ability = nil
@@ -214,16 +324,27 @@ function GwentAddon:CreateCardsList()
 			
 	table.insert(GwentAddon.CardList, {
 				name = "Dun Banner Medic"
-				,deck = DECK_NORTH
+				,faction = faction_NORTH
 				,strength = 5
 				,cardType = {melee = false, ranged = false, siege = true, hero = false, leader = false}
 				,ability = ABILITY_Medic
 				,texture = "balista"
+				,subText = "1/2"
+			})
+			
+	table.insert(GwentAddon.CardList, {
+				name = "Dun Banner Medic"
+				,faction = faction_NORTH
+				,strength = 5
+				,cardType = {melee = false, ranged = false, siege = true, hero = false, leader = false}
+				,ability = ABILITY_Medic
+				,texture = "balista"
+				,subText = "2/2"
 			})
 			
 	table.insert(GwentAddon.CardList, {
 				name = "Sile de Tansarville"
-				,deck = DECK_NORTH
+				,faction = faction_NORTH
 				,strength = 5
 				,cardType = {melee = false, ranged = true, siege = false, hero = false, leader = false}
 				,ability = nil
@@ -232,39 +353,189 @@ function GwentAddon:CreateCardsList()
 			
 	table.insert(GwentAddon.CardList, {
 				name = "Siege Tower"
-				,deck = DECK_NORTH
+				,faction = faction_NORTH
 				,strength = 6
 				,cardType = {melee = false, ranged = false, siege = true, hero = false, leader = false}
 				,ability = nil
 				,texture = "peasant"
+				,subText = "1/2"
+			})
+			
+	table.insert(GwentAddon.CardList, {
+				name = "Siege Tower"
+				,faction = faction_NORTH
+				,strength = 6
+				,cardType = {melee = false, ranged = false, siege = true, hero = false, leader = false}
+				,ability = nil
+				,texture = "peasant"
+				,subText = "2/2"
 			})
 			
 	table.insert(GwentAddon.CardList, {
 				name = "Trebuchet"
-				,deck = DECK_NORTH
+				,faction = faction_NORTH
 				,strength = 6
 				,cardType = {melee = false, ranged = false, siege = true, hero = false, leader = false}
 				,ability = nil
 				,texture = "peasant"
+				,subText = "1/2"
+			})
+			
+	table.insert(GwentAddon.CardList, {
+				name = "Trebuchet"
+				,faction = faction_NORTH
+				,strength = 6
+				,cardType = {melee = false, ranged = false, siege = true, hero = false, leader = false}
+				,ability = nil
+				,texture = "peasant"
+				,subText = "2/2"
 			})
 			
 	table.insert(GwentAddon.CardList, {
 				name = "Ballista"
-				,deck = DECK_NORTH
+				,faction = faction_NORTH
 				,strength = 6
 				,cardType = {melee = false, ranged = false, siege = true, hero = false, leader = false}
 				,ability = nil
 				,texture = "balista"
+				,subText = "1/2"
+			})
+			
+	table.insert(GwentAddon.CardList, {
+				name = "Ballista"
+				,faction = faction_NORTH
+				,strength = 6
+				,cardType = {melee = false, ranged = false, siege = true, hero = false, leader = false}
+				,ability = nil
+				,texture = "balista"
+				,subText = "2/2"
 			})
 			
 	table.insert(GwentAddon.CardList, {
 				name = "Catapult"
-				,deck = DECK_NORTH
+				,faction = faction_NORTH
 				,strength = 8
 				,cardType = {melee = false, ranged = false, siege = true, hero = false, leader = false}
 				,ability = ABILITY_Bond
 				,texture = "peasant"
+				,subText = "1/2"
 			})
+			
+	table.insert(GwentAddon.CardList, {
+				name = "Catapult"
+				,faction = faction_NORTH
+				,strength = 8
+				,cardType = {melee = false, ranged = false, siege = true, hero = false, leader = false}
+				,ability = ABILITY_Bond
+				,texture = "peasant"
+				,subText = "2/2"
+			})
+end
+
+local function AddNeutralCards()
+	-----------------------------------------------------------------------------------------------
+	-- Neutral
+	-----------------------------------------------------------------------------------------------
+	
+	table.insert(GwentAddon.CardList, {
+				name = "Zoltan Chivay"
+				,faction = faction_NEUTRAL
+				,strength = 5
+				,cardType = {melee = true, ranged = false, siege = false, hero = false, leader = false}
+				,ability = nil
+				,texture = "peasant"
+			})
+			
+	table.insert(GwentAddon.CardList, {
+				name = "Geralt of Rivia"
+				,faction = faction_NEUTRAL
+				,strength = 15
+				,cardType = {melee = true, ranged = false, siege = false, hero = true, leader = false}
+				,ability = nil
+				,texture = "peasant"
+			})
+			
+	table.insert(GwentAddon.CardList, {
+				name = "Triss Merigold"
+				,faction = faction_NEUTRAL
+				,strength = 7
+				,cardType = {melee = true, ranged = false, siege = false, hero = true, leader = false}
+				,ability = nil
+				,texture = "peasant"
+			})
+			
+	table.insert(GwentAddon.CardList, {
+				name = "Vesemir"
+				,faction = faction_NEUTRAL
+				,strength = 6
+				,cardType = {melee = true, ranged = false, siege = false, hero = false, leader = false}
+				,ability = nil
+				,texture = "peasant"
+			})
+			
+	table.insert(GwentAddon.CardList, {
+				name = "Yennefer of Vengerberg"
+				,faction = faction_NEUTRAL
+				,strength = 7
+				,cardType = {melee = false, ranged = true, siege = false, hero = true, leader = false}
+				,ability = ABILITY_Medic
+				,texture = "peasant"
+			})
+			
+	table.insert(GwentAddon.CardList, {
+				name = "Dandelion"
+				,faction = faction_NEUTRAL
+				,strength = 2
+				,cardType = {melee = true, ranged = false, siege = false, hero = false, leader = false}
+				,ability = ABILITY_Command
+				,texture = "peasant"
+			})
+			
+	table.insert(GwentAddon.CardList, {
+				name = "Cirilla Fiona Elen Rianno"
+				,faction = faction_NEUTRAL
+				,strength = 15
+				,cardType = {melee = true, ranged = false, siege = false, hero = true, leader = false}
+				,ability = nil
+				,texture = "peasant"
+			})
+			
+	table.insert(GwentAddon.CardList, {
+				name = "Avallac'h"
+				,faction = faction_NEUTRAL
+				,strength = 0
+				,cardType = {melee = true, ranged = false, siege = false, hero = true, leader = false}
+				,ability = ABILITY_Spy
+				,texture = "peasant"
+			})
+			
+	table.insert(GwentAddon.CardList, {
+				name = "Emiel Regis Rohellec Terzieff"
+				,faction = faction_NEUTRAL
+				,strength = 5
+				,cardType = {melee = true, ranged = false, siege = false, hero = false, leader = false}
+				,ability = nil
+				,texture = "peasant"
+			})
+			
+	table.insert(GwentAddon.CardList, {
+				name = "Villentretenmerth"
+				,faction = faction_NEUTRAL
+				,strength = 7
+				,cardType = {melee = true, ranged = false, siege = false, hero = false, leader = false}
+				,ability = ABILITY_SCORCH
+				,texture = "peasant"
+			})
+end
+
+function GwentAddon:CreateCardsList()
+
+	GwentAddon.CardList = {}
+
+	AddNorthCards()
+	AddNeutralCards()
+	
+	
 
 	for k, v in ipairs(GwentAddon.CardList) do
 		v.Id = k
