@@ -450,6 +450,7 @@ local function CreatePlayFrame()
 	PlayFrame.center:SetPoint("topleft", PlayFrame.topleft, "bottomright")
 	PlayFrame.center:SetPoint("bottomright", PlayFrame.bottomright, "topleft")
 
+	
 	CreateCardTooltip(PlayFrame)
 	CreateWeatherArea(PlayFrame)
 	
@@ -773,6 +774,7 @@ local function ResetGame()
 	_DraggedCard = nil
 	_DragginOverFrame = nil
 	GwentAddon.enemyPassed = false
+	GwentAddon.playerPassed = false
 	
 	GwentAddon:ChangeState(GwentAddon.states.noGame)
 
@@ -784,6 +786,23 @@ local function ResetGame()
 	GwentAddon.playFrame.playerTotal.amount = 0
 	GwentAddon.playFrame.enemyTotal.amount = 0
 	
+end
+
+function GwentAddon:StartNewRound()
+	GwentAddon:DestroyCardsInList(GwentAddon.lists.player.siege)
+	GwentAddon:DestroyCardsInList(GwentAddon.lists.player.ranged)
+	GwentAddon:DestroyCardsInList(GwentAddon.lists.player.melee)
+	GwentAddon:DestroyCardsInList(GwentAddon.lists.enemy.siege)
+	GwentAddon:DestroyCardsInList(GwentAddon.lists.enemy.ranged)
+	GwentAddon:DestroyCardsInList(GwentAddon.lists.enemy.melee)
+	GwentAddon.cards:PlaceAllCards()
+	_DraggedCard = nil
+	_DragginOverFrame = nil
+	
+	GwentAddon.enemyPassed = false
+	GwentAddon.playerPassed = false
+	
+	GwentAddon.playFrame.passButton:Enable()
 end
 
 local function FinishRound() 
@@ -809,7 +828,8 @@ local function FinishRound()
 
 	SendAddonMessage(addonName, GwentAddon.messages.won.. (playerWon and "0" or "1"), "whisper" , GwentAddon.challengerName)
 	
-	ResetGame()
+	GwentAddon:StartNewRound()
+	--ResetGame()
 end
 
 function GwentAddon:ChangeState(state)
@@ -819,15 +839,22 @@ function GwentAddon:ChangeState(state)
 	GwentAddon.playFrame.enemyTurn:Hide()
 	
 	if GwentAddon.currentState == GwentAddon.states.playerDiscard or GwentAddon.currentState == GwentAddon.states.enemyDoneDiscarding then
+		GwentAddon.popup:ShowMessage("Select up to 2 cards to discard and click the discard button.", 4)
 		GwentAddon.playFrame.discardButton:Show()
 		
 	elseif GwentAddon.currentState == GwentAddon.states.playerTurn then
+		if GwentAddon.enemyPassed then
+			GwentAddon.popup:ShowMessage("Opponent passed.")
+		else
+			GwentAddon.popup:ShowMessage("Your turn.")
+		end
 		GwentAddon.playFrame.playerTurn:Show()
 		for k, card in ipairs(GwentAddon.lists.player.hand) do
 			card:SetMovable(true)
 		end
 		
 	elseif GwentAddon.currentState == GwentAddon.states.enemyTurn then
+		GwentAddon.popup:ShowMessage("Opponent turn.")
 		GwentAddon.playFrame.enemyTurn:Show()
 		for k, card in ipairs(GwentAddon.lists.player.hand) do
 			card:SetMovable(false)
@@ -868,8 +895,8 @@ function Gwent_EventFrame:CHAT_MSG_ADDON(prefix, message, channel, sender)
 			GwentAddon:ChangeState(GwentAddon.states.determinStart)
 			
 			local playerStart = math.random(2) == 1 and true or false
-			
-			SendAddonMessage(addonName, GwentAddon.messages.start .. (playerStart and "0" or "1"), "whisper" , name)
+
+			SendAddonMessage(addonName, GwentAddon.messages.start .. (playerStart and "0" or "1"), "whisper" , GwentAddon.challengerName)
 			
 			if playerStart then
 				GwentAddon:ChangeState(GwentAddon.states.playerTurn)
@@ -883,8 +910,9 @@ function Gwent_EventFrame:CHAT_MSG_ADDON(prefix, message, channel, sender)
 	end
 	
 	if message == GwentAddon.messages.pass then
-		GwentAddon:ChangeState(GwentAddon.states.playerTurn)
+		
 		GwentAddon.enemyPassed = true
+		GwentAddon:ChangeState(GwentAddon.states.playerTurn)
 		
 		if GwentAddon.playerPassed then
 			FinishRound()
@@ -905,7 +933,7 @@ function Gwent_EventFrame:CHAT_MSG_ADDON(prefix, message, channel, sender)
 			GwentAddon:DeductLife(GwentAddon.playerLives)
 		end
 
-		ResetGame()
+		GwentAddon:StartNewRound()
 	end
 	
 		
@@ -931,6 +959,7 @@ function Gwent_EventFrame:ADDON_LOADED(ADDON_LOADED)
 	
 	GwentAddon.playFrame = CreatePlayFrame()
 	
+	GwentAddon:CreatePopupClass(GwentAddon.playFrame)
 	GwentAddon:CreateAbilitieList()
 	GwentAddon:CreateCardsClass()
 	--GwentAddon:CreateCardsList()
@@ -949,7 +978,6 @@ function Gwent_EventFrame:PLAYER_LOGOUT(ADDON_LOADED)
 
 end
 
-
 SLASH_GWENTSLASH1 = '/gwent';
 local function slashcmd(msg, editbox)
 	if msg == 'debug' then
@@ -957,8 +985,7 @@ local function slashcmd(msg, editbox)
 		GwentAddon:DEBUGToggleFrame()
 		
 	elseif msg == 'test' then
-		GwentAddon:DeductLife(GwentAddon.enemyLives)
-		GwentAddon:DeductLife(GwentAddon.playerLives)
+		GwentAddon.popup:ShowMessage("This is nothing but a test.")
 		
 	elseif msg == 'duel' then
 		
