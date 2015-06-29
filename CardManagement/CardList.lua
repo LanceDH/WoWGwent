@@ -730,9 +730,9 @@ function Cards:CreateCardOfId(id)
 	
 	card:SetMovable(false)
 	card:RegisterForDrag("LeftButton")
-	card:SetScript("OnDragStart", function(c) if c:IsMovable() and  GwentAddon.currentState == GwentAddon.states.round then self:StartDraggingCard(c) end end)
-	card:SetScript("OnDragStop", function(c) if c:IsMovable() and GwentAddon.currentState == GwentAddon.states.round then self:StopDraggingCard(c) end end)
-	card:SetScript("OnMouseDown", function(c) if GwentAddon.currentState == GwentAddon.states.playerDiscard or GwentAddon.currentState == GwentAddon.states.enemyDoneDiscarding then self:SelectForDiscard(c) end end)
+	card:SetScript("OnDragStart", function(c) self:StartDraggingCard(c) end)
+	card:SetScript("OnDragStop", function(c) self:StopDraggingCard(c) end)
+	card:SetScript("OnMouseDown", function(c)  self:SelectForDiscard(c) end)
 	--card:SetScript("OnLeave", function(self) GwentAddon.playFrame.cardTooltip:Hide() end)
 	card:SetScript("OnEnter", function(c) GwentAddon:SetCardTooltip(c) end)
 	card:SetScript("OnLeave", function(c) GwentAddon.playFrame.cardTooltip:Hide() end)
@@ -802,6 +802,11 @@ function Cards:CreateCardOfId(id)
 end
 
 function Cards:SelectForDiscard(card)
+	-- only allow during discard phase
+	if GwentAddon.currentState ~= GwentAddon.states.playerDiscard and GwentAddon.currentState ~= GwentAddon.states.enemyDoneDiscarding then
+		return
+	end
+
 	local nr = GwentAddon:NumberInList(card, _InitialDiscardSelected)
 	if nr > -1 then
 		-- Already selected
@@ -837,10 +842,8 @@ function Cards:DiscardSelectedCards()
 	SendAddonMessage(addonName, GwentAddon.messages.discarded, "whisper" , GwentAddon.challengerName)
 
 	if GwentAddon.currentState == GwentAddon.states.enemyDoneDiscarding then
-
-		GwentAddon:ChangeState(GwentAddon.states.round)
+		GwentAddon:ChangeState(GwentAddon.states.determinStart)
 	else
-
 		GwentAddon:ChangeState(GwentAddon.states.waitEnemyDiscard)
 	end
 	
@@ -890,11 +893,21 @@ function Cards:DrawCard()
 end
 
 function Cards:StartDraggingCard(card)
+	-- only allow during player's turn and when card is movable
+	if not card:IsMovable() or  GwentAddon.currentState ~= GwentAddon.states.playerTurn then
+		return
+	end
+	
 	self.draggedCard = card
 	card:StartMoving()
 end
 
 function Cards:StopDraggingCard(card)
+	-- only allow during player's turn and when card is movable
+	if not card:IsMovable() or GwentAddon.currentState ~= GwentAddon.states.playerTurn then 
+		return
+	end
+
 	local success, area = GwentAddon:DropCardArea(self.draggedCard)
 	if success and self.draggedCard  ~= nil then
 		self.draggedCard  = nil
@@ -902,8 +915,9 @@ function Cards:StopDraggingCard(card)
 		SendAddonMessage(addonName, string.format(GwentAddon.messages.placeInArea, area, card.data.Id), "whisper" , GwentAddon.challengerName)
 		
 		-- don't end your turn if enemy passed
-		if not _EnemyPassed then
-			GwentAddon:IsYourTurn(false)
+		if not GwentAddon.enemyPassed then
+			GwentAddon:ChangeState(GwentAddon.states.enemyTurn)
+			--GwentAddon:IsYourTurn(false)
 		end
 		
 	end

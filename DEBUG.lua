@@ -124,6 +124,10 @@ local function debug_updatext()
 		local text = ""
 
 		text = text .. "state: \n  " .. GwentAddon:GetStateName(GwentAddon.currentState).." ("..GwentAddon.currentState .. ")" .."\n"
+		text = text .. "player passed: \n  " .. (GwentAddon.playerPassed and "true" or "false") .."\n"
+		text = text .. "enemy passed: \n  " .. (GwentAddon.enemyPassed and "true" or "false") .."\n"
+		text = text .. "player lives: " .. GwentAddon.playerLives.count .."\n"
+		text = text .. "enemy lives: " .. GwentAddon.enemyLives.count .."\n"
 		
 		GwentDEBUGVariables.text:SetText(text)
 	end
@@ -154,8 +158,8 @@ local function CreateDebug()
 		})
 
 	GwentDEBUGVariables:SetFrameLevel(5)
-	GwentDEBUGVariables:SetPoint("topleft", DEBUGWINDOW.frame, "topright", 0, -10)
-	GwentDEBUGVariables:SetPoint("bottomleft", DEBUGWINDOW.frame, "bottomright", 0, 10)GwentDEBUGVariables:SetPoint("Center", 250, 0)
+	GwentDEBUGVariables:SetPoint("topleft", DEBUGWINDOW.frame, "topright", -3, -10)
+	GwentDEBUGVariables:SetPoint("bottomleft", DEBUGWINDOW.frame, "bottomright", -3, 10)GwentDEBUGVariables:SetPoint("Center", 250, 0)
 	GwentDEBUGVariables.text = GwentDEBUGVariables:CreateFontString(nil, nil, "GameFontNormal")
 	GwentDEBUGVariables.text:SetPoint("topleft", 10, -10)
 	GwentDEBUGVariables.text:SetText("blqh")

@@ -31,6 +31,7 @@ local TEXTURE_TYPE_RANGED = TEXTURE_CUSTOM_PATH.."TypeRanged"
 local TEXTURE_TYPE_SIEGE = TEXTURE_CUSTOM_PATH.."TypeSiege"
 local TEXTURE_ABILITY_COMMANDER = TEXTURE_CUSTOM_PATH.."AbilityCommander"
 
+local COORDS_ICON_LIFE = {["x"]=64*7, ["y"]=64*11}
 local COORDS_ICON_MELEE = {["x"]=64*7, ["y"]=64*7}
 local COORDS_ICON_RANGED = {["x"]=64*15, ["y"]=64*1}
 local COORDS_ICON_SIEGE = {["x"]=64*3, ["y"]=64*7}
@@ -40,9 +41,10 @@ GwentAddon.messages = {["placeInArea"] = "%s#%d"
 						,["challenge"] = "It's time to du-du-du-duel"
 						,["logout"] = "logged out"
 						,["pass"] = "passing"
-						,["won"] = "win: "
+						,["won"] = "won: "
 						,["tie"] = "tie"
-						,["discarded"] = "Done discarding"}
+						,["discarded"] = "Done discarding"
+						,["start"] = "start: "}
 
 	local TEXT_SIEGE = "siege"
 	local TEXT_RANGED = "ranged"
@@ -72,14 +74,16 @@ local _CardNr = 1
 GwentAddon.currentState = 0
 GwentAddon.states = {["noGame"] = 0
 					,["playerDiscard"] = 1
-					,["round"] = 2
-					,["betweenRounds"] = 3
+					,["playerTurn"] = 2
+					,["enemyTurn"] = 3
 					,["waitEnemyDiscard"] = 4
-					,["enemyDoneDiscarding"] = 5} 
+					,["enemyDoneDiscarding"] = 5
+					,["determinStart"] = 6} 
 					
-local _YourTurn = false
-local _EnemyPassed = false
-local _PlayerPassed = false
+GwentAddon.enemyPassed = false
+GwentAddon.playerPassed = false
+GwentAddon.playerLives = {["count"] = 2, ["texture1"] = nil, ["texture2"] = nil}
+GwentAddon.enemyLives = {["count"] = 2, ["texture1"] = nil, ["texture2"] = nil}
 
 local function isInteger(x)
 	return math.floor(x)==x
@@ -102,32 +106,33 @@ function GwentAddon:GetStateName(state)
 	return "Unknown"
 end
 
-function GwentAddon:IsYourTurn(bool)
-	_YourTurn = bool
-	
-	for k, card in ipairs(GwentAddon.lists.player.hand) do
-		card:SetMovable(bool)
-		--card:EnableMouse(bool)
-	end
-	
-	GwentAddon.playFrame.playerTurn:Hide()
-	GwentAddon.playFrame.enemyTurn:Hide()
-	
-	if _YourTurn then
-		GwentAddon.playFrame.playerTurn:Show()
-	else
-		GwentAddon.playFrame.enemyTurn:Show()
+local function PassTurn()
+	if GwentAddon.currentState == GwentAddon.states.playerTurn then
+		GwentAddon.playerPassed = true
+		GwentAddon.playFrame.passButton:Disable()
+		SendAddonMessage(addonName, GwentAddon.messages.pass , "whisper" , GwentAddon.challengerName)
+		GwentAddon:ChangeState(GwentAddon.states.enemyTurn)
 	end
 end
 
-local function PassTurn()
-	if _YourTurn then
-		_PlayerPassed = true
-		GwentAddon.playFrame.passButton:Disable()
-		SendAddonMessage(addonName, GwentAddon.messages.pass , "whisper" , GwentAddon.challengerName)
-		GwentAddon:IsYourTurn(false)
+function GwentAddon:DeductLife(lives)
+	lives.count = lives.count - 1
+	--lives.texture1:Show()
+	--lives.texture2:Show()
+	lives.texture1:SetVertexColor(0.8, 0.1, 0.1)
+	lives.texture2:SetVertexColor(0.8, 0.1, 0.1)
+	
+	if lives.count < 2 then
+		--lives.texture1:Hide()
+		lives.texture1:SetVertexColor(0.5, 0.5, 0.5)
+	end
+	if lives.count < 1 then
+		--lives.texture2:Hide()
+		lives.texture2:SetVertexColor(0.5, 0.5, 0.5)
 	end
 end
+
+
 
 function GwentAddon:PlayerPlaceCardsOnFrame(list, frame)
 	local totalPoints = 0
@@ -525,19 +530,25 @@ local function CreatePlayFrame()
 	-- player life 2
 	PlayFrame.playerLife2 = PlayFrame.playerDetails:CreateTexture(addonName.."PlayFrame_PlayerLife2", "ARTWORK")
 	PlayFrame.playerLife2:SetDrawLayer("ARTWORK", 1)
-	PlayFrame.playerLife2:SetTexture(TEXTURE_LIFECRYSTAL)
+	--PlayFrame.playerLife2:SetTexture(TEXTURE_LIFECRYSTAL)
+	PlayFrame.playerLife2:SetTexture(TEXTURE_ICONS.path)
+	PlayFrame.playerLife2:SetTexCoord((COORDS_ICON_LIFE.x+5)/TEXTURE_ICONS.width, (COORDS_ICON_LIFE.x + NUM_SIZE_ICON-5)/TEXTURE_ICONS.width, (COORDS_ICON_LIFE.y+5)/TEXTURE_ICONS.height, (COORDS_ICON_LIFE.y + NUM_SIZE_ICON -5)/TEXTURE_ICONS.height)
 	PlayFrame.playerLife2:SetVertexColor(0.8, 0.1, 0.1)
 	PlayFrame.playerLife2:SetWidth(GwentAddon.NUM_CARD_HEIGHT/2)
 	PlayFrame.playerLife2:SetHeight(GwentAddon.NUM_CARD_HEIGHT/2)
 	PlayFrame.playerLife2:SetPoint("topright", PlayFrame.playerDetails)
+	GwentAddon.playerLives.texture2 = PlayFrame.playerLife2
 	
 	PlayFrame.playerLife1 = PlayFrame.playerDetails:CreateTexture(addonName.."PlayFrame_PlayerLife1", "ARTWORK")
 	PlayFrame.playerLife1:SetDrawLayer("ARTWORK", 1)
-	PlayFrame.playerLife1:SetTexture(TEXTURE_LIFECRYSTAL)
+	--PlayFrame.playerLife1:SetTexture(TEXTURE_LIFECRYSTAL)
+	PlayFrame.playerLife1:SetTexture(TEXTURE_ICONS.path)
+	PlayFrame.playerLife1:SetTexCoord((COORDS_ICON_LIFE.x+5)/TEXTURE_ICONS.width, (COORDS_ICON_LIFE.x + NUM_SIZE_ICON-5)/TEXTURE_ICONS.width, (COORDS_ICON_LIFE.y+5)/TEXTURE_ICONS.height, (COORDS_ICON_LIFE.y + NUM_SIZE_ICON -5)/TEXTURE_ICONS.height)
 	PlayFrame.playerLife1:SetVertexColor(0.8, 0.1, 0.1)
 	PlayFrame.playerLife1:SetWidth(GwentAddon.NUM_CARD_HEIGHT/2)
 	PlayFrame.playerLife1:SetHeight(GwentAddon.NUM_CARD_HEIGHT/2)
 	PlayFrame.playerLife1:SetPoint("right", PlayFrame.playerLife2, "left")
+	GwentAddon.playerLives.texture1 = PlayFrame.playerLife1
 	
 	-- player turn arrow
 	PlayFrame.playerTurn = PlayFrame:CreateTexture(addonName.."PlayFrame_PlayerTurn", "ARTWORK")
@@ -643,19 +654,25 @@ local function CreatePlayFrame()
 	-- enemy life 2
 	PlayFrame.enemyLife2 = PlayFrame.enemyDetails:CreateTexture(addonName.."PlayFrame_EnemyLife2", "ARTWORK")
 	PlayFrame.enemyLife2:SetDrawLayer("ARTWORK", 1)
-	PlayFrame.enemyLife2:SetTexture(TEXTURE_LIFECRYSTAL)
+	-- PlayFrame.enemyLife2:SetTexture(TEXTURE_LIFECRYSTAL)
+	PlayFrame.enemyLife2:SetTexture(TEXTURE_ICONS.path)
+	PlayFrame.enemyLife2:SetTexCoord((COORDS_ICON_LIFE.x+5)/TEXTURE_ICONS.width, (COORDS_ICON_LIFE.x + NUM_SIZE_ICON-5)/TEXTURE_ICONS.width, (COORDS_ICON_LIFE.y+5)/TEXTURE_ICONS.height, (COORDS_ICON_LIFE.y + NUM_SIZE_ICON -5)/TEXTURE_ICONS.height)
 	PlayFrame.enemyLife2:SetVertexColor(0.8, 0.1, 0.1)
 	PlayFrame.enemyLife2:SetWidth(GwentAddon.NUM_CARD_HEIGHT/2)
 	PlayFrame.enemyLife2:SetHeight(GwentAddon.NUM_CARD_HEIGHT/2)
 	PlayFrame.enemyLife2:SetPoint("topright", PlayFrame.enemyDetails)
+	GwentAddon.enemyLives.texture2 = PlayFrame.enemyLife2
 	
 	PlayFrame.enemyLife1 = PlayFrame.enemyDetails:CreateTexture(addonName.."PlayFrame_EnemyLife1", "ARTWORK")
 	PlayFrame.enemyLife1:SetDrawLayer("ARTWORK", 1)
-	PlayFrame.enemyLife1:SetTexture(TEXTURE_LIFECRYSTAL)
+	-- PlayFrame.enemyLife1:SetTexture(TEXTURE_LIFECRYSTAL)
+	PlayFrame.enemyLife1:SetTexture(TEXTURE_ICONS.path)
+	PlayFrame.enemyLife1:SetTexCoord((COORDS_ICON_LIFE.x+5)/TEXTURE_ICONS.width, (COORDS_ICON_LIFE.x + NUM_SIZE_ICON-5)/TEXTURE_ICONS.width, (COORDS_ICON_LIFE.y+5)/TEXTURE_ICONS.height, (COORDS_ICON_LIFE.y + NUM_SIZE_ICON -5)/TEXTURE_ICONS.height)
 	PlayFrame.enemyLife1:SetVertexColor(0.8, 0.1, 0.1)
 	PlayFrame.enemyLife1:SetWidth(GwentAddon.NUM_CARD_HEIGHT/2)
 	PlayFrame.enemyLife1:SetHeight(GwentAddon.NUM_CARD_HEIGHT/2)
 	PlayFrame.enemyLife1:SetPoint("right", PlayFrame.enemyLife2, "left")
+	GwentAddon.enemyLives.texture1 = PlayFrame.enemyLife1
 	
 	-- player turn arrow
 	PlayFrame.enemyTurn = PlayFrame:CreateTexture(addonName.."PlayFrame_EnemyTurn", "ARTWORK")
@@ -755,10 +772,9 @@ local function ResetGame()
 	GwentAddon.cards:PlaceAllCards()
 	_DraggedCard = nil
 	_DragginOverFrame = nil
-	_YourTurn = false
-	_EnemyPassed = false
+	GwentAddon.enemyPassed = false
 	
-	GwentAddon.currentState = GwentAddon.states.noGame
+	GwentAddon:ChangeState(GwentAddon.states.noGame)
 
 	GwentAddon.playFrame.playerTurn:Hide()
 	
@@ -770,19 +786,28 @@ local function ResetGame()
 	
 end
 
-local function FinishBattle() 
+local function FinishRound() 
 	local playerWon = false
 	
 	if GwentAddon.playFrame.playerTotal.amount == GwentAddon.playFrame.enemyTotal.amount then 
+		-- Tie
 		SendAddonMessage(addonName, GwentAddon.messages.tie, "whisper" , GwentAddon.challengerName)
+		GwentAddon:DeductLife(GwentAddon.playerLives)
+		GwentAddon:DeductLife(GwentAddon.enemyLives)
 		return
 	end
 	
 	if GwentAddon.playFrame.playerTotal.amount > GwentAddon.playFrame.enemyTotal.amount then
 		playerWon = true
 	end
+	
+	if playerWon then
+		GwentAddon:DeductLife(GwentAddon.enemyLives)
+	else
+		GwentAddon:DeductLife(GwentAddon.playerLives)
+	end
 
-	SendAddonMessage(addonName, GwentAddon.messages.won.. (playerWon and "false" or "true"), "whisper" , GwentAddon.challengerName)
+	SendAddonMessage(addonName, GwentAddon.messages.won.. (playerWon and "0" or "1"), "whisper" , GwentAddon.challengerName)
 	
 	ResetGame()
 end
@@ -790,9 +815,24 @@ end
 function GwentAddon:ChangeState(state)
 	GwentAddon.currentState = state
 	GwentAddon.playFrame.discardButton:Hide()
+	GwentAddon.playFrame.playerTurn:Hide()
+	GwentAddon.playFrame.enemyTurn:Hide()
 	
 	if GwentAddon.currentState == GwentAddon.states.playerDiscard or GwentAddon.currentState == GwentAddon.states.enemyDoneDiscarding then
 		GwentAddon.playFrame.discardButton:Show()
+		
+	elseif GwentAddon.currentState == GwentAddon.states.playerTurn then
+		GwentAddon.playFrame.playerTurn:Show()
+		for k, card in ipairs(GwentAddon.lists.player.hand) do
+			card:SetMovable(true)
+		end
+		
+	elseif GwentAddon.currentState == GwentAddon.states.enemyTurn then
+		GwentAddon.playFrame.enemyTurn:Show()
+		for k, card in ipairs(GwentAddon.lists.player.hand) do
+			card:SetMovable(false)
+		end
+		
 	end
 end
 
@@ -825,29 +865,63 @@ function Gwent_EventFrame:CHAT_MSG_ADDON(prefix, message, channel, sender)
 	
 	if message == GwentAddon.messages.discarded then
 		if GwentAddon.currentState == GwentAddon.states.waitEnemyDiscard then
-			GwentAddon:ChangeState(GwentAddon.states.round)
+			GwentAddon:ChangeState(GwentAddon.states.determinStart)
+			
+			local playerStart = math.random(2) == 1 and true or false
+			
+			SendAddonMessage(addonName, GwentAddon.messages.start .. (playerStart and "0" or "1"), "whisper" , name)
+			
+			if playerStart then
+				GwentAddon:ChangeState(GwentAddon.states.playerTurn)
+			else
+				GwentAddon:ChangeState(GwentAddon.states.enemyTurn)
+			end
+			
 		else
 			GwentAddon:ChangeState(GwentAddon.states.enemyDoneDiscarding)
 		end
 	end
 	
 	if message == GwentAddon.messages.pass then
-		GwentAddon:IsYourTurn(true)
-		_EnemyPassed = true
+		GwentAddon:ChangeState(GwentAddon.states.playerTurn)
+		GwentAddon.enemyPassed = true
 		
-		if _PlayerPassed then
-			FinishBattle()
+		if GwentAddon.playerPassed then
+			FinishRound()
 		end
 	end
 	
 	-- Enemy played card
 	if string.find(message, "#") then
 		GwentAddon.cards:AddEnemyCard(message)
-		GwentAddon:IsYourTurn(true)
+		GwentAddon:ChangeState(GwentAddon.states.playerTurn)
 	end
 	
 	if string.find(message, GwentAddon.messages.won) then
+		local playerWon = tonumber(string.match(message, GwentAddon.messages.won.."(%d+)")) == 1 and true or false
+		if playerWon then
+			GwentAddon:DeductLife(GwentAddon.enemyLives)
+		else
+			GwentAddon:DeductLife(GwentAddon.playerLives)
+		end
+
 		ResetGame()
+	end
+	
+		
+	if message == GwentAddon.messages.tie then
+		GwentAddon:DeductLife(GwentAddon.enemyLives)
+		GwentAddon:DeductLife(GwentAddon.playerLives)
+		ResetGame()
+	end
+	
+	if string.find(message, GwentAddon.messages.start) then
+		local playerStart = tonumber(string.match(message, GwentAddon.messages.start.."(%d+)")) == 1 and true or false
+		if playerStart then
+			GwentAddon:ChangeState(GwentAddon.states.playerTurn)
+		else
+			GwentAddon:ChangeState(GwentAddon.states.enemyTurn)
+		end
 	end
 	
 end
@@ -883,11 +957,9 @@ local function slashcmd(msg, editbox)
 		GwentAddon:DEBUGToggleFrame()
 		
 	elseif msg == 'test' then
+		GwentAddon:DeductLife(GwentAddon.enemyLives)
+		GwentAddon:DeductLife(GwentAddon.playerLives)
 		
-		
-		print(#class.list)
-		--print(GwentAddon.cards.test)
-	
 	elseif msg == 'duel' then
 		
 		name = GetUnitName("target", true)
@@ -898,7 +970,6 @@ local function slashcmd(msg, editbox)
 		
 		SendAddonMessage(addonName, ""..GwentAddon.messages.challenge , "whisper" , name)
 		ChangeChallenger(name)
-		GwentAddon:IsYourTurn(true)
 		GwentAddon:ChangeState(GwentAddon.states.playerDiscard)
 		
 		GwentAddon:DEBUGMessageSent("duelling "..GwentAddon.challengerName, GwentAddon.challengerName)
