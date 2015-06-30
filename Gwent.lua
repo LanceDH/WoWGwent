@@ -41,8 +41,10 @@ GwentAddon.messages = {["placeInArea"] = "%s#%d"
 						,["challenge"] = "It's time to du-du-du-duel"
 						,["logout"] = "logged out"
 						,["pass"] = "passing"
-						,["won"] = "won: "
-						,["tie"] = "tie"
+						,["roundWon"] = "round won: "
+						,["roundTie"] = "round tied"
+						,["battleWon"] = "battle won: "
+						,["battleTie"] = "battle tied"
 						,["discarded"] = "Done discarding"
 						,["start"] = "start: "}
 
@@ -78,7 +80,8 @@ GwentAddon.states = {["noGame"] = 0
 					,["enemyTurn"] = 3
 					,["waitEnemyDiscard"] = 4
 					,["enemyDoneDiscarding"] = 5
-					,["determinStart"] = 6} 
+					,["determinStart"] = 6
+					,["gameEnd"] = 7} 
 					
 GwentAddon.enemyPassed = false
 GwentAddon.playerPassed = false
@@ -132,7 +135,33 @@ function GwentAddon:DeductLife(lives)
 	end
 end
 
-
+function GwentAddon:CheckBattleWinner()
+	-- battle tied
+	if GwentAddon.playerLives.count == 0 and GwentAddon.enemyLives.count == 0 then
+		GwentAddon.popup:ShowButtonMessage("The battle tied.", "End game", function() GwentAddon:ResetGame() end)
+		SendAddonMessage(addonName, GwentAddon.messages.battleTie, "whisper" , GwentAddon.challengerName)
+		GwentAddon:ChangeState(GwentAddon.states.gameEnd)
+		return true
+	end
+	
+	-- player wins
+	if GwentAddon.enemyLives.count == 0 then
+		GwentAddon.popup:ShowButtonMessage("You won the battle.", "End game", function() GwentAddon:ResetGame() end)
+		SendAddonMessage(addonName, GwentAddon.messages.battleWon.. "0", "whisper" , GwentAddon.challengerName)
+		GwentAddon:ChangeState(GwentAddon.states.gameEnd)
+		return true
+	end
+	
+	-- enemy wins
+	if GwentAddon.playerLives.count == 0 then
+		GwentAddon.popup:ShowButtonMessage("You lost the battle.", "End game", function() GwentAddon:ResetGame() end)
+		SendAddonMessage(addonName, GwentAddon.messages.battleWon.. "1", "whisper" , GwentAddon.challengerName)
+		GwentAddon:ChangeState(GwentAddon.states.gameEnd)
+		return true
+	end
+	
+	return false
+end    
 
 function GwentAddon:PlayerPlaceCardsOnFrame(list, frame)
 	local totalPoints = 0
@@ -745,12 +774,13 @@ end
 
 
 
-local function ChangeChallenger(sender)
+function GwentAddon:ChangeChallenger(sender)
+	if sender == nil then
+		sender = ""
+	end
+		
 	GwentAddon.challengerName = sender
 	GwentAddon.playFrame.enemyNametag:SetText(GwentAddon.challengerName)
-	for i=1,10 do
-		GwentAddon.cards:DrawCard()
-	end
 	
 	local challenger = GetUnitName("target", true)	
 	if challenger ~= nil then
@@ -761,7 +791,7 @@ end
 
 
 
-local function ResetGame() 
+function GwentAddon:ResetGame() 
 	GwentAddon.challengerName = nil
 	GwentAddon:DestroyCardsInList(GwentAddon.lists.player.hand)
 	GwentAddon:DestroyCardsInList(GwentAddon.lists.player.siege)
@@ -778,13 +808,27 @@ local function ResetGame()
 	
 	GwentAddon:ChangeState(GwentAddon.states.noGame)
 
-	GwentAddon.playFrame.playerTurn:Hide()
+	local pf = GwentAddon.playFrame
 	
-	GwentAddon.playFrame.enemyNametag:SetText("")
-	GwentAddon.playFrame.enemyTurn:Hide()
-	GwentAddon.playFrame.enemyPortrait:SetTexture(TEXTURE_PORTAITDEFAULT)
-	GwentAddon.playFrame.playerTotal.amount = 0
-	GwentAddon.playFrame.enemyTotal.amount = 0
+	pf.playerTurn:Hide()
+	
+	pf.enemyFaction:SetText("")
+	pf.enemyNametag:SetText("")
+	pf.enemyTurn:Hide()
+	pf.enemyPortrait:SetTexture(TEXTURE_PORTAITDEFAULT)
+	pf.playerTotal.amount = 0
+	pf.enemyTotal.amount = 0
+		
+	GwentAddon:ChangeChallenger(nil)
+	
+	GwentAddon.playerLives.count = 2
+	GwentAddon.playerLives.texture1:SetVertexColor(0.8, 0.1, 0.1)
+	GwentAddon.playerLives.texture2:SetVertexColor(0.8, 0.1, 0.1)
+	GwentAddon.enemyLives.count = 2
+	GwentAddon.enemyLives.texture1:SetVertexColor(0.8, 0.1, 0.1)
+	GwentAddon.enemyLives.texture2:SetVertexColor(0.8, 0.1, 0.1)
+	
+	
 	
 end
 
@@ -795,6 +839,7 @@ function GwentAddon:StartNewRound()
 	GwentAddon:DestroyCardsInList(GwentAddon.lists.enemy.siege)
 	GwentAddon:DestroyCardsInList(GwentAddon.lists.enemy.ranged)
 	GwentAddon:DestroyCardsInList(GwentAddon.lists.enemy.melee)
+	GwentAddon.cards:DrawCard()
 	GwentAddon.cards:PlaceAllCards()
 	_DraggedCard = nil
 	_DragginOverFrame = nil
@@ -810,9 +855,11 @@ local function FinishRound()
 	
 	if GwentAddon.playFrame.playerTotal.amount == GwentAddon.playFrame.enemyTotal.amount then 
 		-- Tie
-		SendAddonMessage(addonName, GwentAddon.messages.tie, "whisper" , GwentAddon.challengerName)
+		SendAddonMessage(addonName, GwentAddon.messages.roundTie, "whisper" , GwentAddon.challengerName)
 		GwentAddon:DeductLife(GwentAddon.playerLives)
 		GwentAddon:DeductLife(GwentAddon.enemyLives)
+		GwentAddon.popup:ShowMessage("Round tied", 4)
+		GwentAddon:StartNewRound()
 		return
 	end
 	
@@ -822,14 +869,19 @@ local function FinishRound()
 	
 	if playerWon then
 		GwentAddon:DeductLife(GwentAddon.enemyLives)
+		GwentAddon.popup:ShowMessage("Round won", 4)
 	else
 		GwentAddon:DeductLife(GwentAddon.playerLives)
+		GwentAddon.popup:ShowMessage("Round lost", 4)
 	end
 
-	SendAddonMessage(addonName, GwentAddon.messages.won.. (playerWon and "0" or "1"), "whisper" , GwentAddon.challengerName)
+	SendAddonMessage(addonName, GwentAddon.messages.roundWon.. (playerWon and "0" or "1"), "whisper" , GwentAddon.challengerName)
+	
+	-- check if a side won
+	
 	
 	GwentAddon:StartNewRound()
-	--ResetGame()
+	--GwentAddon:ResetGame()
 end
 
 function GwentAddon:ChangeState(state)
@@ -837,10 +889,12 @@ function GwentAddon:ChangeState(state)
 	GwentAddon.playFrame.discardButton:Hide()
 	GwentAddon.playFrame.playerTurn:Hide()
 	GwentAddon.playFrame.enemyTurn:Hide()
+	GwentAddon.playFrame.passButton:Enable()
 	
 	if GwentAddon.currentState == GwentAddon.states.playerDiscard or GwentAddon.currentState == GwentAddon.states.enemyDoneDiscarding then
 		GwentAddon.popup:ShowMessage("Select up to 2 cards to discard and click the discard button.", 4)
 		GwentAddon.playFrame.discardButton:Show()
+		GwentAddon.playFrame.passButton:Disable()
 		
 	elseif GwentAddon.currentState == GwentAddon.states.playerTurn then
 		if GwentAddon.enemyPassed then
@@ -859,7 +913,11 @@ function GwentAddon:ChangeState(state)
 		for k, card in ipairs(GwentAddon.lists.player.hand) do
 			card:SetMovable(false)
 		end
+		GwentAddon.playFrame.passButton:Disable()
 		
+		
+	elseif GwentAddon.currentState == GwentAddon.states.gameEnd then
+		GwentAddon.playFrame.passButton:Disable()
 	end
 end
 
@@ -881,13 +939,14 @@ function Gwent_EventFrame:CHAT_MSG_ADDON(prefix, message, channel, sender)
 	end
 	
 	if message == GwentAddon.messages.challenge then
-		ChangeChallenger(sender)
+		GwentAddon:ChangeChallenger(sender)
+		GwentAddon.cards:DrawStartHand()
 		GwentAddon:ChangeState(GwentAddon.states.playerDiscard)
 	end
 	
 	if message == GwentAddon.messages.logout then
 		
-		ResetGame()
+		GwentAddon:ResetGame()
 	end
 	
 	if message == GwentAddon.messages.discarded then
@@ -925,22 +984,43 @@ function Gwent_EventFrame:CHAT_MSG_ADDON(prefix, message, channel, sender)
 		GwentAddon:ChangeState(GwentAddon.states.playerTurn)
 	end
 	
-	if string.find(message, GwentAddon.messages.won) then
-		local playerWon = tonumber(string.match(message, GwentAddon.messages.won.."(%d+)")) == 1 and true or false
+	if string.find(message, GwentAddon.messages.roundWon) then
+		local playerWon = tonumber(string.match(message, GwentAddon.messages.roundWon.."(%d+)")) == 1 and true or false
 		if playerWon then
 			GwentAddon:DeductLife(GwentAddon.enemyLives)
+			GwentAddon.popup:ShowMessage("Round won", 4)
 		else
+			GwentAddon.popup:ShowMessage("Round lost", 4)
 			GwentAddon:DeductLife(GwentAddon.playerLives)
+			
 		end
-
+		
+		
 		GwentAddon:StartNewRound()
+		GwentAddon:CheckBattleWinner()
 	end
 	
+	if string.find(message, GwentAddon.messages.battleWon) then
+		local playerWon = tonumber(string.match(message, GwentAddon.messages.battleWon.."(%d+)")) == 1 and true or false
+		if playerWon then
+			GwentAddon.popup:ShowButtonMessage("Battle won", "End game", function() GwentAddon:ResetGame() end)
+		else
+			GwentAddon.popup:ShowButtonMessage("Battle lost", "End game", function() GwentAddon:ResetGame() end)
+		end
+		GwentAddon:ChangeState(GwentAddon.states.gameEnd)
+	end
 		
-	if message == GwentAddon.messages.tie then
+	if message == GwentAddon.messages.roundTie then
 		GwentAddon:DeductLife(GwentAddon.enemyLives)
 		GwentAddon:DeductLife(GwentAddon.playerLives)
-		ResetGame()
+		GwentAddon.popup:ShowMessage("Round tied", 4)
+		GwentAddon:StartNewRound()
+		GwentAddon:CheckBattleWinner()
+	end
+	
+	if message == GwentAddon.messages.battleTie then
+		GwentAddon.popup:ShowButtonMessage("The battle tied", "End game", function() GwentAddon:ResetGame() end)
+		GwentAddon:ChangeState(GwentAddon.states.gameEnd)
 	end
 	
 	if string.find(message, GwentAddon.messages.start) then
@@ -985,18 +1065,19 @@ local function slashcmd(msg, editbox)
 		GwentAddon:DEBUGToggleFrame()
 		
 	elseif msg == 'test' then
-		GwentAddon.popup:ShowMessage("This is nothing but a test.")
+		GwentAddon.popup:ShowButtonMessage("This is nothing but a test.", "text", function() GwentAddon.popup:ShowMessage("GG") end)
 		
 	elseif msg == 'duel' then
 		
 		name = GetUnitName("target", true)
 		
-		if name == nil then
+		if name == nil or name == GetUnitName("player", false) then
 			return
 		end
 		
 		SendAddonMessage(addonName, ""..GwentAddon.messages.challenge , "whisper" , name)
-		ChangeChallenger(name)
+		GwentAddon:ChangeChallenger(name)
+		GwentAddon.cards:DrawStartHand()
 		GwentAddon:ChangeState(GwentAddon.states.playerDiscard)
 		
 		GwentAddon:DEBUGMessageSent("duelling "..GwentAddon.challengerName, GwentAddon.challengerName)

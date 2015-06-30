@@ -892,6 +892,13 @@ function Cards:DrawCard()
 	self:PlaceAllCards()
 end
 
+function Cards:DrawStartHand()
+
+	for i=1,10 do
+		self:DrawCard()
+	end
+end
+
 function Cards:StartDraggingCard(card)
 	-- only allow during player's turn and when card is movable
 	if not card:IsMovable() or  GwentAddon.currentState ~= GwentAddon.states.playerTurn then

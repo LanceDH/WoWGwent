@@ -18,6 +18,13 @@ function Popup.new(parent)
 	self.time = 0
 	self.showDuration = 2
 	
+	self.button = CreateFrame("button", addonName.."_Popup_button", self.frame, "UIPanelButtonTemplate")
+	self.button:SetPoint("bottom", self.frame, "bottom", 0, 5)
+	self.button:SetSize(100, 25)
+	self.button:SetText("Close")
+	self.button:SetScript("OnClick", function() end)	
+	self.button:Hide()
+	
 	return self
 end
 
@@ -26,7 +33,7 @@ function GwentAddon:CreatePopupClass(parent)
 end
 
 function Popup:CreateFrame(parent)
-	frame = CreateFrame("Frame", addonName.."Popup");
+	frame = CreateFrame("Frame", addonName.."_Popup");
 	frame:SetFrameLevel(parent:GetFrameLevel()+2)
 	frame:ClearAllPoints();
 	frame:SetHeight(100);
@@ -37,26 +44,21 @@ function Popup:CreateFrame(parent)
       insets = { left = 0, right = 0, top = 0, bottom = 0 }
 	  })
 	frame:SetScript("OnUpdate", function() self:OnUpdate() end);
-	-- frame:Hide();
 	frame:SetPoint("center", parent);
 	frame.text = frame:CreateFontString(nil, nil, "PVPInfoTextFont");
-	--frame.text:SetDrawLayer("OVERLAY", 7)
 	frame.text:SetPoint("topleft", frame);
 	frame.text:SetPoint("bottomright", frame);
-	--frame.text:SetAllPoints();
 	frame.text:SetText("default text");
-	
-	--frame = 0;
 	
 	return frame
 end
  
 function Popup:OnUpdate()
-	if (self.time < GetTime() - self.showDuration) then
+	if self.showDuration >= 0 and (self.time < GetTime() - self.showDuration) then
 		local alpha = self.frame:GetAlpha();
 		if (alpha ~= 0) then 
-			self.frame:SetAlpha(alpha - .01); 
-			self.frame.text:SetAlpha(alpha - .01);
+			self.frame:SetAlpha(alpha - .02); 
+			self.frame.text:SetAlpha(alpha - .02);
 		end
 		if (aplha == 0) then
 			self.frame:Hide();
@@ -64,21 +66,32 @@ function Popup:OnUpdate()
 		
 	end
 end
- 
-function Popup:ShowMessage(message, dur)
-	self.showDuration = 2
-	if dur ~= nil and type(dur) == "number" then
-		self.showDuration = dur
-	end
+
+function Popup:ShowButtonMessage(message, text, event)
+	self.showDuration = -1
+	self.button:SetText(text)
+	self.button:SetScript("OnClick", function(btn) 
+								if event ~= nil then
+									event() 
+								end
+								btn:Hide()
+								btn:SetText("Close")
+								self.showDuration = 0
+							end);
+	self.button:Show()
 	self.frame.text:SetText(message);
 	self.frame:SetAlpha(1);
 	self.frame.text:SetAlpha(1);
 	self.frame:Show();
-	self.time = GetTime();
 end
+ 
+function Popup:ShowMessage(message, dur)
+	self.showDuration = 2
+	
+	if dur ~= nil and type(dur) == "number" then
+		self.showDuration = dur
+	end
 
-function Popup:SetTextLong(message)
-	self.showDuration = 4
 	self.frame.text:SetText(message);
 	self.frame:SetAlpha(1);
 	self.frame.text:SetAlpha(1);
