@@ -5,6 +5,14 @@ GwentAddon.DEBUGWINDOW = {}
 local DEBUGMESSAGES = {}
 local TEXT_ADDONMSG_RECIEVED = "Message Recieved"
 
+local function round(num, idp)
+	local ret = 0
+	if num >= 0 then
+		ret = tonumber(string.format("%." .. (idp or 0) .. "f", num))
+	end
+	return ret
+end
+
 local function DEBUGPrintCard(card)
 	local cardName = AceGUI:Create("Label")
 	cardName:SetRelativeWidth(1)
@@ -128,6 +136,8 @@ local function debug_updatext()
 		text = text .. "enemy passed: \n  " .. (GwentAddon.enemyPassed and "true" or "false") .."\n"
 		text = text .. "player lives: " .. GwentAddon.playerLives.count .."\n"
 		text = text .. "enemy lives: " .. GwentAddon.enemyLives.count .."\n"
+		text = text .. "# mouseover list: \n  " .. (GwentAddon.draggingOver.list == nil and "none" or #GwentAddon.draggingOver.list) .."\n"
+		text = text .. "mouse over card: " .. (GwentAddon.draggingOver.card == nil and "" or GwentAddon.draggingOver.card.nr).."\n  " .. (GwentAddon.draggingOver.card == nil and "none" or  round(GwentAddon.draggingOver.card.leftSpacing, 2) .. " - " .. round(GwentAddon.draggingOver.card.rightSpacing, 2)) .."\n"
 		
 		GwentDEBUGVariables.text:SetText(text)
 	end

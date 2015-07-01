@@ -88,6 +88,8 @@ GwentAddon.playerPassed = false
 GwentAddon.playerLives = {["count"] = 2, ["texture1"] = nil, ["texture2"] = nil}
 GwentAddon.enemyLives = {["count"] = 2, ["texture1"] = nil, ["texture2"] = nil}
 
+GwentAddon.draggingOver = {}
+
 local function isInteger(x)
 	return math.floor(x)==x
 end
@@ -165,15 +167,37 @@ end
 
 function GwentAddon:PlayerPlaceCardsOnFrame(list, frame)
 	local totalPoints = 0
+	
+	local distance = 0
+	frame.cardContainer:SetWidth(0)
 
 	for k, card in ipairs(list) do
 		card:ClearAllPoints()
-		card:SetPoint("topleft", frame , "topleft", (k-1)*GwentAddon.NUM_CARD_WIDTH, 0)
+		
+		-- reset spacing when not draggin a card around
+		if GwentAddon.cards.draggedCard == nil then 
+			card.leftSpacing = 0
+			card.rightSpacing = 0
+		end
+		
+		--(k-1)*GwentAddon.NUM_CARD_WIDTH
+		
+		if card.leftSpacing > 0 then distance = distance + card.leftSpacing end
+		card:SetPoint("left", frame.cardContainer , "left",distance , 0)
+		if card.rightSpacing > 0 then distance = distance + card.rightSpacing end
+		-- Change inset for mouseover
+		card:SetHitRectInsets(-card.leftSpacing, -card.rightSpacing, 0, 0)
+		--print(card:GetName(), card:GetHitRectInsets())
+		
 		card:SetWidth(GwentAddon.NUM_CARD_WIDTH)
 		card:SetHeight(GwentAddon.NUM_CARD_HEIGHT)
 		
+		distance = distance + GwentAddon.NUM_CARD_WIDTH
+		
 		totalPoints = totalPoints + card.data.strength
 	end
+	
+	frame.cardContainer:SetWidth(distance)
 	
 	if frame.points ~= nil then
 		frame.points:SetText(totalPoints)
@@ -270,6 +294,11 @@ local function CreateCardArea(name, parent, texture)
 	  tileSize = 0, edgeSize = 16,
       insets = { left = 0, right = 0, top = 0, bottom = 0 }
 	  })
+	  
+	frame.cardContainer = CreateFrame("frame", addonName.."PlayFrame_" .. name.."_Cardcontainer", parent)
+	frame.cardContainer:SetPoint("center", frame)
+	frame.cardContainer:SetHeight(GwentAddon.NUM_CARD_HEIGHT)
+
 	 
 	frame.commander = CreateFrame("frame", addonName.."PlayFrame_" .. name .."_Commander", parent)
 	frame.commander:SetHeight(GwentAddon.NUM_CARD_HEIGHT)
@@ -409,7 +438,74 @@ local function CreateWeatherArea(PlayFrame)
 	  })
 end
 
+GwentAddon.draggingOver.timer = 0
+
+
+function GwentAddon:GetCardlistMouseOver()
+	if GwentAddon:MouseIsOverFrame(GwentPlayFrame.playerSiege) then
+		return GwentAddon.lists.player.siege, GwentPlayFrame.playerSiege
+	elseif GwentAddon:MouseIsOverFrame(GwentPlayFrame.playerRanged) then
+		return GwentAddon.lists.player.ranged, GwentPlayFrame.playerRanged
+	elseif GwentAddon:MouseIsOverFrame(GwentPlayFrame.playerMelee) then
+		return GwentAddon.lists.player.melee, GwentPlayFrame.playerMelee
+	end
+	
+	return nil
+end
+
+function GwentAddon:GetCardMouseOverInLisT(list)
+	if list == nil then return nil end
+
+	for k, card in pairs(list) do
+		if GwentAddon:MouseIsOverFrame(card) then
+			return card
+		end
+	end
+	
+	return nil
+end
+
 local function CreatePlayFrame()
+	
+	local GwentUpdater = CreateFrame("frame", "GwentUpdater", UIParent)
+	
+	GwentUpdater:SetScript("OnUpdate", function(self,elapsed) 
+		
+		
+		if GwentAddon.cards.draggedCard == nil then return end
+		
+		
+		GwentAddon.draggingOver.timer = GwentAddon.draggingOver.timer + elapsed
+		if GwentAddon.draggingOver.timer >= 0.05 then
+			GwentAddon.draggingOver.list = nil
+		GwentAddon.draggingOver.card = nil
+		GwentAddon.draggingOver.mouseX, GwentAddon.draggingOver.mouseY = 0, 0
+			
+			GwentAddon.draggingOver.list, GwentAddon.draggingOver.area = GwentAddon:GetCardlistMouseOver()
+			--GwentAddon.draggingOver.card = GwentAddon:GetCardMouseOverInLisT(GwentAddon.draggingOver.list)
+			GwentAddon.draggingOver.mouseX, GwentAddon.draggingOver.mouseY = GetCursorPosition()
+			if GwentAddon.draggingOver.list ~= nil then
+				for k, card in pairs(GwentAddon.draggingOver.list) do
+					if GwentAddon.cards:UpdateCardSpaceing(card, GwentAddon.draggingOver.mouseX, GwentAddon.draggingOver.mouseY) then
+						GwentAddon.draggingOver.card = card
+					end
+				end
+				GwentAddon:PlayerPlaceCardsOnFrame(GwentAddon.draggingOver.list, GwentAddon.draggingOver.area)
+			end
+			-- safety to not lose card
+			-- if overCard ~= nil then
+				-- GwentAddon.cards:UpdateCardSpaceing(GwentAddon.draggingOver.card, GwentAddon.draggingOver.mouseX, GwentAddon.draggingOver.mouseY)
+				-- GwentAddon:PlayerPlaceCardsOnFrame(GwentAddon.draggingOver.list, GwentAddon.draggingOver.area)
+			-- end
+			GwentAddon.draggingOver.timer = 0
+		end
+		end)
+	
+	
+	
+	
+	
+	
 	
 	local PlayFrame = CreateFrame("frame", addonName.."PlayFrame", UIParent)
 	PlayFrame:SetHeight(780)
@@ -484,18 +580,22 @@ local function CreatePlayFrame()
 	CreateWeatherArea(PlayFrame)
 	
 	-- player hand
-	PlayFrame.playerHand = CreateFrame("frame", addonName.."PlayFrameGwentAddon.lists.player.hand", PlayFrame)
+	PlayFrame.playerHand = CreateFrame("frame", addonName.."PlayerHand", PlayFrame)
 	PlayFrame.playerHand:SetPoint("bottom", PlayFrame, "bottom", 0, 23)
 	PlayFrame.playerHand:SetHeight(GwentAddon.NUM_CARD_HEIGHT)
 	PlayFrame.playerHand:SetWidth(GwentAddon.NUM_CARD_WIDTH * 10)
-	PlayFrame.playerHand:SetBackdrop({bgFile = "Interface\\DialogFrame\\UI-DialogBox-Gold-Background",
+	PlayFrame.playerHand:SetBackdrop({bgFile = TEXTURE_CARD_BG,
       edgeFile = nil,
 	  tileSize = 0, edgeSize = 16,
       insets = { left = 0, right = 0, top = 0, bottom = 0 }
 	  })
 	  
+	PlayFrame.playerHand.cardContainer = CreateFrame("frame", addonName.."PlayerHandContainer", PlayFrame.playerHand)
+	PlayFrame.playerHand.cardContainer:SetPoint("center", PlayFrame.playerHand)
+	PlayFrame.playerHand.cardContainer:SetHeight(GwentAddon.NUM_CARD_HEIGHT)
+	  
 	-- player siege
-	PlayFrame.playerSiege = CreateCardArea("PlayerRanged", PlayFrame, TEXTURE_TYPE_SIEGE)
+	PlayFrame.playerSiege = CreateCardArea("PlayerSiege", PlayFrame, TEXTURE_TYPE_SIEGE)
 	PlayFrame.playerSiege:SetPoint("bottom", PlayFrame.playerHand, "top", 0, 20) 
 	-- player ranged
 	PlayFrame.playerRanged = CreateCardArea("PlayerRanged", PlayFrame, TEXTURE_TYPE_RANGED)
@@ -617,6 +717,10 @@ local function CreatePlayFrame()
       insets = { left = 0, right = 0, top = 0, bottom = 0 }
 	  })
 	  
+	PlayFrame.enemyHand.cardContainer = CreateFrame("frame", addonName.."EnemyHandContainer", PlayFrame.enemyHand)
+	PlayFrame.enemyHand.cardContainer:SetPoint("center", PlayFrame.enemyHand)
+	PlayFrame.enemyHand.cardContainer:SetHeight(GwentAddon.NUM_CARD_HEIGHT)
+	  
 	-- enemy siege
 	PlayFrame.enemySiege = CreateCardArea("EnemyRanged", PlayFrame, TEXTURE_TYPE_SIEGE)
 	PlayFrame.enemySiege:SetPoint("top", PlayFrame.enemyHand, "bottom", 0, -20) 
@@ -726,7 +830,9 @@ local function IsRightTypeForArea(card, areaType)
 	return false
 end
 
-local function DroppingCardOnFrame(frame)
+
+
+function GwentAddon:MouseIsOverFrame(frame)
 	local left, bottom, width, height = frame:GetBoundsRect()
 	local mouseX, mouseY = GetCursorPosition()
 	local s = frame:GetEffectiveScale();
@@ -741,17 +847,17 @@ local function DroppingCardOnFrame(frame)
 end
 
 function GwentAddon:DropCardArea(card)
-	if DroppingCardOnFrame(GwentAddon.playFrame.playerSiege) and IsRightTypeForArea(card, TEXT_SIEGE) then
+	if GwentAddon:MouseIsOverFrame(GwentAddon.playFrame.playerSiege) and IsRightTypeForArea(card, TEXT_SIEGE) then
 		
 		GwentAddon.cards:AddCardToNewList(card, GwentAddon.lists.player.siege)
 		GwentAddon.cards:RemoveCardFromHand(card)
 		return true, TEXT_SIEGE
-	elseif DroppingCardOnFrame(GwentAddon.playFrame.playerRanged) and IsRightTypeForArea(card, TEXT_RANGED) then
+	elseif GwentAddon:MouseIsOverFrame(GwentAddon.playFrame.playerRanged) and IsRightTypeForArea(card, TEXT_RANGED) then
 		
 		GwentAddon.cards:AddCardToNewList(card, GwentAddon.lists.player.ranged)
 		GwentAddon.cards:RemoveCardFromHand(card)
 		return true, TEXT_RANGED
-	elseif DroppingCardOnFrame(GwentAddon.playFrame.playerMelee) and IsRightTypeForArea(card, TEXT_MELEE) then
+	elseif GwentAddon:MouseIsOverFrame(GwentAddon.playFrame.playerMelee) and IsRightTypeForArea(card, TEXT_MELEE) then
 		
 		GwentAddon.cards:AddCardToNewList(card, GwentAddon.lists.player.melee)
 		GwentAddon.cards:RemoveCardFromHand(card)

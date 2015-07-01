@@ -31,6 +31,8 @@ local ABILITY_Command = "Commander's Horn"
 local ABILITY_SCORCH = "Scorch"
 local ABILITY_Hero = "Immune to special cards"
 
+
+
 function Cards.new()
 	local self = setmetatable({}, Cards)
 	self.list = {}
@@ -44,7 +46,6 @@ function Cards.new()
 	self.draggedCard = nil
 	
 	self:CreateCardsList()
-
 	
 	return self
 end
@@ -53,423 +54,522 @@ function GwentAddon:CreateCardsClass()
 	GwentAddon.cards = Cards()
 end
 
+function Cards:CreateCardsDatalist(name, faction, strength, cardType, ability, texture, subText)
+	local data = {name = "Name missing" ,faction = "Faction Missing" ,strength = 0 ,cardType = {melee = false, ranged = false, siege = false, hero = false, leader = false} ,ability = nil ,texture = "",subText = nil, changedStrength = 0}
+	if name ~= nil then data.name = name end
+	if faction ~= nil then data.faction = faction end
+	if strength ~= nil and type(strength) == "number" then data.strength = strength end
+	if cardType ~= nil and type(cardType) == "table" then data.cardType = cardType end
+	if ability ~= nil then data.ability = ability end
+	if texture ~= nil then data.texture = texture end
+	if subText ~= nil then data.subText = subText end
+	
+	return data
+end
+
 function Cards:AddNorthCards()
 	-----------------------------------------------------------------------------------------------
 	-- Northern Realms
 	-----------------------------------------------------------------------------------------------
 	
-	table.insert(self.list, {
-				name = "Foltest, King of Temeria"
-				,faction = self.factions.north
-				,strength = 0
-				,cardType = {melee = false, ranged = false, siege = false, hero = false, leader = true}
-				,ability = "NYI"
-				,texture = "peasant"
-			})
-			
-	table.insert(self.list, {
-				name = "Foltest, Lord Commander Of The North"
-				,faction = self.factions.north
-				,strength = 0
-				,cardType = {melee = false, ranged = false, siege = false, hero = false, leader = true}
-				,ability = "NYI"
-				,texture = "peasant"
-			})
-			
-	table.insert(self.list, {
-				name = "Foltest The Steel-forged"
-				,faction = self.factions.north
-				,strength = 0
-				,cardType = {melee = false, ranged = false, siege = false, hero = false, leader = true}
-				,ability = "NYI"
-				,texture = "peasant"
-			})
+	table.insert(self.list, self:CreateCardsDatalist("Foltest, King of Temeria", self.factions.north, 0, {melee = false, ranged = false, siege = false, hero = false, leader = true}, "NYI", "peasant"))
 	
-	table.insert(self.list, {
-				name = "Foltest The Siegemaster"
-				,faction = self.factions.north
-				,strength = 0
-				,cardType = {melee = false, ranged = false, siege = false, hero = false, leader = true}
-				,ability = "NYI"
-				,texture = "peasant"
-			})
-			
-	table.insert(self.list, {
-				name = "Philippa Eilhart"
-				,faction = self.factions.north
-				,strength = 10
-				,cardType = {melee = false, ranged = true, siege = false, hero = true, leader = false}
-				,ability = ABILITY_Hero
-				,texture = "peasant"
-			})
-			
-	table.insert(self.list, {
-				name = "Vernon Roche"
-				,faction = self.factions.north
-				,strength = 10
-				,cardType = {melee = true, ranged = false, siege = false, hero = true, leader = false}
-				,ability = ABILITY_Hero
-				,texture = "peasant"
-			})
+	-- table.insert(self.list, {
+				-- name = "Foltest, King of Temeria"
+				-- ,faction = self.factions.north
+				-- ,strength = 0
+				-- ,cardType = {melee = false, ranged = false, siege = false, hero = false, leader = true}
+				-- ,ability = "NYI"
+				-- ,texture = "peasant"
+			-- })
 	
-	table.insert(self.list, {
-				name = "Esterad Thyssen"
-				,faction = self.factions.north
-				,strength = 10
-				,cardType = {melee = true, ranged = false, siege = false, hero = true, leader = false}
-				,ability = ABILITY_Hero
-				,texture = "peasant"
-			})
+	table.insert(self.list, self:CreateCardsDatalist("Foltest, Lord Commander Of The North", self.factions.north, 0, {melee = false, ranged = false, siege = false, hero = false, leader = true}, "NYI", "peasant"))
 	
-	table.insert(self.list, {
-				name = "John Natalis"
-				,faction = self.factions.north
-				,strength = 10
-				,cardType = {melee = true, ranged = false, siege = false, hero = true, leader = false}
-				,ability = ABILITY_Hero
-				,texture = "peasant"
-			})
+	-- table.insert(self.list, {
+				-- name = "Foltest, Lord Commander Of The North"
+				-- ,faction = self.factions.north
+				-- ,strength = 0
+				-- ,cardType = {melee = false, ranged = false, siege = false, hero = false, leader = true}
+				-- ,ability = "NYI"
+				-- ,texture = "peasant"
+			-- })
+			
+	table.insert(self.list, self:CreateCardsDatalist("Foltest The Steel-forged", self.factions.north, 0, {melee = false, ranged = false, siege = false, hero = false, leader = true}, "NYI", "peasant"))
+			
+	-- table.insert(self.list, {
+				-- name = "Foltest The Steel-forged"
+				-- ,faction = self.factions.north
+				-- ,strength = 0
+				-- ,cardType = {melee = false, ranged = false, siege = false, hero = false, leader = true}
+				-- ,ability = "NYI"
+				-- ,texture = "peasant"
+			-- })
+			
+	table.insert(self.list, self:CreateCardsDatalist("Foltest The Siegemaster", self.factions.north, 0, {melee = false, ranged = false, siege = false, hero = false, leader = true}, "NYI", "peasant"))
 	
-	table.insert(self.list, {
-				name = "Thaler"
-				,faction = self.factions.north
-				,strength = 1
-				,cardType = {melee = false, ranged = false, siege = true, hero = false, leader = false}
-				,ability = ABILITY_Spy
-				,texture = "peasant"
-			})
+	-- table.insert(self.list, {
+				-- name = "Foltest The Siegemaster"
+				-- ,faction = self.factions.north
+				-- ,strength = 0
+				-- ,cardType = {melee = false, ranged = false, siege = false, hero = false, leader = true}
+				-- ,ability = "NYI"
+				-- ,texture = "peasant"
+			-- })
 			
-	table.insert(self.list, {
-			name = "Redanian Foot Soldier"
-				,faction = self.factions.north
-				,strength = 1
-				,cardType = {melee = true, ranged = false, siege = false, hero = false, leader = false}
-				,ability = nil
-				,texture = "peasant"
-				,subText = "1/2"
-			})
+	table.insert(self.list, self:CreateCardsDatalist("Philippa Eilhart", self.factions.north, 10, {melee = false, ranged = true, siege = false, hero = true, leader = false}, ABILITY_Hero, "peasant"))	
+		
+	-- table.insert(self.list, {
+				-- name = "Philippa Eilhart"
+				-- ,faction = self.factions.north
+				-- ,strength = 10
+				-- ,cardType = {melee = false, ranged = true, siege = false, hero = true, leader = false}
+				-- ,ability = ABILITY_Hero
+				-- ,texture = "peasant"
+			-- })
 			
-	table.insert(self.list, {
-			name = "Redanian Foot Soldier"
-				,faction = self.factions.north
-				,strength = 1
-				,cardType = {melee = true, ranged = false, siege = false, hero = false, leader = false}
-				,ability = nil
-				,texture = "peasant"
-				,subText = "2/2"
-			})
+	table.insert(self.list, self:CreateCardsDatalist("Vernon Roche", self.factions.north, 10, {melee = true, ranged = false, siege = false, hero = true, leader = false}, ABILITY_Hero, "peasant"))	
 			
-	table.insert(self.list, {
-				name = "Poor Fucking Infantry"
-				,faction = self.factions.north
-				,strength = 1
-				,cardType = {melee = true, ranged = false, siege = false, hero = false, leader = false}
-				,ability = ABILITY_Bond
-				,texture = "peasant"
-				,subText = "1/3"
-			})
+	-- table.insert(self.list, {
+				-- name = "Vernon Roche"
+				-- ,faction = self.factions.north
+				-- ,strength = 10
+				-- ,cardType = {melee = true, ranged = false, siege = false, hero = true, leader = false}
+				-- ,ability = ABILITY_Hero
+				-- ,texture = "peasant"
+			-- })
 			
-	table.insert(self.list, {
-				name = "Poor Fucking Infantry"
-				,faction = self.factions.north
-				,strength = 1
-				,cardType = {melee = true, ranged = false, siege = false, hero = false, leader = false}
-				,ability = ABILITY_Bond
-				,texture = "peasant"
-				,subText = "2/3"
-			})
-			
-	table.insert(self.list, {
-				name = "Poor Fucking Infantry"
-				,faction = self.factions.north
-				,strength = 1
-				,cardType = {melee = true, ranged = false, siege = false, hero = false, leader = false}
-				,ability = ABILITY_Bond
-				,texture = "peasant"
-				,subText = "3/3"
-			})
-			
-	table.insert(self.list, {
-				name = "Kaedweni Siege Expert"
-				,faction = self.factions.north
-				,strength = 1
-				,cardType = {melee = false, ranged = false, siege = true, hero = false, leader = false}
-				,ability = ABILITY_Morale
-				,texture = "balista"
-				,subText = "1/3"
-			})
-			
-	table.insert(self.list, {
-				name = "Kaedweni Siege Expert"
-				,faction = self.factions.north
-				,strength = 1
-				,cardType = {melee = false, ranged = false, siege = true, hero = false, leader = false}
-				,ability = ABILITY_Morale
-				,texture = "balista"
-				,subText = "2/3"
-			})
-			
-	table.insert(self.list, {
-				name = "Kaedweni Siege Expert"
-				,faction = self.factions.north
-				,strength = 1
-				,cardType = {melee = false, ranged = false, siege = true, hero = false, leader = false}
-				,ability = ABILITY_Morale
-				,texture = "balista"
-				,subText = "3/3"
-			})
-			
-	table.insert(self.list, {
-				name = "Yarpen Zigrin"
-				,faction = self.factions.north
-				,strength = 2
-				,cardType = {melee = true, ranged = false, siege = false, hero = false, leader = false}
-				,ability = nil
-				,texture = "balista"
-			})
-			
-	table.insert(self.list, {
-				name = "Sigismund Dijkstra"
-				,faction = self.factions.north
-				,strength = 4
-				,cardType = {melee = true, ranged = false, siege = false, hero = false, leader = false}
-				,ability = ABILITY_Spy
-				,texture = "balista"
-			})
-			
-	table.insert(self.list, {
-				name = "Sheldon Skaggs"
-				,faction = self.factions.north
-				,strength = 4
-				,cardType = {melee = false, ranged = true, siege = false, hero = false, leader = false}
-				,ability = nil
-				,texture = "balista"
-			})
-			
-	table.insert(self.list, {
-				name = "Blue Stripes Commando"
-				,faction = self.factions.north
-				,strength = 4
-				,cardType = {melee = true, ranged = false, siege = false, hero = false, leader = false}
-				,ability = ABILITY_Bond
-				,texture = "balista"
-				,subText = "1/3"
-			})
-			
-	table.insert(self.list, {
-				name = "Blue Stripes Commando"
-				,faction = self.factions.north
-				,strength = 4
-				,cardType = {melee = true, ranged = false, siege = false, hero = false, leader = false}
-				,ability = ABILITY_Bond
-				,texture = "balista"
-				,subText = "2/3"
-			})
-			
-	table.insert(self.list, {
-				name = "Blue Stripes Commando"
-				,faction = self.factions.north
-				,strength = 4
-				,cardType = {melee = true, ranged = false, siege = false, hero = false, leader = false}
-				,ability = ABILITY_Bond
-				,texture = "balista"
-				,subText = "3/3"
-			})
-			
-	table.insert(self.list, {
-				name = "Sabrina Gevissig"
-				,faction = self.factions.north
-				,strength = 4
-				,cardType = {melee = false, ranged = true, siege = false, hero = false, leader = false}
-				,ability = nil
-				,texture = "balista"
-			})
+	table.insert(self.list, self:CreateCardsDatalist("Esterad Thyssen", self.factions.north, 10, {melee = true, ranged = false, siege = false, hero = true, leader = false}, ABILITY_Hero, "peasant"))	
 	
-	table.insert(self.list, {
-				name = "Ves"
-				,faction = self.factions.north
-				,strength = 5
-				,cardType = {melee = true, ranged = false, siege = false, hero = false, leader = false}
-				,ability = nil
-				,texture = "peasant"
-			})
+	-- table.insert(self.list, {
+				-- name = "Esterad Thyssen"
+				-- ,faction = self.factions.north
+				-- ,strength = 10
+				-- ,cardType = {melee = true, ranged = false, siege = false, hero = true, leader = false}
+				-- ,ability = ABILITY_Hero
+				-- ,texture = "peasant"
+			-- })
+	
+	table.insert(self.list, self:CreateCardsDatalist("John Natalis", self.factions.north, 10, {melee = true, ranged = false, siege = false, hero = true, leader = false}, ABILITY_Hero, "peasant"))	
+	
+	-- table.insert(self.list, {
+				-- name = "John Natalis"
+				-- ,faction = self.factions.north
+				-- ,strength = 10
+				-- ,cardType = {melee = true, ranged = false, siege = false, hero = true, leader = false}
+				-- ,ability = ABILITY_Hero
+				-- ,texture = "peasant"
+			-- })
 			
-	table.insert(self.list, {
-				name = "Siegfried of Denesle"
-				,faction = self.factions.north
-				,strength = 5
-				,cardType = {melee = true, ranged = false, siege = false, hero = false, leader = false}
-				,ability = nil
-				,texture = "peasant"
-				,subText = "1/2"
-			})
+	table.insert(self.list, self:CreateCardsDatalist("Thaler", self.factions.north, 1, {melee = false, ranged = false, siege = true, hero = false, leader = false}, ABILITY_Spy, "peasant"))	
+	
+	-- table.insert(self.list, {
+				-- name = "Thaler"
+				-- ,faction = self.factions.north
+				-- ,strength = 1
+				-- ,cardType = {melee = false, ranged = false, siege = true, hero = false, leader = false}
+				-- ,ability = ABILITY_Spy
+				-- ,texture = "peasant"
+			-- })
 			
-	table.insert(self.list, {
-				name = "Siegfried of Denesle"
-				,faction = self.factions.north
-				,strength = 5
-				,cardType = {melee = true, ranged = false, siege = false, hero = false, leader = false}
-				,ability = nil
-				,texture = "peasant"
-				,subText = "2/2"
-			})
+	table.insert(self.list, self:CreateCardsDatalist("Redanian Foot Soldier", self.factions.north, 1, {melee = true, ranged = false, siege = false, hero = false, leader = false}, nil, "peasant", "1/2"))
 			
-	table.insert(self.list, {
-				name = "Prince Stennis"
-				,faction = self.factions.north
-				,strength = 5
-				,cardType = {melee = true, ranged = false, siege = false, hero = false, leader = false}
-				,ability = ABILITY_Spy
-				,texture = "balista"
-			})
+	-- table.insert(self.list, {
+			-- name = "Redanian Foot Soldier"
+				-- ,faction = self.factions.north
+				-- ,strength = 1
+				-- ,cardType = {melee = true, ranged = false, siege = false, hero = false, leader = false}
+				-- ,ability = nil
+				-- ,texture = "peasant"
+				-- ,subText = "1/2"
+			-- })
 			
-	table.insert(self.list, {
-				name = "Crinfrid Reavers Dragon Hunter"
-				,faction = self.factions.north
-				,strength = 5
-				,cardType = {melee = false, ranged = true, siege = false, hero = false, leader = false}
-				,ability = ABILITY_Bond
-				,texture = "balista"
-				,subText = "1/3"
-			})
+	table.insert(self.list, self:CreateCardsDatalist("Redanian Foot Soldier", self.factions.north, 1, {melee = true, ranged = false, siege = false, hero = false, leader = false}, nil, "peasant", "2/2"))
+	
+	-- table.insert(self.list, {
+			-- name = "Redanian Foot Soldier"
+				-- ,faction = self.factions.north
+				-- ,strength = 1
+				-- ,cardType = {melee = true, ranged = false, siege = false, hero = false, leader = false}
+				-- ,ability = nil
+				-- ,texture = "peasant"
+				-- ,subText = "2/2"
+			-- })
 			
-	table.insert(self.list, {
-				name = "Crinfrid Reavers Dragon Hunter"
-				,faction = self.factions.north
-				,strength = 5
-				,cardType = {melee = false, ranged = true, siege = false, hero = false, leader = false}
-				,ability = ABILITY_Bond
-				,texture = "balista"
-				,subText = "2/3"
-			})
+	table.insert(self.list, self:CreateCardsDatalist("Poor Fucking Infantry", self.factions.north, 1, {melee = true, ranged = false, siege = false, hero = false, leader = false}, ABILITY_Bond, "peasant", "1/3"))
+	
+	-- table.insert(self.list, {
+				-- name = "Poor Fucking Infantry"
+				-- ,faction = self.factions.north
+				-- ,strength = 1
+				-- ,cardType = {melee = true, ranged = false, siege = false, hero = false, leader = false}
+				-- ,ability = ABILITY_Bond
+				-- ,texture = "peasant"
+				-- ,subText = "1/3"
+			-- })
 			
-	table.insert(self.list, {
-				name = "Crinfrid Reavers Dragon Hunter"
-				,faction = self.factions.north
-				,strength = 5
-				,cardType = {melee = false, ranged = true, siege = false, hero = false, leader = false}
-				,ability = ABILITY_Bond
-				,texture = "balista"
-				,subText = "3/3"
-			})
+	table.insert(self.list, self:CreateCardsDatalist("Poor Fucking Infantry", self.factions.north, 1, {melee = true, ranged = false, siege = false, hero = false, leader = false}, ABILITY_Bond, "peasant", "2/3"))
 			
-	table.insert(self.list, {
-				name = "Keira Metz"
-				,faction = self.factions.north
-				,strength = 5
-				,cardType = {melee = false, ranged = true, siege = false, hero = false, leader = false}
-				,ability = nil
-				,texture = "balista"
-			})
+	-- table.insert(self.list, {
+				-- name = "Poor Fucking Infantry"
+				-- ,faction = self.factions.north
+				-- ,strength = 1
+				-- ,cardType = {melee = true, ranged = false, siege = false, hero = false, leader = false}
+				-- ,ability = ABILITY_Bond
+				-- ,texture = "peasant"
+				-- ,subText = "2/3"
+			-- })
 			
-	table.insert(self.list, {
-				name = "Dun Banner Medic"
-				,faction = self.factions.north
-				,strength = 5
-				,cardType = {melee = false, ranged = false, siege = true, hero = false, leader = false}
-				,ability = ABILITY_Medic
-				,texture = "balista"
-				,subText = "1/2"
-			})
+	table.insert(self.list, self:CreateCardsDatalist("Poor Fucking Infantry", self.factions.north, 1, {melee = true, ranged = false, siege = false, hero = false, leader = false}, ABILITY_Bond, "peasant", "3/3"))
 			
-	table.insert(self.list, {
-				name = "Dun Banner Medic"
-				,faction = self.factions.north
-				,strength = 5
-				,cardType = {melee = false, ranged = false, siege = true, hero = false, leader = false}
-				,ability = ABILITY_Medic
-				,texture = "balista"
-				,subText = "2/2"
-			})
+	-- table.insert(self.list, {
+				-- name = "Poor Fucking Infantry"
+				-- ,faction = self.factions.north
+				-- ,strength = 1
+				-- ,cardType = {melee = true, ranged = false, siege = false, hero = false, leader = false}
+				-- ,ability = ABILITY_Bond
+				-- ,texture = "peasant"
+				-- ,subText = "3/3"
+			-- })
+
+	table.insert(self.list, self:CreateCardsDatalist("Kaedweni Siege Expert", self.factions.north, 1, {melee = false, ranged = false, siege = true, hero = false, leader = false}, ABILITY_Morale, "peasant", "1/3"))
+	
+	-- table.insert(self.list, {
+				-- name = "Kaedweni Siege Expert"
+				-- ,faction = self.factions.north
+				-- ,strength = 1
+				-- ,cardType = {melee = false, ranged = false, siege = true, hero = false, leader = false}
+				-- ,ability = ABILITY_Morale
+				-- ,texture = "balista"
+				-- ,subText = "1/3"
+			-- })
 			
-	table.insert(self.list, {
-				name = "Sile de Tansarville"
-				,faction = self.factions.north
-				,strength = 5
-				,cardType = {melee = false, ranged = true, siege = false, hero = false, leader = false}
-				,ability = nil
-				,texture = "balista"
-			})
+	table.insert(self.list, self:CreateCardsDatalist("Kaedweni Siege Expert", self.factions.north, 1, {melee = false, ranged = false, siege = true, hero = false, leader = false}, ABILITY_Morale, "peasant", "2/3"))
+	
+	-- table.insert(self.list, {
+				-- name = "Kaedweni Siege Expert"
+				-- ,faction = self.factions.north
+				-- ,strength = 1
+				-- ,cardType = {melee = false, ranged = false, siege = true, hero = false, leader = false}
+				-- ,ability = ABILITY_Morale
+				-- ,texture = "balista"
+				-- ,subText = "2/3"
+			-- })
+
+	table.insert(self.list, self:CreateCardsDatalist("Kaedweni Siege Expert", self.factions.north, 1, {melee = false, ranged = false, siege = true, hero = false, leader = false}, ABILITY_Morale, "peasant", "3/3"))
+	
+	-- table.insert(self.list, {
+				-- name = "Kaedweni Siege Expert"
+				-- ,faction = self.factions.north
+				-- ,strength = 1
+				-- ,cardType = {melee = false, ranged = false, siege = true, hero = false, leader = false}
+				-- ,ability = ABILITY_Morale
+				-- ,texture = "balista"
+				-- ,subText = "3/3"
+			-- })
 			
-	table.insert(self.list, {
-				name = "Siege Tower"
-				,faction = self.factions.north
-				,strength = 6
-				,cardType = {melee = false, ranged = false, siege = true, hero = false, leader = false}
-				,ability = nil
-				,texture = "peasant"
-				,subText = "1/2"
-			})
+	table.insert(self.list, self:CreateCardsDatalist("Yarpen Zigrin", self.factions.north, 2, {melee = true, ranged = false, siege = false, hero = false, leader = false}, nil, "peasant"))
 			
-	table.insert(self.list, {
-				name = "Siege Tower"
-				,faction = self.factions.north
-				,strength = 6
-				,cardType = {melee = false, ranged = false, siege = true, hero = false, leader = false}
-				,ability = nil
-				,texture = "peasant"
-				,subText = "2/2"
-			})
+	-- table.insert(self.list, {
+				-- name = "Yarpen Zigrin"
+				-- ,faction = self.factions.north
+				-- ,strength = 2
+				-- ,cardType = {melee = true, ranged = false, siege = false, hero = false, leader = false}
+				-- ,ability = nil
+				-- ,texture = "balista"
+			-- })
 			
-	table.insert(self.list, {
-				name = "Trebuchet"
-				,faction = self.factions.north
-				,strength = 6
-				,cardType = {melee = false, ranged = false, siege = true, hero = false, leader = false}
-				,ability = nil
-				,texture = "peasant"
-				,subText = "1/2"
-			})
+	table.insert(self.list, self:CreateCardsDatalist("Sigismund Dijkstra", self.factions.north, 4, {melee = true, ranged = false, siege = false, hero = false, leader = false}, ABILITY_Spy, "peasant"))
 			
-	table.insert(self.list, {
-				name = "Trebuchet"
-				,faction = self.factions.north
-				,strength = 6
-				,cardType = {melee = false, ranged = false, siege = true, hero = false, leader = false}
-				,ability = nil
-				,texture = "peasant"
-				,subText = "2/2"
-			})
+	-- table.insert(self.list, {
+				-- name = "Sigismund Dijkstra"
+				-- ,faction = self.factions.north
+				-- ,strength = 4
+				-- ,cardType = {melee = true, ranged = false, siege = false, hero = false, leader = false}
+				-- ,ability = ABILITY_Spy
+				-- ,texture = "balista"
+			-- })
 			
-	table.insert(self.list, {
-				name = "Ballista"
-				,faction = self.factions.north
-				,strength = 6
-				,cardType = {melee = false, ranged = false, siege = true, hero = false, leader = false}
-				,ability = nil
-				,texture = "balista"
-				,subText = "1/2"
-			})
+	table.insert(self.list, self:CreateCardsDatalist("Sheldon Skaggs", self.factions.north, 4, {melee = false, ranged = true, siege = false, hero = false, leader = false}, nil, "peasant"))
 			
-	table.insert(self.list, {
-				name = "Ballista"
-				,faction = self.factions.north
-				,strength = 6
-				,cardType = {melee = false, ranged = false, siege = true, hero = false, leader = false}
-				,ability = nil
-				,texture = "balista"
-				,subText = "2/2"
-			})
+	-- table.insert(self.list, {
+				-- name = "Sheldon Skaggs"
+				-- ,faction = self.factions.north
+				-- ,strength = 4
+				-- ,cardType = {melee = false, ranged = true, siege = false, hero = false, leader = false}
+				-- ,ability = nil
+				-- ,texture = "balista"
+			-- })
+	
+	table.insert(self.list, self:CreateCardsDatalist("Blue Stripes Commando", self.factions.north, 4, {melee = true, ranged = false, siege = false, hero = false, leader = false}, ABILITY_Bond, "peasant", "1/3"))
+	
+	-- table.insert(self.list, {
+				-- name = "Blue Stripes Commando"
+				-- ,faction = self.factions.north
+				-- ,strength = 4
+				-- ,cardType = {melee = true, ranged = false, siege = false, hero = false, leader = false}
+				-- ,ability = ABILITY_Bond
+				-- ,texture = "balista"
+				-- ,subText = "1/3"
+			-- })
 			
-	table.insert(self.list, {
-				name = "Catapult"
-				,faction = self.factions.north
-				,strength = 8
-				,cardType = {melee = false, ranged = false, siege = true, hero = false, leader = false}
-				,ability = ABILITY_Bond
-				,texture = "peasant"
-				,subText = "1/2"
-			})
+	table.insert(self.list, self:CreateCardsDatalist("Blue Stripes Commando", self.factions.north, 4, {melee = true, ranged = false, siege = false, hero = false, leader = false}, ABILITY_Bond, "peasant", "2/3"))
 			
-	table.insert(self.list, {
-				name = "Catapult"
-				,faction = self.factions.north
-				,strength = 8
-				,cardType = {melee = false, ranged = false, siege = true, hero = false, leader = false}
-				,ability = ABILITY_Bond
-				,texture = "peasant"
-				,subText = "2/2"
-			})
+	-- table.insert(self.list, {
+				-- name = "Blue Stripes Commando"
+				-- ,faction = self.factions.north
+				-- ,strength = 4
+				-- ,cardType = {melee = true, ranged = false, siege = false, hero = false, leader = false}
+				-- ,ability = ABILITY_Bond
+				-- ,texture = "balista"
+				-- ,subText = "2/3"
+			-- })
+			
+	table.insert(self.list, self:CreateCardsDatalist("Blue Stripes Commando", self.factions.north, 4, {melee = true, ranged = false, siege = false, hero = false, leader = false}, ABILITY_Bond, "peasant", "3/3"))
+			
+	-- table.insert(self.list, {
+				-- name = "Blue Stripes Commando"
+				-- ,faction = self.factions.north
+				-- ,strength = 4
+				-- ,cardType = {melee = true, ranged = false, siege = false, hero = false, leader = false}
+				-- ,ability = ABILITY_Bond
+				-- ,texture = "balista"
+				-- ,subText = "3/3"
+			-- })
+	
+	table.insert(self.list, self:CreateCardsDatalist("Sabrina Gevissig", self.factions.north, 4, {melee = false, ranged = true, siege = false, hero = false, leader = false}, nil, "peasant"))
+	
+	-- table.insert(self.list, {
+				-- name = "Sabrina Gevissig"
+				-- ,faction = self.factions.north
+				-- ,strength = 4
+				-- ,cardType = {melee = false, ranged = true, siege = false, hero = false, leader = false}
+				-- ,ability = nil
+				-- ,texture = "balista"
+			-- })
+	
+	table.insert(self.list, self:CreateCardsDatalist("Ves", self.factions.north, 5, {melee = true, ranged = false, siege = false, hero = false, leader = false}, nil, "peasant"))
+	
+	-- table.insert(self.list, {
+				-- name = "Ves"
+				-- ,faction = self.factions.north
+				-- ,strength = 5
+				-- ,cardType = {melee = true, ranged = false, siege = false, hero = false, leader = false}
+				-- ,ability = nil
+				-- ,texture = "peasant"
+			-- })
+	
+	table.insert(self.list, self:CreateCardsDatalist("Siegfried of Denesle", self.factions.north, 5, {melee = true, ranged = false, siege = false, hero = false, leader = false}, nil, "peasant", "1/2"))
+	
+	-- table.insert(self.list, {
+				-- name = "Siegfried of Denesle"
+				-- ,faction = self.factions.north
+				-- ,strength = 5
+				-- ,cardType = {melee = true, ranged = false, siege = false, hero = false, leader = false}
+				-- ,ability = nil
+				-- ,texture = "peasant"
+				-- ,subText = "1/2"
+			-- })
+	
+	table.insert(self.list, self:CreateCardsDatalist("Siegfried of Denesle", self.factions.north, 5, {melee = true, ranged = false, siege = false, hero = false, leader = false}, nil, "peasant", "2/2"))
+	
+	-- table.insert(self.list, {
+				-- name = "Siegfried of Denesle"
+				-- ,faction = self.factions.north
+				-- ,strength = 5
+				-- ,cardType = {melee = true, ranged = false, siege = false, hero = false, leader = false}
+				-- ,ability = nil
+				-- ,texture = "peasant"
+				-- ,subText = "2/2"
+			-- })
+	
+	table.insert(self.list, self:CreateCardsDatalist("Prince Stennis", self.factions.north, 5, {melee = true, ranged = false, siege = false, hero = false, leader = false}, ABILITY_Spy, "peasant"))
+	
+	-- table.insert(self.list, {
+				-- name = "Prince Stennis"
+				-- ,faction = self.factions.north
+				-- ,strength = 5
+				-- ,cardType = {melee = true, ranged = false, siege = false, hero = false, leader = false}
+				-- ,ability = ABILITY_Spy
+				-- ,texture = "balista"
+			-- })
+			
+	table.insert(self.list, self:CreateCardsDatalist("Crinfrid Reavers Dragon Hunter", self.factions.north, 5, {melee = false, ranged = true, siege = false, hero = false, leader = false}, ABILITY_Bond, "peasant", "1/3"))
+	
+	-- table.insert(self.list, {
+				-- name = "Crinfrid Reavers Dragon Hunter"
+				-- ,faction = self.factions.north
+				-- ,strength = 5
+				-- ,cardType = {melee = false, ranged = true, siege = false, hero = false, leader = false}
+				-- ,ability = ABILITY_Bond
+				-- ,texture = "balista"
+				-- ,subText = "1/3"
+			-- })
+	
+	table.insert(self.list, self:CreateCardsDatalist("Crinfrid Reavers Dragon Hunter", self.factions.north, 5, {melee = false, ranged = true, siege = false, hero = false, leader = false}, ABILITY_Bond, "peasant", "2/3"))
+	
+	-- table.insert(self.list, {
+				-- name = "Crinfrid Reavers Dragon Hunter"
+				-- ,faction = self.factions.north
+				-- ,strength = 5
+				-- ,cardType = {melee = false, ranged = true, siege = false, hero = false, leader = false}
+				-- ,ability = ABILITY_Bond
+				-- ,texture = "balista"
+				-- ,subText = "2/3"
+			-- })
+		
+	table.insert(self.list, self:CreateCardsDatalist("Crinfrid Reavers Dragon Hunter", self.factions.north, 5, {melee = false, ranged = true, siege = false, hero = false, leader = false}, ABILITY_Bond, "peasant", "3/3"))
+			
+	-- table.insert(self.list, {
+				-- name = "Crinfrid Reavers Dragon Hunter"
+				-- ,faction = self.factions.north
+				-- ,strength = 5
+				-- ,cardType = {melee = false, ranged = true, siege = false, hero = false, leader = false}
+				-- ,ability = ABILITY_Bond
+				-- ,texture = "balista"
+				-- ,subText = "3/3"
+			-- })
+	
+	table.insert(self.list, self:CreateCardsDatalist("Keira Metz", self.factions.north, 5, {melee = false, ranged = true, siege = false, hero = false, leader = false}, nil, "peasant"))
+	
+	-- table.insert(self.list, {
+				-- name = "Keira Metz"
+				-- ,faction = self.factions.north
+				-- ,strength = 5
+				-- ,cardType = {melee = false, ranged = true, siege = false, hero = false, leader = false}
+				-- ,ability = nil
+				-- ,texture = "balista"
+			-- })
+		
+	table.insert(self.list, self:CreateCardsDatalist("Dun Banner Medic", self.factions.north, 5, {melee = false, ranged = false, siege = true, hero = false, leader = false}, ABILITY_Medic, "peasant", "1/2"))
+		
+	-- table.insert(self.list, {
+				-- name = "Dun Banner Medic"
+				-- ,faction = self.factions.north
+				-- ,strength = 5
+				-- ,cardType = {melee = false, ranged = false, siege = true, hero = false, leader = false}
+				-- ,ability = ABILITY_Medic
+				-- ,texture = "balista"
+				-- ,subText = "1/2"
+			-- })
+	
+	table.insert(self.list, self:CreateCardsDatalist("Dun Banner Medic", self.factions.north, 5, {melee = false, ranged = false, siege = true, hero = false, leader = false}, ABILITY_Medic, "peasant", "2/2"))
+	
+	-- table.insert(self.list, {
+				-- name = "Dun Banner Medic"
+				-- ,faction = self.factions.north
+				-- ,strength = 5
+				-- ,cardType = {melee = false, ranged = false, siege = true, hero = false, leader = false}
+				-- ,ability = ABILITY_Medic
+				-- ,texture = "balista"
+				-- ,subText = "2/2"
+			-- })
+		
+	table.insert(self.list, self:CreateCardsDatalist("Sile de Tansarville", self.factions.north, 5, {melee = false, ranged = true, siege = false, hero = false, leader = false}, nil, "peasant"))
+		
+	-- table.insert(self.list, {
+				-- name = "Sile de Tansarville"
+				-- ,faction = self.factions.north
+				-- ,strength = 5
+				-- ,cardType = {melee = false, ranged = true, siege = false, hero = false, leader = false}
+				-- ,ability = nil
+				-- ,texture = "balista"
+			-- })
+	
+	table.insert(self.list, self:CreateCardsDatalist("Siege Tower", self.factions.north, 6, {melee = false, ranged = false, siege = true, hero = false, leader = false}, nil, "peasant", "1/2"))
+	
+	-- table.insert(self.list, {
+				-- name = "Siege Tower"
+				-- ,faction = self.factions.north
+				-- ,strength = 6
+				-- ,cardType = {melee = false, ranged = false, siege = true, hero = false, leader = false}
+				-- ,ability = nil
+				-- ,texture = "peasant"
+				-- ,subText = "1/2"
+			-- })
+			
+	table.insert(self.list, self:CreateCardsDatalist("Siege Tower", self.factions.north, 6, {melee = false, ranged = false, siege = true, hero = false, leader = false}, nil, "peasant", "2/2"))
+			
+	-- table.insert(self.list, {
+				-- name = "Siege Tower"
+				-- ,faction = self.factions.north
+				-- ,strength = 6
+				-- ,cardType = {melee = false, ranged = false, siege = true, hero = false, leader = false}
+				-- ,ability = nil
+				-- ,texture = "peasant"
+				-- ,subText = "2/2"
+			-- })
+		
+	table.insert(self.list, self:CreateCardsDatalist("Trebuchet", self.factions.north, 6, {melee = false, ranged = false, siege = true, hero = false, leader = false}, nil, "peasant", "1/2"))
+		
+	-- table.insert(self.list, {
+				-- name = "Trebuchet"
+				-- ,faction = self.factions.north
+				-- ,strength = 6
+				-- ,cardType = {melee = false, ranged = false, siege = true, hero = false, leader = false}
+				-- ,ability = nil
+				-- ,texture = "peasant"
+				-- ,subText = "1/2"
+			-- })
+	
+	table.insert(self.list, self:CreateCardsDatalist("Trebuchet", self.factions.north, 6, {melee = false, ranged = false, siege = true, hero = false, leader = false}, nil, "peasant", "2/2"))
+	
+	-- table.insert(self.list, {
+				-- name = "Trebuchet"
+				-- ,faction = self.factions.north
+				-- ,strength = 6
+				-- ,cardType = {melee = false, ranged = false, siege = true, hero = false, leader = false}
+				-- ,ability = nil
+				-- ,texture = "peasant"
+				-- ,subText = "2/2"
+			-- })
+	
+	table.insert(self.list, self:CreateCardsDatalist("Ballista", self.factions.north, 6, {melee = false, ranged = false, siege = true, hero = false, leader = false}, nil, "peasant", "1/2"))
+	
+	-- table.insert(self.list, {
+				-- name = "Ballista"
+				-- ,faction = self.factions.north
+				-- ,strength = 6
+				-- ,cardType = {melee = false, ranged = false, siege = true, hero = false, leader = false}
+				-- ,ability = nil
+				-- ,texture = "balista"
+				-- ,subText = "1/2"
+			-- })
+		
+	table.insert(self.list, self:CreateCardsDatalist("Ballista", self.factions.north, 6, {melee = false, ranged = false, siege = true, hero = false, leader = false}, nil, "peasant", "2/2"))
+	
+	-- table.insert(self.list, {
+				-- name = "Ballista"
+				-- ,faction = self.factions.north
+				-- ,strength = 6
+				-- ,cardType = {melee = false, ranged = false, siege = true, hero = false, leader = false}
+				-- ,ability = nil
+				-- ,texture = "balista"
+				-- ,subText = "2/2"
+			-- })
+		
+	table.insert(self.list, self:CreateCardsDatalist("Catapult", self.factions.north, 8, {melee = false, ranged = false, siege = true, hero = false, leader = false}, ABILITY_Bond, "peasant", "1/2"))
+		
+	-- table.insert(self.list, {
+				-- name = "Catapult"
+				-- ,faction = self.factions.north
+				-- ,strength = 8
+				-- ,cardType = {melee = false, ranged = false, siege = true, hero = false, leader = false}
+				-- ,ability = ABILITY_Bond
+				-- ,texture = "peasant"
+				-- ,subText = "1/2"
+			-- })
+	
+	table.insert(self.list, self:CreateCardsDatalist("Catapult", self.factions.north, 8, {melee = false, ranged = false, siege = true, hero = false, leader = false}, ABILITY_Bond, "peasant", "2/2"))
+	
+	-- table.insert(self.list, {
+				-- name = "Catapult"
+				-- ,faction = self.factions.north
+				-- ,strength = 8
+				-- ,cardType = {melee = false, ranged = false, siege = true, hero = false, leader = false}
+				-- ,ability = ABILITY_Bond
+				-- ,texture = "peasant"
+				-- ,subText = "2/2"
+			-- })
 end
 
 function Cards:AddNeutralCards()
@@ -477,95 +577,115 @@ function Cards:AddNeutralCards()
 	-- Neutral
 	-----------------------------------------------------------------------------------------------
 	
-	table.insert(self.list, {
-				name = "Zoltan Chivay"
-				,faction = self.factions.neutral
-				,strength = 5
-				,cardType = {melee = true, ranged = false, siege = false, hero = false, leader = false}
-				,ability = nil
-				,texture = "peasant"
-			})
+	table.insert(self.list, self:CreateCardsDatalist("Zoltan Chivay", self.factions.neutral, 5, {melee = true, ranged = false, siege = false, hero = false, leader = false}, nil, "peasant"))
+	
+	-- table.insert(self.list, {
+				-- name = "Zoltan Chivay"
+				-- ,faction = self.factions.neutral
+				-- ,strength = 5
+				-- ,cardType = {melee = true, ranged = false, siege = false, hero = false, leader = false}
+				-- ,ability = nil
+				-- ,texture = "peasant"
+			-- })
 			
-	table.insert(self.list, {
-				name = "Geralt of Rivia"
-				,faction = self.factions.neutral
-				,strength = 15
-				,cardType = {melee = true, ranged = false, siege = false, hero = true, leader = false}
-				,ability = nil
-				,texture = "peasant"
-			})
+	table.insert(self.list, self:CreateCardsDatalist("Geralt of Rivia", self.factions.neutral, 15, {melee = true, ranged = false, siege = false, hero = true, leader = false}, nil, "peasant"))
 			
-	table.insert(self.list, {
-				name = "Triss Merigold"
-				,faction = self.factions.neutral
-				,strength = 7
-				,cardType = {melee = true, ranged = false, siege = false, hero = true, leader = false}
-				,ability = nil
-				,texture = "peasant"
-			})
+	-- table.insert(self.list, {
+				-- name = "Geralt of Rivia"
+				-- ,faction = self.factions.neutral
+				-- ,strength = 15
+				-- ,cardType = {melee = true, ranged = false, siege = false, hero = true, leader = false}
+				-- ,ability = nil
+				-- ,texture = "peasant"
+			-- })
 			
-	table.insert(self.list, {
-				name = "Vesemir"
-				,faction = self.factions.neutral
-				,strength = 6
-				,cardType = {melee = true, ranged = false, siege = false, hero = false, leader = false}
-				,ability = nil
-				,texture = "peasant"
-			})
+	table.insert(self.list, self:CreateCardsDatalist("Triss Merigold", self.factions.neutral, 7, {melee = true, ranged = false, siege = false, hero = true, leader = false}, nil, "peasant"))
 			
-	table.insert(self.list, {
-				name = "Yennefer of Vengerberg"
-				,faction = self.factions.neutral
-				,strength = 7
-				,cardType = {melee = false, ranged = true, siege = false, hero = true, leader = false}
-				,ability = ABILITY_Medic
-				,texture = "peasant"
-			})
+	-- table.insert(self.list, {
+				-- name = "Triss Merigold"
+				-- ,faction = self.factions.neutral
+				-- ,strength = 7
+				-- ,cardType = {melee = true, ranged = false, siege = false, hero = true, leader = false}
+				-- ,ability = nil
+				-- ,texture = "peasant"
+			-- })
 			
-	table.insert(self.list, {
-				name = "Dandelion"
-				,faction = self.factions.neutral
-				,strength = 2
-				,cardType = {melee = true, ranged = false, siege = false, hero = false, leader = false}
-				,ability = ABILITY_Command
-				,texture = "peasant"
-			})
+	table.insert(self.list, self:CreateCardsDatalist("Vesemir", self.factions.neutral, 6, {melee = true, ranged = false, siege = false, hero = false, leader = false}, nil, "peasant"))
 			
-	table.insert(self.list, {
-				name = "Cirilla Fiona Elen Rianno"
-				,faction = self.factions.neutral
-				,strength = 15
-				,cardType = {melee = true, ranged = false, siege = false, hero = true, leader = false}
-				,ability = nil
-				,texture = "peasant"
-			})
+	-- table.insert(self.list, {
+				-- name = "Vesemir"
+				-- ,faction = self.factions.neutral
+				-- ,strength = 6
+				-- ,cardType = {melee = true, ranged = false, siege = false, hero = false, leader = false}
+				-- ,ability = nil
+				-- ,texture = "peasant"
+			-- })
 			
-	table.insert(self.list, {
-				name = "Avallac'h"
-				,faction = self.factions.neutral
-				,strength = 0
-				,cardType = {melee = true, ranged = false, siege = false, hero = true, leader = false}
-				,ability = ABILITY_Spy
-				,texture = "peasant"
-			})
+	table.insert(self.list, self:CreateCardsDatalist("Yennefer of Vengerberg", self.factions.neutral, 7, {melee = false, ranged = true, siege = false, hero = true, leader = false}, ABILITY_Medic, "peasant"))
 			
-	table.insert(self.list, {
-				name = "Emiel Regis Rohellec Terzieff"
-				,faction = self.factions.neutral
-				,strength = 5
-				,cardType = {melee = true, ranged = false, siege = false, hero = false, leader = false}
-				,ability = nil
-				,texture = "peasant"
-			})
+	-- table.insert(self.list, {
+				-- name = "Yennefer of Vengerberg"
+				-- ,faction = self.factions.neutral
+				-- ,strength = 7
+				-- ,cardType = {melee = false, ranged = true, siege = false, hero = true, leader = false}
+				-- ,ability = ABILITY_Medic
+				-- ,texture = "peasant"
+			-- })
+		
+	table.insert(self.list, self:CreateCardsDatalist("Dandelion", self.factions.neutral, 2, {melee = true, ranged = false, siege = false, hero = false, leader = false}, ABILITY_Command, "peasant"))
+		
+	-- table.insert(self.list, {
+				-- name = "Dandelion"
+				-- ,faction = self.factions.neutral
+				-- ,strength = 2
+				-- ,cardType = {melee = true, ranged = false, siege = false, hero = false, leader = false}
+				-- ,ability = ABILITY_Command
+				-- ,texture = "peasant"
+			-- })
 			
-	table.insert(self.list, {
-				name = "Villentretenmerth"
-				,faction = self.factions.neutral
-				,strength = 7
-				,cardType = {melee = true, ranged = false, siege = false, hero = false, leader = false}
-				,ability = ABILITY_SCORCH
-				,texture = "peasant"
-			})
+	table.insert(self.list, self:CreateCardsDatalist("Cirilla Fiona Elen Rianno", self.factions.neutral, 15, {melee = true, ranged = false, siege = false, hero = true, leader = false}, nil, "peasant"))
+			
+	-- table.insert(self.list, {
+				-- name = "Cirilla Fiona Elen Rianno"
+				-- ,faction = self.factions.neutral
+				-- ,strength = 15
+				-- ,cardType = {melee = true, ranged = false, siege = false, hero = true, leader = false}
+				-- ,ability = nil
+				-- ,texture = "peasant"
+			-- })
+		
+	table.insert(self.list, self:CreateCardsDatalist("Avallac'h", self.factions.neutral, 0, {melee = true, ranged = false, siege = false, hero = true, leader = false}, ABILITY_Spy, "peasant"))
+		
+	-- table.insert(self.list, {
+				-- name = "Avallac'h"
+				-- ,faction = self.factions.neutral
+				-- ,strength = 0
+				-- ,cardType = {melee = true, ranged = false, siege = false, hero = true, leader = false}
+				-- ,ability = ABILITY_Spy
+				-- ,texture = "peasant"
+			-- })
+		
+	table.insert(self.list, self:CreateCardsDatalist("Emiel Regis Rohellec Terzieff", self.factions.neutral, 5, {melee = true, ranged = false, siege = false, hero = false, leader = false}, nil, "peasant"))
+		
+	-- table.insert(self.list, {
+				-- name = "Emiel Regis Rohellec Terzieff"
+				-- ,faction = self.factions.neutral
+				-- ,strength = 5
+				-- ,cardType = {melee = true, ranged = false, siege = false, hero = false, leader = false}
+				-- ,ability = nil
+				-- ,texture = "peasant"
+			-- })
+			
+	table.insert(self.list, self:CreateCardsDatalist("Villentretenmerth", self.factions.neutral, 7, {melee = true, ranged = false, siege = false, hero = false, leader = false}, ABILITY_SCORCH, "peasant"))
+			
+	-- table.insert(self.list, {
+				-- name = "Villentretenmerth"
+				-- ,faction = self.factions.neutral
+				-- ,strength = 7
+				-- ,cardType = {melee = true, ranged = false, siege = false, hero = false, leader = false}
+				-- ,ability = ABILITY_SCORCH
+				-- ,texture = "peasant"
+			-- })
 end
 
 function Cards:CreateCardsList()
@@ -589,7 +709,7 @@ end
 function Cards:GetTypeIcon(card)
 	local types = card.data.cardType
 	
-	if types.melee and types.ranged then
+	if types.melee and types.siege then
 		return self.typeTextures.agile
 	elseif types.melee then
 		return self.typeTextures.melee
@@ -601,50 +721,6 @@ function Cards:GetTypeIcon(card)
 
 	return nil
 end
-
--- function Cards:SetCardTooltip(card)
-	-- local tp = GwentAddon.playFrame.cardTooltip
-	
-	-- local vcBG = 1
-	-- local vc = 0
-	-- if card.data.cardType.hero then
-		-- vcBG = 0
-		-- vc = 1
-	-- end
-	
-	-- tp:Show()
-	-- tp.typeBG:Hide()
-	-- tp.type:Hide()
-	-- tp.abilityBG:Hide()
-	-- tp.ability:Hide()
-	
-	-- tp.strengthBG:SetVertexColor(vcBG, vcBG, vcBG, .75)
-	-- tp.abilityBG:SetVertexColor(vcBG, vcBG, vcBG, .75)
-	-- tp.typeBG:SetVertexColor(vcBG, vcBG, vcBG, .75)
-	-- tp.type:SetVertexColor(vc, vc, vc)
-	-- tp.strength:SetTextColor(vc, vc, vc)
-	--tp.texture:SetTexture(TEXTURE_CUSTOM_PATH..card.data.texture)
-
-	-- local typeIcon = self:GetTypeIcon(card)
-	-- if typeIcon ~= nil then
-		-- tp.type:SetTexture(typeIcon)
-		-- tp.typeBG:Show()
-		-- tp.type:Show()
-	-- end
-	
-	-- local ability = GwentAddon:GetAbilitydataByName(card.data.ability)
-	-- if ability ~= nil then
-		-- tp.abilityBG:Show()
-		-- tp.ability:Show()
-		-- tp.ability:SetVertexColor(vc, vc, vc)
-		-- tp.ability:SetTexture(ability.texture)
-		-- tp.ability:SetTexCoord(ability.coords.left, ability.coords.right, ability.coords.top, ability.coords.bottom)
-	-- end
-
-	-- tp.name:SetText(card.data.name)
-	-- tp.faction:SetText(card.data.faction)
-	-- tp.strength:SetText(card.data.strength)
--- end
 
 function Cards:GetCardOfId(id)
 
@@ -695,13 +771,15 @@ function Cards:CreateCardOfId(id)
 	GwentAddon:DEBUGMessageSent("Trying to create card with id "..id)
 	
 	if not cardData then
-		print("Could not create card with Id ".. id)
+		GwentAddon:DEBUGMessageSent("Could not create card with Id "..id)
 		return
 	end
 
 	local card = CreateFrame("frame", addonName.."_Card_".._CardNr, GwentAddon.playFrame)
 	card.data = cardData
 	card.nr = _CardNr
+	card.leftSpacing = 0
+	card.rightSpacing = 0
 	card:SetPoint("topleft", GwentAddon.playFrame, "topleft", 0, 0)
 	card:SetHeight(GwentAddon.NUM_CARD_HEIGHT)
 	card:SetWidth(GwentAddon.NUM_CARD_WIDTH)
@@ -775,6 +853,10 @@ function Cards:CreateCardOfId(id)
 	if card.data.ability ~= nil then
 		GwentAddon:SetAblityIcon(card)
 	end
+	
+	card.nrTxt = card:CreateFontString(nil, nil, "QuestTitleFontBlackShadow")
+	card.nrTxt:SetPoint("bottomright", card)
+	card.nrTxt:SetText(card.nr)
 	
 	
 	--card.strengthBG:SetPoint("bottomright", card, -2, 2)
@@ -864,6 +946,10 @@ function Cards:RemoveCardFromHand(card)
 	
 end
 
+--function Cards:RemoveAll()
+
+--end
+
 function Cards:PlaceAllCards()
 	local playerPoints = 0
 	GwentAddon:PlayerPlaceCardsOnFrame(GwentAddon.lists.player.hand, GwentAddon.playFrame.playerHand)
@@ -880,6 +966,31 @@ function Cards:PlaceAllCards()
 	GwentAddon:UpdateTotalPoints(playerPoints, enemyPoints)
 	GwentAddon:UpdateTotalBorders(playerPoints, enemyPoints)
 
+end
+
+function Cards:UpdateCardSpaceing(card, mouseX, mouseY)
+	
+
+	local left, bottom, width, height = card:GetBoundsRect()
+	local hleft, hright, htop, hbottom = card:GetHitRectInsets()
+	local mouseX, mouseY = GetCursorPosition()
+	local s = card:GetEffectiveScale();
+	mouseX, mouseY = mouseX/s, mouseY/s
+
+	card.leftSpacing = 0
+	card.rightSpacing = 0
+	
+	if mouseX < left + width/2 and mouseX >= left + hleft then
+		--print("left card ".. card.nr)
+		card.leftSpacing = width/2
+		return true
+	elseif mouseX > left + width/2  and mouseX <= left +width -hright  then
+		card.rightSpacing = width/2
+		--print("right card ".. card.nr)
+		return true
+	end
+
+	return false
 end
 
 function Cards:DrawCard()
@@ -959,7 +1070,25 @@ function Cards:AddEnemyCard(message)
 end
 
 function Cards:AddCardToNewList(card, list)
-	table.insert(list, card)
+	
+	print((GwentAddon.draggingOver.card == nil and  "nope" or GwentAddon.draggingOver.card:GetName()))
+	-- check if it's first card in the list or not
+	if GwentAddon.draggingOver.card == nil then
+
+		table.insert(list, card);
+	else
+	
+		local pos = GwentAddon:NumberInList(GwentAddon.draggingOver.card, list)
+		-- check if card should be added left or right
+		if ( GwentAddon.draggingOver.card.rightSpacing > 0 ) then
+			pos = pos + 1
+		end
+	
+		
+		table.insert(list, pos, card);
+
+	end
+	
 	card:SetMovable(false)
 	card:SetScript("OnDragStart", function(self) end)
 	card:SetScript("OnDragStop", function(self)  end)
