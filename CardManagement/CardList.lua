@@ -933,7 +933,7 @@ end
 
 function Cards:RemoveCardFromHand(card)
 	local cardToRemove = nil
-	for k, v in ipairs(GwentAddon.lists.player.hand) do
+	for k, v in ipairs(GwentAddon.lists.playerHand) do
 		if v.nr == card.nr then
 			cardToRemove = k
 			break
@@ -941,7 +941,7 @@ function Cards:RemoveCardFromHand(card)
 	end
 	
 	if cardToRemove ~= nil then
-		table.remove(GwentAddon.lists.player.hand, cardToRemove)
+		table.remove(GwentAddon.lists.playerHand, cardToRemove)
 	end
 	
 end
@@ -952,16 +952,16 @@ end
 
 function Cards:PlaceAllCards()
 	local playerPoints = 0
-	GwentAddon:PlayerPlaceCardsOnFrame(GwentAddon.lists.player.hand, GwentAddon.playFrame.playerHand)
-	playerPoints = playerPoints + GwentAddon:PlayerPlaceCardsOnFrame(GwentAddon.lists.player.siege, GwentAddon.playFrame.playerSiege)
-	playerPoints = playerPoints + GwentAddon:PlayerPlaceCardsOnFrame(GwentAddon.lists.player.ranged, GwentAddon.playFrame.playerRanged)
-	playerPoints = playerPoints + GwentAddon:PlayerPlaceCardsOnFrame(GwentAddon.lists.player.melee, GwentAddon.playFrame.playerMelee)
+	GwentAddon:PlayerPlaceCardsOnFrame(GwentAddon.lists.playerHand, GwentAddon.playFrame.playerHand)
+	playerPoints = playerPoints + GwentAddon:PlayerPlaceCardsOnFrame(GwentAddon.lists.playerSiege, GwentAddon.playFrame.playerSiege)
+	playerPoints = playerPoints + GwentAddon:PlayerPlaceCardsOnFrame(GwentAddon.lists.playerRanged, GwentAddon.playFrame.playerRanged)
+	playerPoints = playerPoints + GwentAddon:PlayerPlaceCardsOnFrame(GwentAddon.lists.playerMelee, GwentAddon.playFrame.playerMelee)
 	
 	local enemyPoints = 0
 	-- Place enemy hand
-	enemyPoints = enemyPoints + GwentAddon:PlayerPlaceCardsOnFrame(GwentAddon.lists.enemy.siege, GwentAddon.playFrame.enemySiege)
-	enemyPoints = enemyPoints + GwentAddon:PlayerPlaceCardsOnFrame(GwentAddon.lists.enemy.ranged, GwentAddon.playFrame.enemyRanged)
-	enemyPoints = enemyPoints + GwentAddon:PlayerPlaceCardsOnFrame(GwentAddon.lists.enemy.melee, GwentAddon.playFrame.enemyMelee)
+	enemyPoints = enemyPoints + GwentAddon:PlayerPlaceCardsOnFrame(GwentAddon.lists.enemySiege, GwentAddon.playFrame.enemySiege)
+	enemyPoints = enemyPoints + GwentAddon:PlayerPlaceCardsOnFrame(GwentAddon.lists.enemyRanged, GwentAddon.playFrame.enemyRanged)
+	enemyPoints = enemyPoints + GwentAddon:PlayerPlaceCardsOnFrame(GwentAddon.lists.enemyMelee, GwentAddon.playFrame.enemyMelee)
 	
 	GwentAddon:UpdateTotalPoints(playerPoints, enemyPoints)
 	GwentAddon:UpdateTotalBorders(playerPoints, enemyPoints)
@@ -995,10 +995,10 @@ end
 
 function Cards:DrawCard()
 
-	local deckCardNr = math.random(#GwentAddon.lists.player.deck)
-	table.insert(GwentAddon.lists.player.hand, self:CreateCardOfId(GwentAddon.lists.player.deck[deckCardNr].Id))
+	local deckCardNr = math.random(#GwentAddon.lists.playerDeck)
+	table.insert(GwentAddon.lists.playerHand, self:CreateCardOfId(GwentAddon.lists.playerDeck[deckCardNr].Id))
 	
-	table.remove(GwentAddon.lists.player.deck, deckCardNr)
+	table.remove(GwentAddon.lists.playerDeck, deckCardNr)
 	
 	self:PlaceAllCards()
 end
@@ -1026,11 +1026,11 @@ function Cards:StopDraggingCard(card)
 		return
 	end
 
-	local success, area = GwentAddon:DropCardArea(self.draggedCard)
+	local success, area, position = GwentAddon:DropCardArea(self.draggedCard)
 	if success and self.draggedCard  ~= nil then
 		self.draggedCard  = nil
 
-		SendAddonMessage(addonName, string.format(GwentAddon.messages.placeInArea, area, card.data.Id), "whisper" , GwentAddon.challengerName)
+		SendAddonMessage(addonName, string.format(GwentAddon.messages.placeInArea, area, card.data.Id, position), "whisper" , GwentAddon.challengerName)
 		
 		-- don't end your turn if enemy passed
 		if not GwentAddon.enemyPassed then
@@ -1050,15 +1050,15 @@ end
 
 function Cards:AddEnemyCard(message)
 	--print(message, string.match(message, "(%a+)#(%d+)"))
-	local areaType, id = string.match(message, "(%a+)#(%d+)")
+	local areaType, id, pos = string.match(message, "(%a+)#(%d+)#(%d+)")
 	--GwentAddon:DEBUGMessageSent(message .. " - ".. string.match(message, "(%a+)#(%d+)"))
 	local card = self:CreateCardOfId(id)
 	if areaType == TEXT_SIEGE then
-		self:AddCardToNewList(card, GwentAddon.lists.enemy.siege)
+		self:AddCardToNewList(card, "enemySiege", pos)
 	elseif areaType == TEXT_RANGED then
-		self:AddCardToNewList(card, GwentAddon.lists.enemy.ranged)
+		self:AddCardToNewList(card, "enemyRanged", pos)
 	elseif areaType == TEXT_MELEE then
-		self:AddCardToNewList(card, GwentAddon.lists.enemy.melee)
+		self:AddCardToNewList(card, "enemyMelee", pos)
 	end
 	
 	card:SetScript("OnDragStart", function(self) end)
@@ -1069,16 +1069,37 @@ function Cards:AddEnemyCard(message)
 	self:PlaceAllCards()
 end
 
-function Cards:AddCardToNewList(card, list)
+local function DroppedOnLeftSideOfArea()
+	local left, bottom, width, height = frame:GetBoundsRect()
+	local mouseX, mouseY = GetCursorPosition()
+	local s = frame:GetEffectiveScale();
+	mouseX, mouseY = mouseX/s, mouseY/s
+
+	if mouseX > left and mouseX < left + width/2 then
+		return true
+	end
 	
-	print((GwentAddon.draggingOver.card == nil and  "nope" or GwentAddon.draggingOver.card:GetName()))
+	return false
+end
+
+function Cards:AddCardToNewList(card, name, position)
+	
+	local list = GwentAddon:GetListByName(name)
+	local area = GwentAddon:GetAreaByName(name)
+	
+	local pos = DroppedOnLeftSideOfArea() and 1 or #list+1
 	-- check if it's first card in the list or not
 	if GwentAddon.draggingOver.card == nil then
-
-		table.insert(list, card);
+		-- put at position if given, else just throw it in
+		
+		
+		if position ~= nil then
+			pos = position
+		end
+		table.insert(list, pos, card);
+		
 	else
-	
-		local pos = GwentAddon:NumberInList(GwentAddon.draggingOver.card, list)
+		pos = GwentAddon:NumberInList(GwentAddon.draggingOver.card, list)
 		-- check if card should be added left or right
 		if ( GwentAddon.draggingOver.card.rightSpacing > 0 ) then
 			pos = pos + 1
@@ -1087,10 +1108,14 @@ function Cards:AddCardToNewList(card, list)
 		
 		table.insert(list, pos, card);
 
+		GwentAddon.draggingOver.card = nil
+		
 	end
 	
 	card:SetMovable(false)
 	card:SetScript("OnDragStart", function(self) end)
 	card:SetScript("OnDragStop", function(self)  end)
 	--card:EnableMouse(false)
+	
+	return pos
 end

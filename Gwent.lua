@@ -37,7 +37,7 @@ local COORDS_ICON_RANGED = {["x"]=64*15, ["y"]=64*1}
 local COORDS_ICON_SIEGE = {["x"]=64*3, ["y"]=64*7}
 local COORDS_SMALLCARD = {["left"]=76/256, ["right"]=244/256, ["top"]=30/512, ["bottom"]=300/512}
 
-GwentAddon.messages = {["placeInArea"] = "%s#%d"
+GwentAddon.messages = {["placeInArea"] = "%s#%d#%d"
 						,["challenge"] = "It's time to du-du-du-duel"
 						,["logout"] = "logged out"
 						,["pass"] = "passing"
@@ -56,16 +56,25 @@ local _CardPool = {}
 
 GwentAddon.challengerName = nil
 --local GwentAddon.playFrame = {}
-GwentAddon.lists = {["player"] = {["hand"] = {}
-								,["siege"] = {}
-								,["ranged"] = {}
-								,["melee"] = {}
-								,["deck"] = {}}
-					,["enemy"] = {["hand"] = {}
-								,["siege"] = {}
-								,["ranged"] = {}
-								,["melee"] = {}}
-								}
+GwentAddon.lists = {["playerHand"] = {}
+					,["playerSiege"] = {}
+					,["playerRanged"] = {}
+					,["playerMelee"] = {}
+					,["playerDeck"] = {}
+					,["enemyHand"] = {}
+					,["enemySiege"] = {}
+					,["enemyRanged"] = {}
+					,["enemyMelee"] = {}}
+					
+GwentAddon.areas = {["playerHand"] = {}
+					,["playerSiege"] = {}
+					,["playerRanged"] = {}
+					,["playerMelee"] = {}
+					,["playerDeck"] = {}
+					,["enemyHand"] = {}
+					,["enemySiege"] = {}
+					,["enemyRanged"] = {}
+					,["enemyMelee"] = {}}
 
 --local _PlayerGraveyard = {}
 local _DraggedCard = nil
@@ -289,7 +298,7 @@ local function CreateCardArea(name, parent, texture)
 	local frame = CreateFrame("frame", addonName.."PlayFrame_" .. name, parent)
 	frame:SetHeight(GwentAddon.NUM_CARD_HEIGHT)
 	frame:SetWidth(GwentAddon.NUM_CARD_WIDTH * 10)
-	frame:SetBackdrop({bgFile = "Interface\\DialogFrame\\UI-DialogBox-Gold-Background",
+	frame:SetBackdrop({bgFile = TEXTURE_CARD_DARKEN,
       edgeFile = nil,
 	  tileSize = 0, edgeSize = 16,
       insets = { left = 0, right = 0, top = 0, bottom = 0 }
@@ -304,7 +313,7 @@ local function CreateCardArea(name, parent, texture)
 	frame.commander:SetHeight(GwentAddon.NUM_CARD_HEIGHT)
 	frame.commander:SetWidth(GwentAddon.NUM_CARD_HEIGHT)
 	frame.commander:SetPoint("right", frame, "left", -5, 0)
-	frame.commander:SetBackdrop({bgFile = "Interface\\DialogFrame\\UI-DialogBox-Gold-Background",
+	frame.commander:SetBackdrop({bgFile = TEXTURE_CARD_DARKEN,
       edgeFile = nil,
 	  tileSize = 0, edgeSize = 16,
       insets = { left = 0, right = 0, top = 0, bottom = 0 }
@@ -443,11 +452,11 @@ GwentAddon.draggingOver.timer = 0
 
 function GwentAddon:GetCardlistMouseOver()
 	if GwentAddon:MouseIsOverFrame(GwentPlayFrame.playerSiege) then
-		return GwentAddon.lists.player.siege, GwentPlayFrame.playerSiege
+		return GwentAddon.lists.playerSiege, GwentPlayFrame.playerSiege
 	elseif GwentAddon:MouseIsOverFrame(GwentPlayFrame.playerRanged) then
-		return GwentAddon.lists.player.ranged, GwentPlayFrame.playerRanged
+		return GwentAddon.lists.playerRanged, GwentPlayFrame.playerRanged
 	elseif GwentAddon:MouseIsOverFrame(GwentPlayFrame.playerMelee) then
-		return GwentAddon.lists.player.melee, GwentPlayFrame.playerMelee
+		return GwentAddon.lists.playerMelee, GwentPlayFrame.playerMelee
 	end
 	
 	return nil
@@ -580,28 +589,32 @@ local function CreatePlayFrame()
 	CreateWeatherArea(PlayFrame)
 	
 	-- player hand
-	PlayFrame.playerHand = CreateFrame("frame", addonName.."PlayerHand", PlayFrame)
+	PlayFrame.playerHand = CreateFrame("frame", addonName.."playerHand", PlayFrame)
+	GwentAddon.areas.playerHand = PlayFrame.playerHand
 	PlayFrame.playerHand:SetPoint("bottom", PlayFrame, "bottom", 0, 23)
 	PlayFrame.playerHand:SetHeight(GwentAddon.NUM_CARD_HEIGHT)
 	PlayFrame.playerHand:SetWidth(GwentAddon.NUM_CARD_WIDTH * 10)
-	PlayFrame.playerHand:SetBackdrop({bgFile = TEXTURE_CARD_BG,
+	PlayFrame.playerHand:SetBackdrop({bgFile = TEXTURE_CARD_DARKEN,
       edgeFile = nil,
 	  tileSize = 0, edgeSize = 16,
       insets = { left = 0, right = 0, top = 0, bottom = 0 }
 	  })
 	  
-	PlayFrame.playerHand.cardContainer = CreateFrame("frame", addonName.."PlayerHandContainer", PlayFrame.playerHand)
+	PlayFrame.playerHand.cardContainer = CreateFrame("frame", addonName.."playerHandContainer", PlayFrame.playerHand)
 	PlayFrame.playerHand.cardContainer:SetPoint("center", PlayFrame.playerHand)
 	PlayFrame.playerHand.cardContainer:SetHeight(GwentAddon.NUM_CARD_HEIGHT)
 	  
 	-- player siege
-	PlayFrame.playerSiege = CreateCardArea("PlayerSiege", PlayFrame, TEXTURE_TYPE_SIEGE)
+	PlayFrame.playerSiege = CreateCardArea("playerSiege", PlayFrame, TEXTURE_TYPE_SIEGE)
+	GwentAddon.areas.playerSiege = PlayFrame.playerSiege
 	PlayFrame.playerSiege:SetPoint("bottom", PlayFrame.playerHand, "top", 0, 20) 
 	-- player ranged
-	PlayFrame.playerRanged = CreateCardArea("PlayerRanged", PlayFrame, TEXTURE_TYPE_RANGED)
+	PlayFrame.playerRanged = CreateCardArea("playerRanged", PlayFrame, TEXTURE_TYPE_RANGED)
+	GwentAddon.areas.playerRanged = PlayFrame.playerRanged
 	PlayFrame.playerRanged:SetPoint("bottom", PlayFrame.playerSiege, "top", 0, 10)  
 	-- player melee
-	PlayFrame.playerMelee = CreateCardArea("PlayerMelee", PlayFrame, TEXTURE_TYPE_MELEE)
+	PlayFrame.playerMelee = CreateCardArea("playerMelee", PlayFrame, TEXTURE_TYPE_MELEE)
+	GwentAddon.areas.playerMelee = PlayFrame.playerMelee
 	PlayFrame.playerMelee:SetPoint("bottom", PlayFrame.playerRanged, "top", 0, 10)
 	
 	PlayFrame.playerDetails = CreateFrame("frame", PlayFrame:GetName() .. "_PlayerDetails", PlayFrame)
@@ -708,10 +721,11 @@ local function CreatePlayFrame()
 	
 	-- enemy hand
 	PlayFrame.enemyHand = CreateFrame("frame", addonName.."PlayFrame_EnemyHand", PlayFrame)
+	GwentAddon.areas.enemyHand = PlayFrame.enemyHand
 	PlayFrame.enemyHand:SetPoint("top", PlayFrame, "top", 0, -30)
 	PlayFrame.enemyHand:SetHeight(GwentAddon.NUM_CARD_HEIGHT)
 	PlayFrame.enemyHand:SetWidth(GwentAddon.NUM_CARD_WIDTH * 10)
-	PlayFrame.enemyHand:SetBackdrop({bgFile = "Interface\\DialogFrame\\UI-DialogBox-Gold-Background",
+	PlayFrame.enemyHand:SetBackdrop({bgFile = TEXTURE_CARD_DARKEN,
       edgeFile = nil,
 	  tileSize = 0, edgeSize = 16,
       insets = { left = 0, right = 0, top = 0, bottom = 0 }
@@ -722,13 +736,16 @@ local function CreatePlayFrame()
 	PlayFrame.enemyHand.cardContainer:SetHeight(GwentAddon.NUM_CARD_HEIGHT)
 	  
 	-- enemy siege
-	PlayFrame.enemySiege = CreateCardArea("EnemyRanged", PlayFrame, TEXTURE_TYPE_SIEGE)
+	PlayFrame.enemySiege = CreateCardArea("enemyRanged", PlayFrame, TEXTURE_TYPE_SIEGE)
+	GwentAddon.areas.enemySiege = PlayFrame.enemySiege
 	PlayFrame.enemySiege:SetPoint("top", PlayFrame.enemyHand, "bottom", 0, -20) 
 	-- enemy ranged
-	PlayFrame.enemyRanged = CreateCardArea("EnemyRanged", PlayFrame, TEXTURE_TYPE_RANGED)
+	PlayFrame.enemyRanged = CreateCardArea("enemyRanged", PlayFrame, TEXTURE_TYPE_RANGED)
+	GwentAddon.areas.enemyRanged = PlayFrame.enemyRanged
 	PlayFrame.enemyRanged:SetPoint("top", PlayFrame.enemySiege, "bottom", 0, -10)  
 	-- enemy melee
-	PlayFrame.enemyMelee = CreateCardArea("EnemyMelee", PlayFrame, TEXTURE_TYPE_MELEE)
+	PlayFrame.enemyMelee = CreateCardArea("enemyMelee", PlayFrame, TEXTURE_TYPE_MELEE)
+	GwentAddon.areas.enemyMelee = PlayFrame.enemyMelee
 	PlayFrame.enemyMelee:SetPoint("top", PlayFrame.enemyRanged, "bottom", 0, -10)
 	
 	PlayFrame.enemyDetails = CreateFrame("frame", PlayFrame:GetName() .. "_EnemyDetails", PlayFrame)
@@ -846,22 +863,42 @@ function GwentAddon:MouseIsOverFrame(frame)
 	
 end
 
+function GwentAddon:GetListByName(name)
+	for k, v in pairs(GwentAddon.lists) do
+		if k == name then
+			return v
+		end
+	end
+	
+	return nil
+end
+
+function GwentAddon:GetAreaByName(name)
+	for k, v in pairs(GwentAddon.areas) do
+		if k == name then
+			return v
+		end
+	end
+	
+	return nil
+end
+
 function GwentAddon:DropCardArea(card)
 	if GwentAddon:MouseIsOverFrame(GwentAddon.playFrame.playerSiege) and IsRightTypeForArea(card, TEXT_SIEGE) then
 		
-		GwentAddon.cards:AddCardToNewList(card, GwentAddon.lists.player.siege)
+		local pos = GwentAddon.cards:AddCardToNewList(card, "playerSiege")
 		GwentAddon.cards:RemoveCardFromHand(card)
-		return true, TEXT_SIEGE
+		return true, TEXT_SIEGE, pos
 	elseif GwentAddon:MouseIsOverFrame(GwentAddon.playFrame.playerRanged) and IsRightTypeForArea(card, TEXT_RANGED) then
 		
-		GwentAddon.cards:AddCardToNewList(card, GwentAddon.lists.player.ranged)
+		local pos = GwentAddon.cards:AddCardToNewList(card, "playerRange")
 		GwentAddon.cards:RemoveCardFromHand(card)
-		return true, TEXT_RANGED
+		return true, TEXT_RANGED, pos
 	elseif GwentAddon:MouseIsOverFrame(GwentAddon.playFrame.playerMelee) and IsRightTypeForArea(card, TEXT_MELEE) then
 		
-		GwentAddon.cards:AddCardToNewList(card, GwentAddon.lists.player.melee)
+		local pos = GwentAddon.cards:AddCardToNewList(card, "playerMelee")
 		GwentAddon.cards:RemoveCardFromHand(card)
-		return true, TEXT_MELEE
+		return true, TEXT_MELEE, pos
 	end
 	return false
 end
@@ -899,13 +936,13 @@ end
 
 function GwentAddon:ResetGame() 
 	GwentAddon.challengerName = nil
-	GwentAddon:DestroyCardsInList(GwentAddon.lists.player.hand)
-	GwentAddon:DestroyCardsInList(GwentAddon.lists.player.siege)
-	GwentAddon:DestroyCardsInList(GwentAddon.lists.player.ranged)
-	GwentAddon:DestroyCardsInList(GwentAddon.lists.player.melee)
-	GwentAddon:DestroyCardsInList(GwentAddon.lists.enemy.siege)
-	GwentAddon:DestroyCardsInList(GwentAddon.lists.enemy.ranged)
-	GwentAddon:DestroyCardsInList(GwentAddon.lists.enemy.melee)
+	GwentAddon:DestroyCardsInList(GwentAddon.lists.playerHand)
+	GwentAddon:DestroyCardsInList(GwentAddon.lists.playerSiege)
+	GwentAddon:DestroyCardsInList(GwentAddon.lists.playerRanged)
+	GwentAddon:DestroyCardsInList(GwentAddon.lists.playerMelee)
+	GwentAddon:DestroyCardsInList(GwentAddon.lists.enemySiege)
+	GwentAddon:DestroyCardsInList(GwentAddon.lists.enemyRanged)
+	GwentAddon:DestroyCardsInList(GwentAddon.lists.enemyMelee)
 	GwentAddon.cards:PlaceAllCards()
 	_DraggedCard = nil
 	_DragginOverFrame = nil
@@ -939,12 +976,12 @@ function GwentAddon:ResetGame()
 end
 
 function GwentAddon:StartNewRound()
-	GwentAddon:DestroyCardsInList(GwentAddon.lists.player.siege)
-	GwentAddon:DestroyCardsInList(GwentAddon.lists.player.ranged)
-	GwentAddon:DestroyCardsInList(GwentAddon.lists.player.melee)
-	GwentAddon:DestroyCardsInList(GwentAddon.lists.enemy.siege)
-	GwentAddon:DestroyCardsInList(GwentAddon.lists.enemy.ranged)
-	GwentAddon:DestroyCardsInList(GwentAddon.lists.enemy.melee)
+	GwentAddon:DestroyCardsInList(GwentAddon.lists.playerSiege)
+	GwentAddon:DestroyCardsInList(GwentAddon.lists.playerRanged)
+	GwentAddon:DestroyCardsInList(GwentAddon.lists.playerMelee)
+	GwentAddon:DestroyCardsInList(GwentAddon.lists.enemySiege)
+	GwentAddon:DestroyCardsInList(GwentAddon.lists.enemyRanged)
+	GwentAddon:DestroyCardsInList(GwentAddon.lists.enemyMelee)
 	GwentAddon.cards:DrawCard()
 	GwentAddon.cards:PlaceAllCards()
 	_DraggedCard = nil
@@ -1009,14 +1046,14 @@ function GwentAddon:ChangeState(state)
 			GwentAddon.popup:ShowMessage("Your turn.")
 		end
 		GwentAddon.playFrame.playerTurn:Show()
-		for k, card in ipairs(GwentAddon.lists.player.hand) do
+		for k, card in ipairs(GwentAddon.lists.playerHand) do
 			card:SetMovable(true)
 		end
 		
 	elseif GwentAddon.currentState == GwentAddon.states.enemyTurn then
 		GwentAddon.popup:ShowMessage("Opponent turn.")
 		GwentAddon.playFrame.enemyTurn:Show()
-		for k, card in ipairs(GwentAddon.lists.player.hand) do
+		for k, card in ipairs(GwentAddon.lists.playerHand) do
 			card:SetMovable(false)
 		end
 		GwentAddon.playFrame.passButton:Disable()
@@ -1149,7 +1186,7 @@ function Gwent_EventFrame:ADDON_LOADED(ADDON_LOADED)
 	GwentAddon:CreateAbilitieList()
 	GwentAddon:CreateCardsClass()
 	--GwentAddon:CreateCardsList()
-	GwentAddon.lists.player.deck = GwentAddon:CreateTestDeck()
+	GwentAddon.lists.playerDeck = GwentAddon:CreateTestDeck()
 	
 	
 	if not RegisterAddonMessagePrefix(addonName) then
@@ -1202,7 +1239,7 @@ local function slashcmd(msg, editbox)
 	elseif string.find(msg, "draw") then
 		local nr = string.match(msg, "draw (%d+)")
 		
-		table.insert(GwentAddon.lists.player.hand, CreateCardOfId(nr))
+		table.insert(GwentAddon.lists.playerHand, CreateCardOfId(nr))
 		GwentAddon.cards:PlaceAllCards()
 		
 	elseif msg == 'log' then
