@@ -17,80 +17,128 @@ local TEXTURE_ICONS = {["path"]="Interface\\GUILDFRAME\\GUILDEMBLEMSLG_01", ["wi
 local NUM_SIZE_ICON = 64
 local TEXTURE_CARD_BG = "Interface\\DialogFrame\\UI-DialogBox-Gold-Background"
 local TEXTURE_SPY = {["path"]="Interface\\PVPFrame\\Icons\\PVP-Banner-Emblem-14", ["width"]=128, ["height"]=128}
+local TEXTURE_CUSTOM_PATH = "Interface\\AddOns\\Gwent\\CardTextures\\"
+
+local Abilitie = {}
+Abilitie.__index = Abilitie
+setmetatable(Abilitie, {
+  __call = function (cls, ...)
+    return cls.new(...)
+  end,
+})
+
+function Abilitie.new(name, isLeader, texture, abilityFunction)
+	local self = setmetatable({}, Abilities)
+	
+	self.name = name
+	self.isLeader = false
+	self.texture = TEXTURE_CUSTOM_PATH .. texture
+	self.funct = function(card, list, c) abilityFunction(card, list, c) end
+	
+	return self
+end
+
+-- Tight Bond
+--
+-- Place next to card card zith the same name to double the strength of both cards.
+local function AbilityTightBond(card, list)
+	print("Bond")
+end
+
+-- Morable Boost
+--
+-- Adds +1 to all units in the row (excluding itself)
+local function AbilityMoraleBoost(card, list)
+	for k, lCard in pairs(list) do
+		-- exlude self and hero characters
+		if lCard.data.Id ~= card.data.Id and not lCard.data.cardType.hero then
+			lCard.data.calcStrength = lCard.data.calcStrength + 1
+			lCard:UpdateCardStrength()
+		end
+	end
+end
 
 function GwentAddon:CreateAbilitieList()
 
 	GwentAddon.Abilities = {}
 
-	table.insert(GwentAddon.Abilities, {
-				name = "Spy"
-				,isLeader = false
-				,texture = "Interface\\AddOns\\Gwent\\CardTextures\\AbilitySpy"
-				,coords = {left = 0
-							,right = 1
-							,top = 0
-							,bottom = 1}
-			})
-			
-	table.insert(GwentAddon.Abilities, {
-				name = "Tight Bond"
-				,isLeader = false
-				,texture = "Interface\\AddOns\\Gwent\\CardTextures\\AbilityBond"
-				,coords = {left = 0
-							,right = 1
-							,top = 0
-							,bottom = 1}
-			})
-			
-	table.insert(GwentAddon.Abilities, {
-				name = "Morale Boost"
-				,isLeader = false
-				,texture = "Interface\\AddOns\\Gwent\\CardTextures\\AbilityBoost"
-				,coords = {left = 0
-							,right = 1
-							,top = 0
-							,bottom = 1}
-			})
-			
-	table.insert(GwentAddon.Abilities, {
-				name = "Medic"
-				,isLeader = false
-				,texture = "Interface\\AddOns\\Gwent\\CardTextures\\AbilityMedic"
-				,coords = {left = 0
-							,right = 1
-							,top = 0
-							,bottom = 1}
-			})
-			
-	table.insert(GwentAddon.Abilities, {
-				name = "Muster"
-				,isLeader = false
-				,texture = "Interface\\AddOns\\Gwent\\CardTextures\\AbilityMuster"
-				,coords = {left = 0
-							,right = 1
-							,top = 0
-							,bottom = 1}
-			})
-			
-	table.insert(GwentAddon.Abilities, {
-				name = "Agile"
-				,isLeader = false
-				,texture = "Interface\\AddOns\\Gwent\\CardTextures\\AbilityAgile"
-				,coords = {left = 0
-							,right = 1
-							,top = 0
-							,bottom = 1}
-			})
+	table.insert(GwentAddon.Abilities, Abilitie("Spy", false, "AbilitySpy", function(card, list, c) print("NYI Spy") end));
+	table.insert(GwentAddon.Abilities, Abilitie("Tight Bond", false, "AbilityBond", function(card, list, c) AbilityTightBond(card, list) end));
+	table.insert(GwentAddon.Abilities, Abilitie("Morale Boost", false, "AbilityBoost", function(card, list, c) AbilityMoraleBoost(card, list) end));
+	table.insert(GwentAddon.Abilities, Abilitie("Medic", false, "AbilityMedic", function(card, list, c) print("NYI Medic") end));
+	table.insert(GwentAddon.Abilities, Abilitie("Muster", false, "AbilityMuster", function(card, list, c) print("NYI Muster") end));
+	table.insert(GwentAddon.Abilities, Abilitie("Agile", false, "AbilityAgile", function(card, list, c) print("NYI Agile") end));
+	table.insert(GwentAddon.Abilities, Abilitie("Scorch", false, "AbilityScorch", function(card, list, c) print("NYI Scorch") end));
 	
-	table.insert(GwentAddon.Abilities, {
-				name = "Scorch"
-				,isLeader = false
-				,texture = "Interface\\AddOns\\Gwent\\CardTextures\\AbilityScorch"
-				,coords = {left = 0
-							,right = 1
-							,top = 0
-							,bottom = 1}
-			})
+	-- table.insert(GwentAddon.Abilities, {
+				-- name = "Spy"
+				-- ,isLeader = false
+				-- ,texture = "Interface\\AddOns\\Gwent\\CardTextures\\AbilitySpy"
+				-- ,coords = {left = 0
+							-- ,right = 1
+							-- ,top = 0
+							-- ,bottom = 1}
+			-- })
+			
+	-- table.insert(GwentAddon.Abilities, {
+				-- name = "Tight Bond"
+				-- ,isLeader = false
+				-- ,texture = "Interface\\AddOns\\Gwent\\CardTextures\\AbilityBond"
+				-- ,coords = {left = 0
+							-- ,right = 1
+							-- ,top = 0
+							-- ,bottom = 1}
+			-- })
+			
+	-- table.insert(GwentAddon.Abilities, {
+				-- name = "Morale Boost"
+				-- ,isLeader = false
+				-- ,texture = "Interface\\AddOns\\Gwent\\CardTextures\\AbilityBoost"
+				-- ,coords = {left = 0
+							-- ,right = 1
+							-- ,top = 0
+							-- ,bottom = 1}
+			-- })
+			
+	-- table.insert(GwentAddon.Abilities, {
+				-- name = "Medic"
+				-- ,isLeader = false
+				-- ,texture = "Interface\\AddOns\\Gwent\\CardTextures\\AbilityMedic"
+				-- ,coords = {left = 0
+							-- ,right = 1
+							-- ,top = 0
+							-- ,bottom = 1}
+			-- })
+			
+	-- table.insert(GwentAddon.Abilities, {
+				-- name = "Muster"
+				-- ,isLeader = false
+				-- ,texture = "Interface\\AddOns\\Gwent\\CardTextures\\AbilityMuster"
+				-- ,coords = {left = 0
+							-- ,right = 1
+							-- ,top = 0
+							-- ,bottom = 1}
+			-- })
+			
+	-- table.insert(GwentAddon.Abilities, {
+				-- name = "Agile"
+				-- ,isLeader = false
+				-- ,texture = "Interface\\AddOns\\Gwent\\CardTextures\\AbilityAgile"
+				-- ,coords = {left = 0
+							-- ,right = 1
+							-- ,top = 0
+							-- ,bottom = 1}
+			-- })
+	
+	-- table.insert(GwentAddon.Abilities, {
+				-- name = "Scorch"
+				-- ,isLeader = false
+				-- ,texture = "Interface\\AddOns\\Gwent\\CardTextures\\AbilityScorch"
+				-- ,coords = {left = 0
+							-- ,right = 1
+							-- ,top = 0
+							-- ,bottom = 1}
+			-- })
 			
 	for k, v in ipairs(GwentAddon.Abilities) do
 		v.Id = k
@@ -110,21 +158,21 @@ function GwentAddon:GetAbilitydataByName(name)
 	return nil
 end
 
-function GwentAddon:SetAblityIcon(card)
+function GwentAddon:SetAblityIcon(card, data)
 
-	local ability = GwentAddon:GetAbilitydataByName(card.data.ability)
+	local ability = data.ability --GwentAddon:GetAbilitydataByName(card.data.ability)
 		
 	if ability == nil then return end
 	
 	local vc = 0
-	if card.data.cardType.hero then
+	if data.cardType.hero then
 		vc = 1
 	end
 	
 	card.iconAbility:SetVertexColor(vc, vc, vc)
 	card.abilityBG:Show()
 	card.iconAbility:SetTexture(ability.texture)
-	card.iconAbility:SetTexCoord(ability.coords.left, ability.coords.right, ability.coords.top, ability.coords.bottom)
+	--card.iconAbility:SetTexCoord(ability.coords.left, ability.coords.right, ability.coords.top, ability.coords.bottom)
 
 end
 

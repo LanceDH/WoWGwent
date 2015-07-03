@@ -1,17 +1,16 @@
-Prevent from duelling self
 Prevent challenging if already in a game
-Random coin flip start
 Deck creation
 - Save deck
 - Add card
 - Remove card
 Add more cards
+only move cards if hover over right area
 
 
 Abilities
 - Spy 
 - Tight Bond 
-- Morale Boost 
+x Morale Boost 
 - Medic 
 - Muster 
 - Agile 

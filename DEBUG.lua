@@ -13,6 +13,14 @@ local function round(num, idp)
 	return ret
 end
 
+local function convertMemory(kb)
+	local mb = kb / 1024
+	if mb > 1 then
+		return round(mb, 2) .. " MB"
+	end
+	return round(kb, 0) .. " KB"
+end
+
 local function DEBUGPrintCard(card)
 	local cardName = AceGUI:Create("Label")
 	cardName:SetRelativeWidth(1)
@@ -130,14 +138,16 @@ end
 
 local function debug_updatext()
 		local text = ""
-
+		
+		UpdateAddOnMemoryUsage()
+		text = text .. "Memory: \n  " .. convertMemory(GetAddOnMemoryUsage(addonName)) .."\n"
 		text = text .. "state: \n  " .. GwentAddon:GetStateName(GwentAddon.currentState).." ("..GwentAddon.currentState .. ")" .."\n"
 		text = text .. "player passed: \n  " .. (GwentAddon.playerPassed and "true" or "false") .."\n"
 		text = text .. "enemy passed: \n  " .. (GwentAddon.enemyPassed and "true" or "false") .."\n"
 		text = text .. "player lives: " .. GwentAddon.playerLives.count .."\n"
 		text = text .. "enemy lives: " .. GwentAddon.enemyLives.count .."\n"
 		text = text .. "# mouseover list: \n  " .. (GwentAddon.draggingOver.list == nil and "none" or #GwentAddon.draggingOver.list) .."\n"
-		text = text .. "mouse over card: " .. (GwentAddon.draggingOver.card == nil and "" or GwentAddon.draggingOver.card.nr).."\n  " .. (GwentAddon.draggingOver.card == nil and "none" or  round(GwentAddon.draggingOver.card.leftSpacing, 2) .. " - " .. round(GwentAddon.draggingOver.card.rightSpacing, 2)) .."\n"
+		--text = text .. "mouse over card: " .. (GwentAddon.draggingOver.card == nil and "" or GwentAddon.draggingOver.card.nr).."\n  " .. (GwentAddon.draggingOver.card == nil and "none" or  round(GwentAddon.draggingOver.card.leftSpacing, 2) .. " - " .. round(GwentAddon.draggingOver.card.rightSpacing, 2)) .."\n"
 		
 		GwentDEBUGVariables.text:SetText(text)
 	end

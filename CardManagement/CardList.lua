@@ -15,9 +15,17 @@ local _InitialDiscardSelected = {}
 	local TEXT_RANGED = "ranged"
 	local TEXT_MELEE = "melee"
 
-local Cards = {}
-Cards.__index = Cards
-setmetatable(Cards, {
+local CardList = {}
+CardList.__index = CardList
+setmetatable(CardList, {
+  __call = function (cls, ...)
+    return cls.new(...)
+  end,
+})
+
+local Card = {}
+Card.__index = Card
+setmetatable(Card, {
   __call = function (cls, ...)
     return cls.new(...)
   end,
@@ -29,12 +37,172 @@ local ABILITY_Morale = "Morale Boost"
 local ABILITY_Medic = "Medic"
 local ABILITY_Command = "Commander's Horn"
 local ABILITY_SCORCH = "Scorch"
-local ABILITY_Hero = "Immune to special cards"
+local ABILITY_Hero = "Immune to special CardList"
+
+function Card.new(id, cardList)
+	local self = setmetatable({}, Card)
+	
+	print("class using " .. id)
+	print("class # " .. #Card)
+	self.cardList = cardList
+	self.leftSpacing = 0
+	self.rightSpacing = 0
+	
+	self.data = cardList:GetCardDataOfId(id)
+	self.frame = self:CreateFrame(id)
+	
+	if self.data.ability ~= nil then
+		GwentAddon:SetAblityIcon(self.frame, self.data)
+	end
+
+	return self
+end
+
+function Card:CreateCardTypeIcons(card)
+	local count = 0;
+	local vcBG = 1
+	local vc = 0
+	if self.data.cardType.hero then
+		vcBG = 0
+		vc = 1
+	end
+	
+	card.iconTypeBG = card:CreateTexture(addonName.."_Card_".._CardNr.."_TypeBG", "ARTWORK")
+	card.iconTypeBG:SetDrawLayer("ARTWORK", 1)
+	card.iconTypeBG:SetTexture(TEXTURE_CARD_ICONBG)
+	card.iconTypeBG:SetVertexColor(vcBG, vcBG, vcBG, .75)
+		-- card.iconMeleeBG:SetTexCoord(4/32, 28/32, 4/32, 28/32)
+	card.iconTypeBG:SetTexCoord(0.3, 0.45,0.1, 0.4)
+	card.iconTypeBG:SetPoint("left", card)
+	card.iconTypeBG:SetHeight(GwentAddon.NUM_CARD_WIDTH/2)
+	card.iconTypeBG:SetWidth(GwentAddon.NUM_CARD_WIDTH/2)
+		
+	card.iconType = card:CreateTexture(addonName.."_Card_".._CardNr.."_Type", "art")
+	card.iconType:SetDrawLayer("ARTWORK", 2)
+	card.iconType:SetTexture(self.cardList:GetTypeIcon(self))
+	card.iconType:SetVertexColor(vc, vc, vc)
+	card.iconType:SetWidth(GwentAddon.NUM_CARD_WIDTH*0.5)
+	card.iconType:SetHeight(GwentAddon.NUM_CARD_WIDTH*0.5)
+	card.iconType:SetPoint("center", card.iconTypeBG)
+		-- card.iconMelee:SetPoint("bottomleft", card, "bottomleft", (GwentAddon.NUM_CARD_WIDTH/2)*count, 0)
+	count = count + 1
+
+end
 
 
+function Card:CreateFrame()
+	local cardData = self.data
 
-function Cards.new()
-	local self = setmetatable({}, Cards)
+	if not cardData then
+		return
+	end
+
+	local card = CreateFrame("frame", addonName.."_Card_".._CardNr, GwentAddon.playFrame)
+	card.data = cardData
+	card.nr = _CardNr
+	card.leftSpacing = 0
+	card.rightSpacing = 0
+	card:SetPoint("topleft", GwentAddon.playFrame, "topleft", 0, 0)
+	card:SetHeight(GwentAddon.NUM_CARD_HEIGHT)
+	card:SetWidth(GwentAddon.NUM_CARD_WIDTH)
+	card:SetBackdrop({bgFile = TEXTURE_CARD_BG,
+		edgeFile = TEXTURE_CARD_BORDER,
+
+	  tileSize = 0, edgeSize = 4,
+      insets = { left = 0, right = 0, top 
+	  = 0, bottom = 0 }
+	  })
+	
+	-- card.texture = card:CreateTexture(addonName.."_Card_".._CardNr.."_Texture", "ARTWORK")
+	-- card.texture:SetDrawLayer("ARTWORK", 0)
+	-- card.texture:SetTexture(TEXTURE_CUSTOM_PATH..cardData.texture)
+	-- card.texture:SetTexCoord(COORDS_SMALLCARD.left, COORDS_SMALLCARD.right, COORDS_SMALLCARD.top, COORDS_SMALLCARD.bottom)
+	-- card.texture:SetPoint("topleft", card, 2, -2)
+	-- card.texture:SetPoint("bottomright", card, -2, 2)
+	
+	card.darken = card:CreateTexture(addonName.."_Card_".._CardNr.."_Darken", "ARTWORK")
+	card.darken:SetDrawLayer("ARTWORK", 7)
+	card.darken:SetTexture(TEXTURE_CARD_DARKEN)
+	card.darken:SetVertexColor(0, 0, 0, 1)
+	card.darken:SetPoint("topleft", card, 0, 0)
+	card.darken:SetPoint("bottomright", card, 0, 0)
+	card.darken:Hide()
+	
+	card:SetMovable(false)
+	card:RegisterForDrag("LeftButton")
+	card:SetScript("OnDragStart", function(c) self:StartDragging() end)
+	card:SetScript("OnDragStop", function(c) self:StopDragging() end)
+	card:SetScript("OnMouseDown", function(c) self:SelectForDiscard(self) end)
+	--card:SetScript("OnLeave", function(self) GwentAddon.playFrame.cardTooltip:Hide() end)
+	card:SetScript("OnEnter", function(c) GwentAddon:SetCardTooltip(self) end)
+	card:SetScript("OnLeave", function(c) GwentAddon.playFrame.cardTooltip:Hide() end)
+	--card:EnableMouse(false)
+	  
+	
+	local vc = 1
+	local font = "GameFontBlack"
+	if self.data.cardType.hero then
+		font = "GameFontWhite"
+		vc = 0
+	end
+	
+	card.strengthBG = card:CreateTexture(addonName.."_Card_".._CardNr.."_StrengthBG", "ARTWORK")
+	card.strengthBG:SetDrawLayer("ARTWORK", 1)
+	card.strengthBG:SetTexture(TEXTURE_CARD_ICONBG)
+	card.strengthBG:SetVertexColor(vc, vc, vc, .75)
+	card.strengthBG:SetTexCoord(0.3, 0.45,0.1, 0.4)
+	card.strengthBG:SetPoint("topleft", card, 0, 0)
+	card.strengthBG:SetHeight(GwentAddon.NUM_CARD_WIDTH/2)
+	card.strengthBG:SetWidth(GwentAddon.NUM_CARD_WIDTH/2)
+	
+	card.abilityBG = card:CreateTexture(addonName.."_Card_".._CardNr.."_AbilityBG", "ARTWORK")
+	card.abilityBG:SetDrawLayer("ARTWORK", 1)
+	card.abilityBG:SetTexture(TEXTURE_CARD_ICONBG)
+	card.abilityBG:SetVertexColor(vc, vc, vc, .75)
+	card.abilityBG:SetTexCoord(0.3, 0.45,0.1, 0.4)
+	card.abilityBG:SetPoint("bottomleft", card)
+	card.abilityBG:SetHeight(GwentAddon.NUM_CARD_WIDTH/2)
+	card.abilityBG:SetWidth(GwentAddon.NUM_CARD_WIDTH/2)
+	card.abilityBG:Hide()
+	
+	card.iconAbility = card:CreateTexture(addonName.."_Card_".._CardNr.."_AbilityIcon", "ARTWORK")
+	card.iconAbility:SetDrawLayer("ARTWORK", 2)
+	card.iconAbility:SetPoint("center", card.abilityBG)
+	card.iconAbility:SetHeight(GwentAddon.NUM_CARD_WIDTH/2)
+	card.iconAbility:SetWidth(GwentAddon.NUM_CARD_WIDTH/2)
+	card.iconAbility:SetVertexColor(0, 0, 0)
+	
+	card.nrTxt = card:CreateFontString(nil, nil, "QuestTitleFontBlackShadow")
+	card.nrTxt:SetPoint("bottomright", card)
+	card.nrTxt:SetText(card.nr)
+	
+	
+	--card.strengthBG:SetPoint("bottomright", card, -2, 2)
+	
+	card.strength = card:CreateFontString(nil, nil, font)
+	--card.strength:SetDrawLayer("ARTWORK", 1)
+	card.strength:SetPoint("topleft", card.strengthBG)
+	card.strength:SetPoint("bottomright", card.strengthBG)
+	--card.strength:SetPoint("bottomright", card, "bottomright", -2, -7)
+	card.strength:SetJustifyH("center")
+	card.strength:SetJustifyV("middle")
+	card.strength:SetText(cardData.calcStrength)
+	--card.strength:SetTextColor(0,0,0)
+	if self.data.cardType.hero then
+		--card.strength:SetTextColor(1,1,1)
+	end
+	  
+	self:CreateCardTypeIcons(card)
+	  
+	_CardNr = _CardNr + 1
+	
+	
+	  
+	return card
+end
+
+function CardList.new()
+	local self = setmetatable({}, CardList)
 	self.list = {}
 	self.factions = {["north"] = "Northern Realms"
 				,["neutral"] = "Neutral"}
@@ -51,14 +219,22 @@ function Cards.new()
 end
 
 function GwentAddon:CreateCardsClass()
-	GwentAddon.cards = Cards()
+	GwentAddon.cards = CardList()
 end
 
-function Cards:CreateCardsDatalist(name, faction, strength, cardType, ability, texture, subText)
-	local data = {name = "Name missing" ,faction = "Faction Missing" ,strength = 0 ,cardType = {melee = false, ranged = false, siege = false, hero = false, leader = false} ,ability = nil ,texture = "",subText = nil, changedStrength = 0}
+function GwentAddon:CreateCard(id, cardList)
+	return Card(id, cardList)
+end
+
+function CardList:CreateCardsDatalist(name, faction, strength, cardType, ability, texture, subText)
+	local data = {name = "Name missing" ,faction = "Faction Missing" ,strength = 0 ,cardType = {melee = false, ranged = false, siege = false, hero = false, leader = false} 
+					,ability = nil ,texture = "",subText = nil, calcStrength = 0}
 	if name ~= nil then data.name = name end
 	if faction ~= nil then data.faction = faction end
-	if strength ~= nil and type(strength) == "number" then data.strength = strength end
+	if strength ~= nil and type(strength) == "number" then 
+		data.strength = strength;
+		data.calcStrength = strength;
+	end
 	if cardType ~= nil and type(cardType) == "table" then data.cardType = cardType end
 	if ability ~= nil then data.ability = ability end
 	if texture ~= nil then data.texture = texture end
@@ -67,12 +243,12 @@ function Cards:CreateCardsDatalist(name, faction, strength, cardType, ability, t
 	return data
 end
 
-function Cards:AddNorthCards()
+function CardList:AddNorthCards()
 	-----------------------------------------------------------------------------------------------
 	-- Northern Realms
 	-----------------------------------------------------------------------------------------------
 	
-	table.insert(self.list, self:CreateCardsDatalist("Foltest, King of Temeria", self.factions.north, 0, {melee = false, ranged = false, siege = false, hero = false, leader = true}, "NYI", "peasant"))
+	table.insert(self.list, self:CreateCardsDatalist("Foltest, King of Temeria", self.factions.north, 0, {melee = false, ranged = false, siege = false, hero = false, leader = true}, GwentAddon:GetAbilitydataByName("NYI"), "peasant"))
 	
 	-- table.insert(self.list, {
 				-- name = "Foltest, King of Temeria"
@@ -83,7 +259,7 @@ function Cards:AddNorthCards()
 				-- ,texture = "peasant"
 			-- })
 	
-	table.insert(self.list, self:CreateCardsDatalist("Foltest, Lord Commander Of The North", self.factions.north, 0, {melee = false, ranged = false, siege = false, hero = false, leader = true}, "NYI", "peasant"))
+	table.insert(self.list, self:CreateCardsDatalist("Foltest, Lord Commander Of The North", self.factions.north, 0, {melee = false, ranged = false, siege = false, hero = false, leader = true}, GwentAddon:GetAbilitydataByName("NYI"), "peasant"))
 	
 	-- table.insert(self.list, {
 				-- name = "Foltest, Lord Commander Of The North"
@@ -94,7 +270,7 @@ function Cards:AddNorthCards()
 				-- ,texture = "peasant"
 			-- })
 			
-	table.insert(self.list, self:CreateCardsDatalist("Foltest The Steel-forged", self.factions.north, 0, {melee = false, ranged = false, siege = false, hero = false, leader = true}, "NYI", "peasant"))
+	table.insert(self.list, self:CreateCardsDatalist("Foltest The Steel-forged", self.factions.north, 0, {melee = false, ranged = false, siege = false, hero = false, leader = true}, GwentAddon:GetAbilitydataByName("NYI"), "peasant"))
 			
 	-- table.insert(self.list, {
 				-- name = "Foltest The Steel-forged"
@@ -105,7 +281,7 @@ function Cards:AddNorthCards()
 				-- ,texture = "peasant"
 			-- })
 			
-	table.insert(self.list, self:CreateCardsDatalist("Foltest The Siegemaster", self.factions.north, 0, {melee = false, ranged = false, siege = false, hero = false, leader = true}, "NYI", "peasant"))
+	table.insert(self.list, self:CreateCardsDatalist("Foltest The Siegemaster", self.factions.north, 0, {melee = false, ranged = false, siege = false, hero = false, leader = true}, GwentAddon:GetAbilitydataByName("NYI"), "peasant"))
 	
 	-- table.insert(self.list, {
 				-- name = "Foltest The Siegemaster"
@@ -116,7 +292,7 @@ function Cards:AddNorthCards()
 				-- ,texture = "peasant"
 			-- })
 			
-	table.insert(self.list, self:CreateCardsDatalist("Philippa Eilhart", self.factions.north, 10, {melee = false, ranged = true, siege = false, hero = true, leader = false}, ABILITY_Hero, "peasant"))	
+	table.insert(self.list, self:CreateCardsDatalist("Philippa Eilhart", self.factions.north, 10, {melee = false, ranged = true, siege = false, hero = true, leader = false}, GwentAddon:GetAbilitydataByName(ABILITY_Hero), "peasant"))	
 		
 	-- table.insert(self.list, {
 				-- name = "Philippa Eilhart"
@@ -127,7 +303,7 @@ function Cards:AddNorthCards()
 				-- ,texture = "peasant"
 			-- })
 			
-	table.insert(self.list, self:CreateCardsDatalist("Vernon Roche", self.factions.north, 10, {melee = true, ranged = false, siege = false, hero = true, leader = false}, ABILITY_Hero, "peasant"))	
+	table.insert(self.list, self:CreateCardsDatalist("Vernon Roche", self.factions.north, 10, {melee = true, ranged = false, siege = false, hero = true, leader = false}, GwentAddon:GetAbilitydataByName(ABILITY_Hero), "peasant"))	
 			
 	-- table.insert(self.list, {
 				-- name = "Vernon Roche"
@@ -138,7 +314,7 @@ function Cards:AddNorthCards()
 				-- ,texture = "peasant"
 			-- })
 			
-	table.insert(self.list, self:CreateCardsDatalist("Esterad Thyssen", self.factions.north, 10, {melee = true, ranged = false, siege = false, hero = true, leader = false}, ABILITY_Hero, "peasant"))	
+	table.insert(self.list, self:CreateCardsDatalist("Esterad Thyssen", self.factions.north, 10, {melee = true, ranged = false, siege = false, hero = true, leader = false}, GwentAddon:GetAbilitydataByName(ABILITY_Hero), "peasant"))	
 	
 	-- table.insert(self.list, {
 				-- name = "Esterad Thyssen"
@@ -149,7 +325,7 @@ function Cards:AddNorthCards()
 				-- ,texture = "peasant"
 			-- })
 	
-	table.insert(self.list, self:CreateCardsDatalist("John Natalis", self.factions.north, 10, {melee = true, ranged = false, siege = false, hero = true, leader = false}, ABILITY_Hero, "peasant"))	
+	table.insert(self.list, self:CreateCardsDatalist("John Natalis", self.factions.north, 10, {melee = true, ranged = false, siege = false, hero = true, leader = false}, GwentAddon:GetAbilitydataByName(ABILITY_Hero), "peasant"))	
 	
 	-- table.insert(self.list, {
 				-- name = "John Natalis"
@@ -160,7 +336,7 @@ function Cards:AddNorthCards()
 				-- ,texture = "peasant"
 			-- })
 			
-	table.insert(self.list, self:CreateCardsDatalist("Thaler", self.factions.north, 1, {melee = false, ranged = false, siege = true, hero = false, leader = false}, ABILITY_Spy, "peasant"))	
+	table.insert(self.list, self:CreateCardsDatalist("Thaler", self.factions.north, 1, {melee = false, ranged = false, siege = true, hero = false, leader = false}, GwentAddon:GetAbilitydataByName(ABILITY_Spy), "peasant"))	
 	
 	-- table.insert(self.list, {
 				-- name = "Thaler"
@@ -195,7 +371,7 @@ function Cards:AddNorthCards()
 				-- ,subText = "2/2"
 			-- })
 			
-	table.insert(self.list, self:CreateCardsDatalist("Poor Fucking Infantry", self.factions.north, 1, {melee = true, ranged = false, siege = false, hero = false, leader = false}, ABILITY_Bond, "peasant", "1/3"))
+	table.insert(self.list, self:CreateCardsDatalist("Poor Fucking Infantry", self.factions.north, 1, {melee = true, ranged = false, siege = false, hero = false, leader = false}, GwentAddon:GetAbilitydataByName(ABILITY_Bond), "peasant", "1/3"))
 	
 	-- table.insert(self.list, {
 				-- name = "Poor Fucking Infantry"
@@ -207,7 +383,7 @@ function Cards:AddNorthCards()
 				-- ,subText = "1/3"
 			-- })
 			
-	table.insert(self.list, self:CreateCardsDatalist("Poor Fucking Infantry", self.factions.north, 1, {melee = true, ranged = false, siege = false, hero = false, leader = false}, ABILITY_Bond, "peasant", "2/3"))
+	table.insert(self.list, self:CreateCardsDatalist("Poor Fucking Infantry", self.factions.north, 1, {melee = true, ranged = false, siege = false, hero = false, leader = false}, GwentAddon:GetAbilitydataByName(ABILITY_Bond), "peasant", "2/3"))
 			
 	-- table.insert(self.list, {
 				-- name = "Poor Fucking Infantry"
@@ -219,7 +395,7 @@ function Cards:AddNorthCards()
 				-- ,subText = "2/3"
 			-- })
 			
-	table.insert(self.list, self:CreateCardsDatalist("Poor Fucking Infantry", self.factions.north, 1, {melee = true, ranged = false, siege = false, hero = false, leader = false}, ABILITY_Bond, "peasant", "3/3"))
+	table.insert(self.list, self:CreateCardsDatalist("Poor Fucking Infantry", self.factions.north, 1, {melee = true, ranged = false, siege = false, hero = false, leader = false}, GwentAddon:GetAbilitydataByName(ABILITY_Bond), "peasant", "3/3"))
 			
 	-- table.insert(self.list, {
 				-- name = "Poor Fucking Infantry"
@@ -231,7 +407,7 @@ function Cards:AddNorthCards()
 				-- ,subText = "3/3"
 			-- })
 
-	table.insert(self.list, self:CreateCardsDatalist("Kaedweni Siege Expert", self.factions.north, 1, {melee = false, ranged = false, siege = true, hero = false, leader = false}, ABILITY_Morale, "peasant", "1/3"))
+	table.insert(self.list, self:CreateCardsDatalist("Kaedweni Siege Expert", self.factions.north, 1, {melee = false, ranged = false, siege = true, hero = false, leader = false}, GwentAddon:GetAbilitydataByName(ABILITY_Morale), "peasant", "1/3"))
 	
 	-- table.insert(self.list, {
 				-- name = "Kaedweni Siege Expert"
@@ -243,7 +419,7 @@ function Cards:AddNorthCards()
 				-- ,subText = "1/3"
 			-- })
 			
-	table.insert(self.list, self:CreateCardsDatalist("Kaedweni Siege Expert", self.factions.north, 1, {melee = false, ranged = false, siege = true, hero = false, leader = false}, ABILITY_Morale, "peasant", "2/3"))
+	table.insert(self.list, self:CreateCardsDatalist("Kaedweni Siege Expert", self.factions.north, 1, {melee = false, ranged = false, siege = true, hero = false, leader = false}, GwentAddon:GetAbilitydataByName(ABILITY_Morale), "peasant", "2/3"))
 	
 	-- table.insert(self.list, {
 				-- name = "Kaedweni Siege Expert"
@@ -255,7 +431,7 @@ function Cards:AddNorthCards()
 				-- ,subText = "2/3"
 			-- })
 
-	table.insert(self.list, self:CreateCardsDatalist("Kaedweni Siege Expert", self.factions.north, 1, {melee = false, ranged = false, siege = true, hero = false, leader = false}, ABILITY_Morale, "peasant", "3/3"))
+	table.insert(self.list, self:CreateCardsDatalist("Kaedweni Siege Expert", self.factions.north, 1, {melee = false, ranged = false, siege = true, hero = false, leader = false}, GwentAddon:GetAbilitydataByName(ABILITY_Morale), "peasant", "3/3"))
 	
 	-- table.insert(self.list, {
 				-- name = "Kaedweni Siege Expert"
@@ -278,7 +454,7 @@ function Cards:AddNorthCards()
 				-- ,texture = "balista"
 			-- })
 			
-	table.insert(self.list, self:CreateCardsDatalist("Sigismund Dijkstra", self.factions.north, 4, {melee = true, ranged = false, siege = false, hero = false, leader = false}, ABILITY_Spy, "peasant"))
+	table.insert(self.list, self:CreateCardsDatalist("Sigismund Dijkstra", self.factions.north, 4, {melee = true, ranged = false, siege = false, hero = false, leader = false}, GwentAddon:GetAbilitydataByName(ABILITY_Spy), "peasant"))
 			
 	-- table.insert(self.list, {
 				-- name = "Sigismund Dijkstra"
@@ -300,7 +476,7 @@ function Cards:AddNorthCards()
 				-- ,texture = "balista"
 			-- })
 	
-	table.insert(self.list, self:CreateCardsDatalist("Blue Stripes Commando", self.factions.north, 4, {melee = true, ranged = false, siege = false, hero = false, leader = false}, ABILITY_Bond, "peasant", "1/3"))
+	table.insert(self.list, self:CreateCardsDatalist("Blue Stripes Commando", self.factions.north, 4, {melee = true, ranged = false, siege = false, hero = false, leader = false}, GwentAddon:GetAbilitydataByName(ABILITY_Bond), "peasant", "1/3"))
 	
 	-- table.insert(self.list, {
 				-- name = "Blue Stripes Commando"
@@ -312,7 +488,7 @@ function Cards:AddNorthCards()
 				-- ,subText = "1/3"
 			-- })
 			
-	table.insert(self.list, self:CreateCardsDatalist("Blue Stripes Commando", self.factions.north, 4, {melee = true, ranged = false, siege = false, hero = false, leader = false}, ABILITY_Bond, "peasant", "2/3"))
+	table.insert(self.list, self:CreateCardsDatalist("Blue Stripes Commando", self.factions.north, 4, {melee = true, ranged = false, siege = false, hero = false, leader = false}, GwentAddon:GetAbilitydataByName(ABILITY_Bond), "peasant", "2/3"))
 			
 	-- table.insert(self.list, {
 				-- name = "Blue Stripes Commando"
@@ -324,7 +500,7 @@ function Cards:AddNorthCards()
 				-- ,subText = "2/3"
 			-- })
 			
-	table.insert(self.list, self:CreateCardsDatalist("Blue Stripes Commando", self.factions.north, 4, {melee = true, ranged = false, siege = false, hero = false, leader = false}, ABILITY_Bond, "peasant", "3/3"))
+	table.insert(self.list, self:CreateCardsDatalist("Blue Stripes Commando", self.factions.north, 4, {melee = true, ranged = false, siege = false, hero = false, leader = false}, GwentAddon:GetAbilitydataByName(ABILITY_Bond), "peasant", "3/3"))
 			
 	-- table.insert(self.list, {
 				-- name = "Blue Stripes Commando"
@@ -382,7 +558,7 @@ function Cards:AddNorthCards()
 				-- ,subText = "2/2"
 			-- })
 	
-	table.insert(self.list, self:CreateCardsDatalist("Prince Stennis", self.factions.north, 5, {melee = true, ranged = false, siege = false, hero = false, leader = false}, ABILITY_Spy, "peasant"))
+	table.insert(self.list, self:CreateCardsDatalist("Prince Stennis", self.factions.north, 5, {melee = true, ranged = false, siege = false, hero = false, leader = false}, GwentAddon:GetAbilitydataByName(ABILITY_Spy), "peasant"))
 	
 	-- table.insert(self.list, {
 				-- name = "Prince Stennis"
@@ -393,7 +569,7 @@ function Cards:AddNorthCards()
 				-- ,texture = "balista"
 			-- })
 			
-	table.insert(self.list, self:CreateCardsDatalist("Crinfrid Reavers Dragon Hunter", self.factions.north, 5, {melee = false, ranged = true, siege = false, hero = false, leader = false}, ABILITY_Bond, "peasant", "1/3"))
+	table.insert(self.list, self:CreateCardsDatalist("Crinfrid Reavers Dragon Hunter", self.factions.north, 5, {melee = false, ranged = true, siege = false, hero = false, leader = false}, GwentAddon:GetAbilitydataByName(ABILITY_Bond), "peasant", "1/3"))
 	
 	-- table.insert(self.list, {
 				-- name = "Crinfrid Reavers Dragon Hunter"
@@ -405,7 +581,7 @@ function Cards:AddNorthCards()
 				-- ,subText = "1/3"
 			-- })
 	
-	table.insert(self.list, self:CreateCardsDatalist("Crinfrid Reavers Dragon Hunter", self.factions.north, 5, {melee = false, ranged = true, siege = false, hero = false, leader = false}, ABILITY_Bond, "peasant", "2/3"))
+	table.insert(self.list, self:CreateCardsDatalist("Crinfrid Reavers Dragon Hunter", self.factions.north, 5, {melee = false, ranged = true, siege = false, hero = false, leader = false}, GwentAddon:GetAbilitydataByName(ABILITY_Bond), "peasant", "2/3"))
 	
 	-- table.insert(self.list, {
 				-- name = "Crinfrid Reavers Dragon Hunter"
@@ -417,7 +593,7 @@ function Cards:AddNorthCards()
 				-- ,subText = "2/3"
 			-- })
 		
-	table.insert(self.list, self:CreateCardsDatalist("Crinfrid Reavers Dragon Hunter", self.factions.north, 5, {melee = false, ranged = true, siege = false, hero = false, leader = false}, ABILITY_Bond, "peasant", "3/3"))
+	table.insert(self.list, self:CreateCardsDatalist("Crinfrid Reavers Dragon Hunter", self.factions.north, 5, {melee = false, ranged = true, siege = false, hero = false, leader = false}, GwentAddon:GetAbilitydataByName(ABILITY_Bond), "peasant", "3/3"))
 			
 	-- table.insert(self.list, {
 				-- name = "Crinfrid Reavers Dragon Hunter"
@@ -440,7 +616,7 @@ function Cards:AddNorthCards()
 				-- ,texture = "balista"
 			-- })
 		
-	table.insert(self.list, self:CreateCardsDatalist("Dun Banner Medic", self.factions.north, 5, {melee = false, ranged = false, siege = true, hero = false, leader = false}, ABILITY_Medic, "peasant", "1/2"))
+	table.insert(self.list, self:CreateCardsDatalist("Dun Banner Medic", self.factions.north, 5, {melee = false, ranged = false, siege = true, hero = false, leader = false}, GwentAddon:GetAbilitydataByName(ABILITY_Medic), "peasant", "1/2"))
 		
 	-- table.insert(self.list, {
 				-- name = "Dun Banner Medic"
@@ -452,7 +628,7 @@ function Cards:AddNorthCards()
 				-- ,subText = "1/2"
 			-- })
 	
-	table.insert(self.list, self:CreateCardsDatalist("Dun Banner Medic", self.factions.north, 5, {melee = false, ranged = false, siege = true, hero = false, leader = false}, ABILITY_Medic, "peasant", "2/2"))
+	table.insert(self.list, self:CreateCardsDatalist("Dun Banner Medic", self.factions.north, 5, {melee = false, ranged = false, siege = true, hero = false, leader = false}, GwentAddon:GetAbilitydataByName(ABILITY_Medic), "peasant", "2/2"))
 	
 	-- table.insert(self.list, {
 				-- name = "Dun Banner Medic"
@@ -547,7 +723,7 @@ function Cards:AddNorthCards()
 				-- ,subText = "2/2"
 			-- })
 		
-	table.insert(self.list, self:CreateCardsDatalist("Catapult", self.factions.north, 8, {melee = false, ranged = false, siege = true, hero = false, leader = false}, ABILITY_Bond, "peasant", "1/2"))
+	table.insert(self.list, self:CreateCardsDatalist("Catapult", self.factions.north, 8, {melee = false, ranged = false, siege = true, hero = false, leader = false}, GwentAddon:GetAbilitydataByName(ABILITY_Bond), "peasant", "1/2"))
 		
 	-- table.insert(self.list, {
 				-- name = "Catapult"
@@ -559,7 +735,7 @@ function Cards:AddNorthCards()
 				-- ,subText = "1/2"
 			-- })
 	
-	table.insert(self.list, self:CreateCardsDatalist("Catapult", self.factions.north, 8, {melee = false, ranged = false, siege = true, hero = false, leader = false}, ABILITY_Bond, "peasant", "2/2"))
+	table.insert(self.list, self:CreateCardsDatalist("Catapult", self.factions.north, 8, {melee = false, ranged = false, siege = true, hero = false, leader = false}, GwentAddon:GetAbilitydataByName(ABILITY_Bond), "peasant", "2/2"))
 	
 	-- table.insert(self.list, {
 				-- name = "Catapult"
@@ -572,7 +748,7 @@ function Cards:AddNorthCards()
 			-- })
 end
 
-function Cards:AddNeutralCards()
+function CardList:AddNeutralCards()
 	-----------------------------------------------------------------------------------------------
 	-- Neutral
 	-----------------------------------------------------------------------------------------------
@@ -621,7 +797,7 @@ function Cards:AddNeutralCards()
 				-- ,texture = "peasant"
 			-- })
 			
-	table.insert(self.list, self:CreateCardsDatalist("Yennefer of Vengerberg", self.factions.neutral, 7, {melee = false, ranged = true, siege = false, hero = true, leader = false}, ABILITY_Medic, "peasant"))
+	table.insert(self.list, self:CreateCardsDatalist("Yennefer of Vengerberg", self.factions.neutral, 7, {melee = false, ranged = true, siege = false, hero = true, leader = false}, GwentAddon:GetAbilitydataByName(ABILITY_Medic), "peasant"))
 			
 	-- table.insert(self.list, {
 				-- name = "Yennefer of Vengerberg"
@@ -632,7 +808,7 @@ function Cards:AddNeutralCards()
 				-- ,texture = "peasant"
 			-- })
 		
-	table.insert(self.list, self:CreateCardsDatalist("Dandelion", self.factions.neutral, 2, {melee = true, ranged = false, siege = false, hero = false, leader = false}, ABILITY_Command, "peasant"))
+	table.insert(self.list, self:CreateCardsDatalist("Dandelion", self.factions.neutral, 2, {melee = true, ranged = false, siege = false, hero = false, leader = false}, GwentAddon:GetAbilitydataByName(ABILITY_Command), "peasant"))
 		
 	-- table.insert(self.list, {
 				-- name = "Dandelion"
@@ -654,7 +830,7 @@ function Cards:AddNeutralCards()
 				-- ,texture = "peasant"
 			-- })
 		
-	table.insert(self.list, self:CreateCardsDatalist("Avallac'h", self.factions.neutral, 0, {melee = true, ranged = false, siege = false, hero = true, leader = false}, ABILITY_Spy, "peasant"))
+	table.insert(self.list, self:CreateCardsDatalist("Avallac'h", self.factions.neutral, 0, {melee = true, ranged = false, siege = false, hero = true, leader = false}, GwentAddon:GetAbilitydataByName(ABILITY_Spy), "peasant"))
 		
 	-- table.insert(self.list, {
 				-- name = "Avallac'h"
@@ -676,7 +852,7 @@ function Cards:AddNeutralCards()
 				-- ,texture = "peasant"
 			-- })
 			
-	table.insert(self.list, self:CreateCardsDatalist("Villentretenmerth", self.factions.neutral, 7, {melee = true, ranged = false, siege = false, hero = false, leader = false}, ABILITY_SCORCH, "peasant"))
+	table.insert(self.list, self:CreateCardsDatalist("Villentretenmerth", self.factions.neutral, 7, {melee = true, ranged = false, siege = false, hero = false, leader = false}, GwentAddon:GetAbilitydataByName(ABILITY_SCORCH), "peasant"))
 			
 	-- table.insert(self.list, {
 				-- name = "Villentretenmerth"
@@ -688,7 +864,7 @@ function Cards:AddNeutralCards()
 			-- })
 end
 
-function Cards:CreateCardsList()
+function CardList:CreateCardsList()
 	
 	self.list = {}
 
@@ -706,7 +882,7 @@ function Cards:CreateCardsList()
 	
 end
 
-function Cards:GetTypeIcon(card)
+function CardList:GetTypeIcon(card)
 	local types = card.data.cardType
 	
 	if types.melee and types.siege then
@@ -722,7 +898,7 @@ function Cards:GetTypeIcon(card)
 	return nil
 end
 
-function Cards:GetCardOfId(id)
+function CardList:GetCardDataOfId(id)
 
 	for k, v in ipairs(self.list) do
 		if v.Id == tonumber(id) then
@@ -733,7 +909,7 @@ function Cards:GetCardOfId(id)
 	return nil
 end
 
-function Cards:CreateCardTypeIcons(card)
+function CardList:CreateCardTypeIcons(card)
 	local count = 0;
 	local vcBG = 1
 	local vc = 0
@@ -764,9 +940,27 @@ function Cards:CreateCardTypeIcons(card)
 
 end
 
-function Cards:CreateCardOfId(id)
+function Card:UpdateCardStrength()
+	local frame = self.frame
+	frame.strength:SetTextColor(0, 0, 0)
+	if self.data.cardType.hero then
+		frame.strength:SetTextColor(1, 1, 1)
+	end
+	frame.strength:SetText(self.data.calcStrength)
+	
+	if ( self.data.calcStrength > self.data.strength ) then -- buffed
+		frame.strength:SetTextColor(0.2, 1, 0.2)
+	elseif ( self.data.calcStrength < self.data.strength ) then -- nerfed
+		frame.strength:SetTextColor(1, 0.7, 0.7)
+	end
+	
+end
+--[[
+function CardList:CreateCardOfId(id)
 
-	local cardData = self:GetCardOfId(id)
+	Card(id, self)
+
+	local cardData = self:GetCardDataOfId(id)
 	
 	GwentAddon:DEBUGMessageSent("Trying to create card with id "..id)
 	
@@ -791,12 +985,12 @@ function Cards:CreateCardOfId(id)
 	  = 0, bottom = 0 }
 	  })
 	
-	-- card.texture = card:CreateTexture(addonName.."_Card_".._CardNr.."_Texture", "ARTWORK")
-	-- card.texture:SetDrawLayer("ARTWORK", 0)
-	-- card.texture:SetTexture(TEXTURE_CUSTOM_PATH..cardData.texture)
-	-- card.texture:SetTexCoord(COORDS_SMALLCARD.left, COORDS_SMALLCARD.right, COORDS_SMALLCARD.top, COORDS_SMALLCARD.bottom)
-	-- card.texture:SetPoint("topleft", card, 2, -2)
-	-- card.texture:SetPoint("bottomright", card, -2, 2)
+	card.texture = card:CreateTexture(addonName.."_Card_".._CardNr.."_Texture", "ARTWORK")
+	card.texture:SetDrawLayer("ARTWORK", 0)
+	card.texture:SetTexture(TEXTURE_CUSTOM_PATH..cardData.texture)
+	card.texture:SetTexCoord(COORDS_SMALLCARD.left, COORDS_SMALLCARD.right, COORDS_SMALLCARD.top, COORDS_SMALLCARD.bottom)
+	card.texture:SetPoint("topleft", card, 2, -2)
+	card.texture:SetPoint("bottomright", card, -2, 2)
 	
 	card.darken = card:CreateTexture(addonName.."_Card_".._CardNr.."_Darken", "ARTWORK")
 	card.darken:SetDrawLayer("ARTWORK", 7)
@@ -808,8 +1002,8 @@ function Cards:CreateCardOfId(id)
 	
 	card:SetMovable(false)
 	card:RegisterForDrag("LeftButton")
-	card:SetScript("OnDragStart", function(c) self:StartDraggingCard(c) end)
-	card:SetScript("OnDragStop", function(c) self:StopDraggingCard(c) end)
+	card:SetScript("OnDragStart", function(c) self:StartDragging(c) end)
+	card:SetScript("OnDragStop", function(c) self:StopDragging(c) end)
 	card:SetScript("OnMouseDown", function(c)  self:SelectForDiscard(c) end)
 	--card:SetScript("OnLeave", function(self) GwentAddon.playFrame.cardTooltip:Hide() end)
 	card:SetScript("OnEnter", function(c) GwentAddon:SetCardTooltip(c) end)
@@ -868,7 +1062,7 @@ function Cards:CreateCardOfId(id)
 	--card.strength:SetPoint("bottomright", card, "bottomright", -2, -7)
 	card.strength:SetJustifyH("center")
 	card.strength:SetJustifyV("middle")
-	card.strength:SetText(cardData.strength)
+	card.strength:SetText(cardData.calcStrength)
 	--card.strength:SetTextColor(0,0,0)
 	if card.data.cardType.hero then
 		--card.strength:SetTextColor(1,1,1)
@@ -882,28 +1076,29 @@ function Cards:CreateCardOfId(id)
 	  
 	return card
 end
+]]--
 
-function Cards:SelectForDiscard(card)
+function Card:SelectForDiscard()
 	-- only allow during discard phase
 	if GwentAddon.currentState ~= GwentAddon.states.playerDiscard and GwentAddon.currentState ~= GwentAddon.states.enemyDoneDiscarding then
 		return
 	end
 
-	local nr = GwentAddon:NumberInList(card, _InitialDiscardSelected)
+	local nr = GwentAddon:NumberInList(self, _InitialDiscardSelected)
 	if nr > -1 then
 		-- Already selected
-		card.darken:Hide()
+		self.frame.darken:Hide()
 		table.remove(_InitialDiscardSelected, nr)
 	else
 		-- Not yet selected
 		if #_InitialDiscardSelected < 2 then
-			table.insert(_InitialDiscardSelected, card)
-			card.darken:Show()
+			table.insert(_InitialDiscardSelected, self)
+			self.frame.darken:Show()
 		end
 	end
 end
 
-function Cards:DiscardSelectedCards() 
+function CardList:DiscardSelectedCards() 
 
 	for k, card in ipairs(_InitialDiscardSelected) do
 		self:RemoveCardFromHand(card)
@@ -917,7 +1112,7 @@ function Cards:DiscardSelectedCards()
 		self:DrawCard()
 	end
 	
-	self:PlaceAllCards()
+	GwentAddon:PlaceAllCards()
 
 	GwentPlayFrame.discardButton:Hide()
 	
@@ -931,10 +1126,13 @@ function Cards:DiscardSelectedCards()
 	
 end
 
-function Cards:RemoveCardFromHand(card)
+function CardList:RemoveCardFromHand(card)
 	local cardToRemove = nil
+	
+	print(card.frame:GetName())
+	
 	for k, v in ipairs(GwentAddon.lists.playerHand) do
-		if v.nr == card.nr then
+		if v.frame.nr == card.frame.nr then
 			cardToRemove = k
 			break
 		end
@@ -946,35 +1144,35 @@ function Cards:RemoveCardFromHand(card)
 	
 end
 
---function Cards:RemoveAll()
+--function CardList:RemoveAll()
 
 --end
 
-function Cards:PlaceAllCards()
+function GwentAddon:PlaceAllCards()
 	local playerPoints = 0
-	GwentAddon:PlayerPlaceCardsOnFrame(GwentAddon.lists.playerHand, GwentAddon.playFrame.playerHand)
-	playerPoints = playerPoints + GwentAddon:PlayerPlaceCardsOnFrame(GwentAddon.lists.playerSiege, GwentAddon.playFrame.playerSiege)
-	playerPoints = playerPoints + GwentAddon:PlayerPlaceCardsOnFrame(GwentAddon.lists.playerRanged, GwentAddon.playFrame.playerRanged)
-	playerPoints = playerPoints + GwentAddon:PlayerPlaceCardsOnFrame(GwentAddon.lists.playerMelee, GwentAddon.playFrame.playerMelee)
+	GwentAddon:PlaceCardsOnFrame(GwentAddon.lists.playerHand, GwentAddon.playFrame.playerHand)
+	playerPoints = playerPoints + GwentAddon:PlaceCardsOnFrame(GwentAddon.lists.playerSiege, GwentAddon.playFrame.playerSiege)
+	playerPoints = playerPoints + GwentAddon:PlaceCardsOnFrame(GwentAddon.lists.playerRanged, GwentAddon.playFrame.playerRanged)
+	playerPoints = playerPoints + GwentAddon:PlaceCardsOnFrame(GwentAddon.lists.playerMelee, GwentAddon.playFrame.playerMelee)
 	
 	local enemyPoints = 0
 	-- Place enemy hand
-	enemyPoints = enemyPoints + GwentAddon:PlayerPlaceCardsOnFrame(GwentAddon.lists.enemySiege, GwentAddon.playFrame.enemySiege)
-	enemyPoints = enemyPoints + GwentAddon:PlayerPlaceCardsOnFrame(GwentAddon.lists.enemyRanged, GwentAddon.playFrame.enemyRanged)
-	enemyPoints = enemyPoints + GwentAddon:PlayerPlaceCardsOnFrame(GwentAddon.lists.enemyMelee, GwentAddon.playFrame.enemyMelee)
+	enemyPoints = enemyPoints + GwentAddon:PlaceCardsOnFrame(GwentAddon.lists.enemySiege, GwentAddon.playFrame.enemySiege)
+	enemyPoints = enemyPoints + GwentAddon:PlaceCardsOnFrame(GwentAddon.lists.enemyRanged, GwentAddon.playFrame.enemyRanged)
+	enemyPoints = enemyPoints + GwentAddon:PlaceCardsOnFrame(GwentAddon.lists.enemyMelee, GwentAddon.playFrame.enemyMelee)
 	
 	GwentAddon:UpdateTotalPoints(playerPoints, enemyPoints)
 	GwentAddon:UpdateTotalBorders(playerPoints, enemyPoints)
 
 end
 
-function Cards:UpdateCardSpaceing(card, mouseX, mouseY)
+function CardList:UpdateCardSpaceing(card, mouseX, mouseY)
 	
 
-	local left, bottom, width, height = card:GetBoundsRect()
-	local hleft, hright, htop, hbottom = card:GetHitRectInsets()
+	local left, bottom, width, height = card.frame:GetBoundsRect()
+	local hleft, hright, htop, hbottom = card.frame:GetHitRectInsets()
 	local mouseX, mouseY = GetCursorPosition()
-	local s = card:GetEffectiveScale();
+	local s = card.frame:GetEffectiveScale();
 	mouseX, mouseY = mouseX/s, mouseY/s
 
 	card.leftSpacing = 0
@@ -993,44 +1191,44 @@ function Cards:UpdateCardSpaceing(card, mouseX, mouseY)
 	return false
 end
 
-function Cards:DrawCard()
+function CardList:DrawCard()
 
 	local deckCardNr = math.random(#GwentAddon.lists.playerDeck)
-	table.insert(GwentAddon.lists.playerHand, self:CreateCardOfId(GwentAddon.lists.playerDeck[deckCardNr].Id))
+	table.insert(GwentAddon.lists.playerHand, Card(GwentAddon.lists.playerDeck[deckCardNr].Id, self))--self:CreateCardOfId(GwentAddon.lists.playerDeck[deckCardNr].Id))
 	
 	table.remove(GwentAddon.lists.playerDeck, deckCardNr)
 	
-	self:PlaceAllCards()
+	GwentAddon:PlaceAllCards()
 end
 
-function Cards:DrawStartHand()
+function CardList:DrawStartHand()
 
 	for i=1,10 do
 		self:DrawCard()
 	end
 end
 
-function Cards:StartDraggingCard(card)
+function Card:StartDragging()
 	-- only allow during player's turn and when card is movable
-	if not card:IsMovable() or  GwentAddon.currentState ~= GwentAddon.states.playerTurn then
+	if not self.frame:IsMovable() or  GwentAddon.currentState ~= GwentAddon.states.playerTurn then
 		return
 	end
 	
-	self.draggedCard = card
-	card:StartMoving()
+	GwentAddon.cards.draggedCard = self
+	self.frame:StartMoving()
 end
 
-function Cards:StopDraggingCard(card)
+function Card:StopDragging(card)
 	-- only allow during player's turn and when card is movable
-	if not card:IsMovable() or GwentAddon.currentState ~= GwentAddon.states.playerTurn then 
+	if not self.frame:IsMovable() or GwentAddon.currentState ~= GwentAddon.states.playerTurn then 
 		return
 	end
 
-	local success, area, position = GwentAddon:DropCardArea(self.draggedCard)
-	if success and self.draggedCard  ~= nil then
-		self.draggedCard  = nil
+	local success, area, position = GwentAddon:DropCardArea(GwentAddon.cards.draggedCard)
+	if success and GwentAddon.cards.draggedCard  ~= nil then
+		GwentAddon.cards.draggedCard  = nil
 
-		SendAddonMessage(addonName, string.format(GwentAddon.messages.placeInArea, area, card.data.Id, position), "whisper" , GwentAddon.challengerName)
+		SendAddonMessage(addonName, string.format(GwentAddon.messages.placeInArea, area, self.data.Id, position), "whisper" , GwentAddon.challengerName)
 		
 		-- don't end your turn if enemy passed
 		if not GwentAddon.enemyPassed then
@@ -1040,19 +1238,19 @@ function Cards:StopDraggingCard(card)
 		
 	end
 
-	self.draggedCard  = nil
-	card:StopMovingOrSizing()
-	self:PlaceAllCards()
+	GwentAddon.cards.draggedCard  = nil
+	self.frame:StopMovingOrSizing()
+	GwentAddon:PlaceAllCards()
 	
 	
 
 end
 
-function Cards:AddEnemyCard(message)
+function CardList:AddEnemyCard(message)
 	--print(message, string.match(message, "(%a+)#(%d+)"))
 	local areaType, id, pos = string.match(message, "(%a+)#(%d+)#(%d+)")
 	--GwentAddon:DEBUGMessageSent(message .. " - ".. string.match(message, "(%a+)#(%d+)"))
-	local card = self:CreateCardOfId(id)
+	local card = GwentAddon:CreateCard(id, self) --self:CreateCardOfId(id)
 	if areaType == TEXT_SIEGE then
 		self:AddCardToNewList(card, "enemySiege", pos)
 	elseif areaType == TEXT_RANGED then
@@ -1061,12 +1259,12 @@ function Cards:AddEnemyCard(message)
 		self:AddCardToNewList(card, "enemyMelee", pos)
 	end
 	
-	card:SetScript("OnDragStart", function(self) end)
-	card:SetScript("OnDragStop", function(self)  end)
-	card:SetScript("OnEnter", function(self) GwentAddon:SetCardTooltip(self) end)
-	card:SetScript("OnLeave", function(self) GwentAddon.playFrame.cardTooltip:Hide() end)
+	card.frame:SetScript("OnDragStart", function(self) end)
+	card.frame:SetScript("OnDragStop", function(self)  end)
+	card.frame:SetScript("OnEnter", function(self) GwentAddon:SetCardTooltip(self) end)
+	card.frame:SetScript("OnLeave", function(self) GwentAddon.playFrame.cardTooltip:Hide() end)
 	
-	self:PlaceAllCards()
+	GwentAddon:PlaceAllCards()
 end
 
 local function DroppedOnLeftSideOfArea()
@@ -1082,7 +1280,7 @@ local function DroppedOnLeftSideOfArea()
 	return false
 end
 
-function Cards:AddCardToNewList(card, name, position)
+function CardList:AddCardToNewList(card, name, position)
 	
 	local list = GwentAddon:GetListByName(name)
 	local area = GwentAddon:GetAreaByName(name)
@@ -1112,9 +1310,11 @@ function Cards:AddCardToNewList(card, name, position)
 		
 	end
 	
-	card:SetMovable(false)
-	card:SetScript("OnDragStart", function(self) end)
-	card:SetScript("OnDragStop", function(self)  end)
+	card.frame:SetMovable(false)
+	card.frame:SetScript("OnDragStart", function(self) end)
+	card.frame:SetScript("OnDragStop", function(self)  end)
+	--If card has an ability, use it
+
 	--card:EnableMouse(false)
 	
 	return pos

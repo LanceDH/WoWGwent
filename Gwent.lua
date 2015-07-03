@@ -174,14 +174,14 @@ function GwentAddon:CheckBattleWinner()
 	return false
 end    
 
-function GwentAddon:PlayerPlaceCardsOnFrame(list, frame)
+function GwentAddon:PlaceCardsOnFrame(list, frame)
 	local totalPoints = 0
 	
 	local distance = 0
 	frame.cardContainer:SetWidth(0)
 
 	for k, card in ipairs(list) do
-		card:ClearAllPoints()
+		card.frame:ClearAllPoints()
 		
 		-- reset spacing when not draggin a card around
 		if GwentAddon.cards.draggedCard == nil then 
@@ -192,18 +192,35 @@ function GwentAddon:PlayerPlaceCardsOnFrame(list, frame)
 		--(k-1)*GwentAddon.NUM_CARD_WIDTH
 		
 		if card.leftSpacing > 0 then distance = distance + card.leftSpacing end
-		card:SetPoint("left", frame.cardContainer , "left",distance , 0)
+		card.frame:SetPoint("left", frame.cardContainer , "left",distance , 0)
 		if card.rightSpacing > 0 then distance = distance + card.rightSpacing end
 		-- Change inset for mouseover
-		card:SetHitRectInsets(-card.leftSpacing, -card.rightSpacing, 0, 0)
-		--print(card:GetName(), card:GetHitRectInsets())
+		card.frame:SetHitRectInsets(-card.leftSpacing, -card.rightSpacing, 0, 0)
+		--print(card.frame:GetName(), card.frame:GetHitRectInsets())
 		
-		card:SetWidth(GwentAddon.NUM_CARD_WIDTH)
-		card:SetHeight(GwentAddon.NUM_CARD_HEIGHT)
+		card.frame:SetWidth(GwentAddon.NUM_CARD_WIDTH)
+		card.frame:SetHeight(GwentAddon.NUM_CARD_HEIGHT)
 		
 		distance = distance + GwentAddon.NUM_CARD_WIDTH
+
+		-- reset the strength
+		card.data.calcStrength = card.data.strength
+		card:UpdateCardStrength()
+	end
+	
+	-- use abilities but not when it's the player's hand
+	if list ~= GwentAddon.lists.playerHand then
+		for k, card in ipairs(list) do
+			if card.data.ability then
+				card.data.ability.funct(card, list)
+			end
 		
-		totalPoints = totalPoints + card.data.strength
+		end
+	end
+	
+	-- count row points
+	for k, card in ipairs(list) do
+		totalPoints = totalPoints + card.data.calcStrength
 	end
 	
 	frame.cardContainer:SetWidth(distance)
@@ -212,6 +229,7 @@ function GwentAddon:PlayerPlaceCardsOnFrame(list, frame)
 		frame.points:SetText(totalPoints)
 		return totalPoints
 	end
+	
 end
 
 function GwentAddon:UpdateTotalBorders(playerPoints, enemyPoints)
@@ -237,8 +255,8 @@ end
 
 function GwentAddon:DestroyCardsInList(list)
 	for k, card in pairs(list) do
-		table.insert(_CardPool, card)
-		card:Hide()
+		table.insert(_CardPool, card.frame)
+		card.frame:Hide()
 		list[k] = nil
 	end
 	
@@ -291,7 +309,21 @@ function GwentAddon:SetCardTooltip(card)
 	
 	tp.name:SetText(card.data.name)
 	tp.faction:SetText(card.data.faction)
-	tp.strength:SetText(card.data.strength)
+	
+	tp.strength:SetTextColor(0, 0, 0)
+	if card.data.cardType.hero then
+		tp.strength:SetTextColor(1, 1, 1)
+	end
+	
+	tp.strength:SetText(card.data.calcStrength)
+	
+	if ( card.data.calcStrength > card.data.strength ) then -- buffed
+		tp.strength:SetTextColor(0.2, 1, 0.2)
+	elseif ( card.data.calcStrength < card.data.strength ) then -- nerfed
+		tp.strength:SetTextColor(1, 0.7, 0.7)
+	end
+	
+	
 end
 
 local function CreateCardArea(name, parent, texture)
@@ -499,12 +531,12 @@ local function CreatePlayFrame()
 						GwentAddon.draggingOver.card = card
 					end
 				end
-				GwentAddon:PlayerPlaceCardsOnFrame(GwentAddon.draggingOver.list, GwentAddon.draggingOver.area)
+				GwentAddon:PlaceCardsOnFrame(GwentAddon.draggingOver.list, GwentAddon.draggingOver.area)
 			end
 			-- safety to not lose card
 			-- if overCard ~= nil then
 				-- GwentAddon.cards:UpdateCardSpaceing(GwentAddon.draggingOver.card, GwentAddon.draggingOver.mouseX, GwentAddon.draggingOver.mouseY)
-				-- GwentAddon:PlayerPlaceCardsOnFrame(GwentAddon.draggingOver.list, GwentAddon.draggingOver.area)
+				-- GwentAddon:PlaceCardsOnFrame(GwentAddon.draggingOver.list, GwentAddon.draggingOver.area)
 			-- end
 			GwentAddon.draggingOver.timer = 0
 		end
@@ -891,7 +923,7 @@ function GwentAddon:DropCardArea(card)
 		return true, TEXT_SIEGE, pos
 	elseif GwentAddon:MouseIsOverFrame(GwentAddon.playFrame.playerRanged) and IsRightTypeForArea(card, TEXT_RANGED) then
 		
-		local pos = GwentAddon.cards:AddCardToNewList(card, "playerRange")
+		local pos = GwentAddon.cards:AddCardToNewList(card, "playerRanged")
 		GwentAddon.cards:RemoveCardFromHand(card)
 		return true, TEXT_RANGED, pos
 	elseif GwentAddon:MouseIsOverFrame(GwentAddon.playFrame.playerMelee) and IsRightTypeForArea(card, TEXT_MELEE) then
@@ -943,7 +975,7 @@ function GwentAddon:ResetGame()
 	GwentAddon:DestroyCardsInList(GwentAddon.lists.enemySiege)
 	GwentAddon:DestroyCardsInList(GwentAddon.lists.enemyRanged)
 	GwentAddon:DestroyCardsInList(GwentAddon.lists.enemyMelee)
-	GwentAddon.cards:PlaceAllCards()
+	GwentAddon:PlaceAllCards()
 	_DraggedCard = nil
 	_DragginOverFrame = nil
 	GwentAddon.enemyPassed = false
@@ -983,7 +1015,7 @@ function GwentAddon:StartNewRound()
 	GwentAddon:DestroyCardsInList(GwentAddon.lists.enemyRanged)
 	GwentAddon:DestroyCardsInList(GwentAddon.lists.enemyMelee)
 	GwentAddon.cards:DrawCard()
-	GwentAddon.cards:PlaceAllCards()
+	GwentAddon:PlaceAllCards()
 	_DraggedCard = nil
 	_DragginOverFrame = nil
 	
@@ -1047,14 +1079,14 @@ function GwentAddon:ChangeState(state)
 		end
 		GwentAddon.playFrame.playerTurn:Show()
 		for k, card in ipairs(GwentAddon.lists.playerHand) do
-			card:SetMovable(true)
+			card.frame:SetMovable(true)
 		end
 		
 	elseif GwentAddon.currentState == GwentAddon.states.enemyTurn then
 		GwentAddon.popup:ShowMessage("Opponent turn.")
 		GwentAddon.playFrame.enemyTurn:Show()
 		for k, card in ipairs(GwentAddon.lists.playerHand) do
-			card:SetMovable(false)
+			card.frame:SetMovable(false)
 		end
 		GwentAddon.playFrame.passButton:Disable()
 		
@@ -1240,7 +1272,7 @@ local function slashcmd(msg, editbox)
 		local nr = string.match(msg, "draw (%d+)")
 		
 		table.insert(GwentAddon.lists.playerHand, CreateCardOfId(nr))
-		GwentAddon.cards:PlaceAllCards()
+		GwentAddon:PlaceAllCards()
 		
 	elseif msg == 'log' then
 		SendAddonMessage(addonName, GwentAddon.messages.logout, "whisper" , GwentAddon.challengerName)
