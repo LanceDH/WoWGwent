@@ -33,16 +33,45 @@ function Abilitie.new(name, isLeader, texture, abilityFunction)
 	self.name = name
 	self.isLeader = false
 	self.texture = TEXTURE_CUSTOM_PATH .. texture
-	self.funct = function(card, list, c) abilityFunction(card, list, c) end
+	self.funct = function(card, list, pos) abilityFunction(card, list, pos) end
 	
 	return self
+end
+
+local function CountSameNameOnLeft(card, list, pos) 
+	if pos == 1 then return 0 end -- is left most card
+	local count = 0
+	
+	if ( list[pos-1].data.name == card.data.name ) then
+		count = count + 1
+		count = count + CountSameNameOnLeft(card, list, pos-1) 
+	end
+	return count
+end
+
+local function CountSameNameOnRight(card, list, pos) 
+	if pos == #list then return 0 end -- is right most card
+	local count = 0
+	
+	if ( list[pos+1].data.name == card.data.name ) then
+		count = count + 1
+		count = count + CountSameNameOnRight(card, list, pos+1) 
+	end
+	return count
 end
 
 -- Tight Bond
 --
 -- Place next to card card zith the same name to double the strength of both cards.
-local function AbilityTightBond(card, list)
-	print("Bond")
+local function AbilityTightBond(card, list, pos)
+	print("checking card " .. card.frame:GetName());
+	local left = CountSameNameOnLeft(card, list, pos);
+	local right = CountSameNameOnRight(card, list, pos);
+	print(left .. " - " .. right);
+	local count = left + right;
+	
+	card.data.calcStrength = card.data.calcStrength + (card.data.strength * count);
+	card:UpdateCardStrength();
 end
 
 -- Morable Boost
@@ -62,13 +91,13 @@ function GwentAddon:CreateAbilitieList()
 
 	GwentAddon.Abilities = {}
 
-	table.insert(GwentAddon.Abilities, Abilitie("Spy", false, "AbilitySpy", function(card, list, c) print("NYI Spy") end));
-	table.insert(GwentAddon.Abilities, Abilitie("Tight Bond", false, "AbilityBond", function(card, list, c) AbilityTightBond(card, list) end));
-	table.insert(GwentAddon.Abilities, Abilitie("Morale Boost", false, "AbilityBoost", function(card, list, c) AbilityMoraleBoost(card, list) end));
-	table.insert(GwentAddon.Abilities, Abilitie("Medic", false, "AbilityMedic", function(card, list, c) print("NYI Medic") end));
-	table.insert(GwentAddon.Abilities, Abilitie("Muster", false, "AbilityMuster", function(card, list, c) print("NYI Muster") end));
-	table.insert(GwentAddon.Abilities, Abilitie("Agile", false, "AbilityAgile", function(card, list, c) print("NYI Agile") end));
-	table.insert(GwentAddon.Abilities, Abilitie("Scorch", false, "AbilityScorch", function(card, list, c) print("NYI Scorch") end));
+	table.insert(GwentAddon.Abilities, Abilitie("Spy", false, "AbilitySpy", function(card, list, pos) print("NYI Spy") end));
+	table.insert(GwentAddon.Abilities, Abilitie("Tight Bond", false, "AbilityBond", function(card, list, pos) AbilityTightBond(card, list, pos) end));
+	table.insert(GwentAddon.Abilities, Abilitie("Morale Boost", false, "AbilityBoost", function(card, list, pos) AbilityMoraleBoost(card, list) end));
+	table.insert(GwentAddon.Abilities, Abilitie("Medic", false, "AbilityMedic", function(card, list, pos) print("NYI Medic") end));
+	table.insert(GwentAddon.Abilities, Abilitie("Muster", false, "AbilityMuster", function(card, list, pos) print("NYI Muster") end));
+	table.insert(GwentAddon.Abilities, Abilitie("Agile", false, "AbilityAgile", function(card, list, pos) print("NYI Agile") end));
+	table.insert(GwentAddon.Abilities, Abilitie("Scorch", false, "AbilityScorch", function(card, list, pos) print("NYI Scorch") end));
 	
 	-- table.insert(GwentAddon.Abilities, {
 				-- name = "Spy"

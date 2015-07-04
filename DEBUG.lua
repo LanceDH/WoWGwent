@@ -45,7 +45,10 @@ local function DEBUGPrintCard(card)
 	
 	local cardAbility = AceGUI:Create("Label")
 	cardAbility:SetRelativeWidth(0.3)
-	cardAbility:SetText(card.ability)
+	cardAbility:SetText("")
+	if ( card.ability ) then
+		cardAbility:SetText(card.ability.name)
+	end
 	DEBUGWINDOW.cardScroller:AddChild(cardAbility)
 	
 	local cardDeck = AceGUI:Create("Label")
