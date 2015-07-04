@@ -212,7 +212,8 @@ function GwentAddon:PlaceCardsOnFrame(list, frame)
 	if list ~= GwentAddon.lists.playerHand then
 		for k, card in ipairs(list) do
 			if card.data.ability then
-				card.data.ability.funct(card, list)
+				print(k)
+				card.data.ability.funct(card, list, k)
 			end
 		
 		end
@@ -1271,7 +1272,7 @@ local function slashcmd(msg, editbox)
 	elseif string.find(msg, "draw") then
 		local nr = string.match(msg, "draw (%d+)")
 		
-		table.insert(GwentAddon.lists.playerHand, CreateCardOfId(nr))
+		table.insert(GwentAddon.lists.playerHand, GwentAddon:CreateCard(nr, GwentAddon.cards))
 		GwentAddon:PlaceAllCards()
 		
 	elseif msg == 'log' then
