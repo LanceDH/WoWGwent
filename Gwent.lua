@@ -37,8 +37,9 @@ local COORDS_ICON_RANGED = {["x"]=64*15, ["y"]=64*1}
 local COORDS_ICON_SIEGE = {["x"]=64*3, ["y"]=64*7}
 local COORDS_SMALLCARD = {["left"]=76/256, ["right"]=244/256, ["top"]=30/512, ["bottom"]=300/512}
 
-GwentAddon.messages = {["placeInArea"] = "%s#%d#%d"
-						,["challenge"] = "It's time to du-du-du-duel"
+GwentAddon.messages = {["placeInArea"] = "#%s#%d#%d"
+						,["challenge"] = "It's time to du du du duel"
+						--,["challenge"] = "fuck"
 						,["logout"] = "logged out"
 						,["pass"] = "passing"
 						,["roundWon"] = "round won: "
@@ -46,7 +47,8 @@ GwentAddon.messages = {["placeInArea"] = "%s#%d#%d"
 						,["battleWon"] = "battle won: "
 						,["battleTie"] = "battle tied"
 						,["discarded"] = "Done discarding"
-						,["start"] = "start: "}
+						,["start"] = "start: "
+						,["placeCard"] = "enemyCard"}
 
 	local TEXT_SIEGE = "siege"
 	local TEXT_RANGED = "ranged"
@@ -111,6 +113,7 @@ local function round(num, idp)
 	return ret
 end
 
+-- Get state number by name
 function GwentAddon:GetStateName(state)
 	for name, nr in pairs(GwentAddon.states) do
 		if nr == state then
@@ -129,6 +132,7 @@ local function PassTurn()
 	end
 end
 
+-- Reduces a player's total lives by 1
 function GwentAddon:DeductLife(lives)
 	lives.count = lives.count - 1
 	--lives.texture1:Show()
@@ -146,6 +150,8 @@ function GwentAddon:DeductLife(lives)
 	end
 end
 
+-- Checks if either player has won or tie
+-- Returns true if a player won
 function GwentAddon:CheckBattleWinner()
 	-- battle tied
 	if GwentAddon.playerLives.count == 0 and GwentAddon.enemyLives.count == 0 then
@@ -174,6 +180,8 @@ function GwentAddon:CheckBattleWinner()
 	return false
 end    
 
+-- Place all cards from a list on a frame
+-- TODO: Change to require name
 function GwentAddon:PlaceCardsOnFrame(list, frame)
 	local totalPoints = 0
 	
@@ -233,6 +241,7 @@ function GwentAddon:PlaceCardsOnFrame(list, frame)
 	
 end
 
+-- Updates to borders of player's total points depending on highest total
 function GwentAddon:UpdateTotalBorders(playerPoints, enemyPoints)
 	GwentAddon.playFrame.playerTotal:SetTexture(TEXTURE_TOTAL_BORDERNORMAL)
 	GwentAddon.playFrame.enemyTotal:SetTexture(TEXTURE_TOTAL_BORDERNORMAL)
@@ -245,6 +254,7 @@ function GwentAddon:UpdateTotalBorders(playerPoints, enemyPoints)
 	
 end
 
+-- Update the total points for both players
 function GwentAddon:UpdateTotalPoints(playerPoints, enemyPoints)
 	GwentAddon.playFrame.playerTotal.points:SetText(playerPoints)
 	GwentAddon.playFrame.playerTotal.amount = playerPoints
@@ -252,8 +262,7 @@ function GwentAddon:UpdateTotalPoints(playerPoints, enemyPoints)
 	GwentAddon.playFrame.enemyTotal.amount = enemyPoints
 end
 
-
-
+-- Places card frames in a list into the card pool, removing them from the game
 function GwentAddon:DestroyCardsInList(list)
 	for k, card in pairs(list) do
 		table.insert(_CardPool, card.frame)
@@ -264,6 +273,7 @@ function GwentAddon:DestroyCardsInList(list)
 	list = {}
 end
 
+-- Show the mouse over tooltip for a card
 function GwentAddon:SetCardTooltip(card)
 	local tp = GwentAddon.playFrame.cardTooltip
 	
@@ -480,9 +490,7 @@ local function CreateWeatherArea(PlayFrame)
 	  })
 end
 
-GwentAddon.draggingOver.timer = 0
-
-
+-- Get the list and area the mouse is currently hovering over
 function GwentAddon:GetCardlistMouseOver()
 	if GwentAddon:MouseIsOverFrame(GwentPlayFrame.playerSiege) then
 		return GwentAddon.lists.playerSiege, GwentPlayFrame.playerSiege
@@ -495,6 +503,7 @@ function GwentAddon:GetCardlistMouseOver()
 	return nil
 end
 
+-- Get the card the from a list the mouse is currently hovering over
 function GwentAddon:GetCardMouseOverInLisT(list)
 	if list == nil then return nil end
 
@@ -509,6 +518,8 @@ end
 
 local function CreatePlayFrame()
 	
+	
+	GwentAddon.draggingOver.timer = 0
 	local GwentUpdater = CreateFrame("frame", "GwentUpdater", UIParent)
 	
 	GwentUpdater:SetScript("OnUpdate", function(self,elapsed) 
@@ -814,7 +825,7 @@ local function CreatePlayFrame()
 	--SetPortraitTexture(PlayFrame.playerPortrait, "player")
 	
 	PlayFrame.enemyPortraitborder = PlayFrame.enemyDetails:CreateTexture(addonName.."PlayFrame_EnemyPortraitBorder", "ARTWORK")
-	PlayFrame.enemyPortraitborder:SetDrawLayer("ARTWORK", -7)
+	PlayFrame.enemyPortraitborder:SetDrawLayer("ARTWORK", 1)
 	PlayFrame.enemyPortraitborder:SetTexture(TEXTURE_TOTAL_BORDERNORMAL)
 	PlayFrame.enemyPortraitborder:SetWidth(GwentAddon.NUM_CARD_HEIGHT+50)
 	PlayFrame.enemyPortraitborder:SetHeight(GwentAddon.NUM_CARD_HEIGHT+50)
@@ -880,8 +891,7 @@ local function IsRightTypeForArea(card, areaType)
 	return false
 end
 
-
-
+-- Checks if the mouse is hovering over a specific frame
 function GwentAddon:MouseIsOverFrame(frame)
 	local left, bottom, width, height = frame:GetBoundsRect()
 	local mouseX, mouseY = GetCursorPosition()
@@ -896,6 +906,7 @@ function GwentAddon:MouseIsOverFrame(frame)
 	
 end
 
+-- Get a list by name
 function GwentAddon:GetListByName(name)
 	for k, v in pairs(GwentAddon.lists) do
 		if k == name then
@@ -906,6 +917,7 @@ function GwentAddon:GetListByName(name)
 	return nil
 end
 
+-- Get a play area by name
 function GwentAddon:GetAreaByName(name)
 	for k, v in pairs(GwentAddon.areas) do
 		if k == name then
@@ -916,6 +928,8 @@ function GwentAddon:GetAreaByName(name)
 	return nil
 end
 
+-- Tries to drop a card.
+-- If successful returns true, the name of the area and the position in list it was added
 function GwentAddon:DropCardArea(card)
 	if GwentAddon:MouseIsOverFrame(GwentAddon.playFrame.playerSiege) and IsRightTypeForArea(card, TEXT_SIEGE) then
 		
@@ -936,8 +950,7 @@ function GwentAddon:DropCardArea(card)
 	return false
 end
 
-
-
+-- Returns the position of a card in a list
 function GwentAddon:NumberInList(card, list)
 	for k, v in ipairs(list) do
 		if v.data.Id == card.data.Id then
@@ -948,9 +961,8 @@ function GwentAddon:NumberInList(card, list)
 	return -1
 end
 
-
-
-function GwentAddon:ChangeChallenger(sender)
+-- Change the current challengers
+function GwentAddon:ChangeChallenger(sender, race, gender)
 	if sender == nil then
 		sender = ""
 	end
@@ -959,14 +971,22 @@ function GwentAddon:ChangeChallenger(sender)
 	GwentAddon.playFrame.enemyNametag:SetText(GwentAddon.challengerName)
 	
 	local challenger = GetUnitName("target", true)	
-	if challenger ~= nil then
+	if race ~= nil and gender ~= nil then
+		if tonumber(gender) == 2 then -- male
+			gender = "MALE"
+		elseif tonumber(gender) == 3 then -- female
+			gender = "FEMALE"
+		end
+		
+		SetPortraitToTexture(GwentAddon.playFrame.enemyPortrait, "Interface\\CHARACTERFRAME\\TemporaryPortrait-"..gender.."-"..race)
+		
+	elseif challenger ~= nil then
 		SetPortraitTexture(GwentAddon.playFrame.enemyPortrait, "target")
 		
 	end
 end
 
-
-
+-- Reset the entire game
 function GwentAddon:ResetGame() 
 	GwentAddon.challengerName = nil
 	GwentAddon:DestroyCardsInList(GwentAddon.lists.playerHand)
@@ -1008,6 +1028,7 @@ function GwentAddon:ResetGame()
 	
 end
 
+-- Resets the board to play a new round
 function GwentAddon:StartNewRound()
 	GwentAddon:DestroyCardsInList(GwentAddon.lists.playerSiege)
 	GwentAddon:DestroyCardsInList(GwentAddon.lists.playerRanged)
@@ -1015,7 +1036,7 @@ function GwentAddon:StartNewRound()
 	GwentAddon:DestroyCardsInList(GwentAddon.lists.enemySiege)
 	GwentAddon:DestroyCardsInList(GwentAddon.lists.enemyRanged)
 	GwentAddon:DestroyCardsInList(GwentAddon.lists.enemyMelee)
-	GwentAddon.cards:DrawCard()
+	--GwentAddon.cards:DrawCard()
 	GwentAddon:PlaceAllCards()
 	_DraggedCard = nil
 	_DragginOverFrame = nil
@@ -1060,6 +1081,7 @@ local function FinishRound()
 	--GwentAddon:ResetGame()
 end
 
+-- Change the current state the game is in
 function GwentAddon:ChangeState(state)
 	GwentAddon.currentState = state
 	GwentAddon.playFrame.discardButton:Hide()
@@ -1108,14 +1130,19 @@ function Gwent_EventFrame:CHAT_MSG_ADDON(prefix, message, channel, sender)
 		return
 	end
 	
+	print(message)
+	print(GwentAddon.messages.challenge)
+	print(string.find(message, GwentAddon.messages.challenge))
 	--GwentAddon:DEBUGMessageSent(message, sender)
 	
 	if message == TEXT_ADDONMSG_RECIEVED then
 		return
 	end
 	
-	if message == GwentAddon.messages.challenge then
-		GwentAddon:ChangeChallenger(sender)
+	if string.find(message, GwentAddon.messages.challenge) then
+		
+		local race, gender = string.match(message, GwentAddon.messages.challenge.."#(%a+)#(%d+)")
+		GwentAddon:ChangeChallenger(sender, race, gender)
 		GwentAddon.cards:DrawStartHand()
 		GwentAddon:ChangeState(GwentAddon.states.playerDiscard)
 	end
@@ -1155,7 +1182,7 @@ function Gwent_EventFrame:CHAT_MSG_ADDON(prefix, message, channel, sender)
 	end
 	
 	-- Enemy played card
-	if string.find(message, "#") then
+	if string.find(message, GwentAddon.messages.placeCard) then
 		GwentAddon.cards:AddEnemyCard(message)
 		GwentAddon:ChangeState(GwentAddon.states.playerTurn)
 	end
@@ -1251,7 +1278,7 @@ local function slashcmd(msg, editbox)
 			return
 		end
 		
-		SendAddonMessage(addonName, ""..GwentAddon.messages.challenge , "whisper" , name)
+		SendAddonMessage(addonName, ""..GwentAddon.messages.challenge.."#"..select(2,UnitRace("player")).."#".. UnitSex("player"), "whisper" , name)
 		GwentAddon:ChangeChallenger(name)
 		GwentAddon.cards:DrawStartHand()
 		GwentAddon:ChangeState(GwentAddon.states.playerDiscard)

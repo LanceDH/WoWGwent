@@ -1,0 +1,10 @@
+Your opponent will go first
+Choose a card to redraw. x/2
+Round Start
+Opponent's turn
+Your turn!
+Your opponent won the round
+You won the round!
+The round ended in a draw
+Northern Realms faction ability triggered - North draws an additional card.
+Your opponent has passed

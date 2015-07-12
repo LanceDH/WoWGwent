@@ -19,15 +19,15 @@ local TEXTURE_CARD_BG = "Interface\\DialogFrame\\UI-DialogBox-Gold-Background"
 local TEXTURE_SPY = {["path"]="Interface\\PVPFrame\\Icons\\PVP-Banner-Emblem-14", ["width"]=128, ["height"]=128}
 local TEXTURE_CUSTOM_PATH = "Interface\\AddOns\\Gwent\\CardTextures\\"
 
-local Abilitie = {}
-Abilitie.__index = Abilitie
-setmetatable(Abilitie, {
+local Ability = {}
+Ability.__index = Ability
+setmetatable(Ability, {
   __call = function (cls, ...)
     return cls.new(...)
   end,
 })
 
-function Abilitie.new(name, isLeader, texture, abilityFunction)
+function Ability.new(name, isLeader, texture, abilityFunction)
 	local self = setmetatable({}, Abilities)
 	
 	self.name = name
@@ -38,6 +38,8 @@ function Abilitie.new(name, isLeader, texture, abilityFunction)
 	return self
 end
 
+-- Count successive same name cards on the left
+-- Used for tight bond
 local function CountSameNameOnLeft(card, list, pos) 
 	if pos == 1 then return 0 end -- is left most card
 	local count = 0
@@ -49,6 +51,8 @@ local function CountSameNameOnLeft(card, list, pos)
 	return count
 end
 
+-- Count successive same name cards on the right
+-- Used for tight bond
 local function CountSameNameOnRight(card, list, pos) 
 	if pos == #list then return 0 end -- is right most card
 	local count = 0
@@ -62,7 +66,7 @@ end
 
 -- Tight Bond
 --
--- Place next to card card zith the same name to double the strength of both cards.
+-- Place next to card card with the same name to double the strength of both cards.
 local function AbilityTightBond(card, list, pos)
 	print("checking card " .. card.frame:GetName());
 	local left = CountSameNameOnLeft(card, list, pos);
@@ -74,7 +78,7 @@ local function AbilityTightBond(card, list, pos)
 	card:UpdateCardStrength();
 end
 
--- Morable Boost
+-- Morale Boost
 --
 -- Adds +1 to all units in the row (excluding itself)
 local function AbilityMoraleBoost(card, list)
@@ -87,17 +91,18 @@ local function AbilityMoraleBoost(card, list)
 	end
 end
 
+-- Create a list of abilities
 function GwentAddon:CreateAbilitieList()
 
 	GwentAddon.Abilities = {}
 
-	table.insert(GwentAddon.Abilities, Abilitie("Spy", false, "AbilitySpy", function(card, list, pos) print("NYI Spy") end));
-	table.insert(GwentAddon.Abilities, Abilitie("Tight Bond", false, "AbilityBond", function(card, list, pos) AbilityTightBond(card, list, pos) end));
-	table.insert(GwentAddon.Abilities, Abilitie("Morale Boost", false, "AbilityBoost", function(card, list, pos) AbilityMoraleBoost(card, list) end));
-	table.insert(GwentAddon.Abilities, Abilitie("Medic", false, "AbilityMedic", function(card, list, pos) print("NYI Medic") end));
-	table.insert(GwentAddon.Abilities, Abilitie("Muster", false, "AbilityMuster", function(card, list, pos) print("NYI Muster") end));
-	table.insert(GwentAddon.Abilities, Abilitie("Agile", false, "AbilityAgile", function(card, list, pos) print("NYI Agile") end));
-	table.insert(GwentAddon.Abilities, Abilitie("Scorch", false, "AbilityScorch", function(card, list, pos) print("NYI Scorch") end));
+	table.insert(GwentAddon.Abilities, Ability("Spy", false, "AbilitySpy", function(card, list, pos) print("NYI Spy") end));
+	table.insert(GwentAddon.Abilities, Ability("Tight Bond", false, "AbilityBond", function(card, list, pos) AbilityTightBond(card, list, pos) end));
+	table.insert(GwentAddon.Abilities, Ability("Morale Boost", false, "AbilityBoost", function(card, list, pos) AbilityMoraleBoost(card, list) end));
+	table.insert(GwentAddon.Abilities, Ability("Medic", false, "AbilityMedic", function(card, list, pos) print("NYI Medic") end));
+	table.insert(GwentAddon.Abilities, Ability("Muster", false, "AbilityMuster", function(card, list, pos) print("NYI Muster") end));
+	table.insert(GwentAddon.Abilities, Ability("Agile", false, "AbilityAgile", function(card, list, pos) print("NYI Agile") end));
+	table.insert(GwentAddon.Abilities, Ability("Scorch", false, "AbilityScorch", function(card, list, pos) print("NYI Scorch") end));
 	
 	-- table.insert(GwentAddon.Abilities, {
 				-- name = "Spy"
@@ -176,6 +181,7 @@ function GwentAddon:CreateAbilitieList()
 	
 end
 
+-- Get a specific ability by name
 function GwentAddon:GetAbilitydataByName(name)
 	
 	for k, v in pairs(GwentAddon.Abilities) do
@@ -187,6 +193,7 @@ function GwentAddon:GetAbilitydataByName(name)
 	return nil
 end
 
+-- Set the ability icon of a card
 function GwentAddon:SetAblityIcon(card, data)
 
 	local ability = data.ability --GwentAddon:GetAbilitydataByName(card.data.ability)

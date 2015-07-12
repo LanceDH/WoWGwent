@@ -2,11 +2,11 @@
 
 GwentAddon.DeckBuilding = {}
 
-
-
 local DECK_NORTH = "Northern Realms"
 local DECK_NEUTRAL = "Neutral"
 
+-- Create a test deck to play with
+-- Uses all north and neutral cards
 function GwentAddon:CreateTestDeck()
 
 	local factions = GwentAddon.cards.factions

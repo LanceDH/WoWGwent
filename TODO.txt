@@ -1,4 +1,5 @@
 Prevent challenging if already in a game
+Redraw put back in deck, not GY
 Deck creation
 - Save deck
 - Add card

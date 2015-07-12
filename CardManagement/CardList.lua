@@ -58,38 +58,7 @@ function Card.new(id, cardList)
 	return self
 end
 
-function Card:CreateCardTypeIcons(card)
-	local count = 0;
-	local vcBG = 1
-	local vc = 0
-	if self.data.cardType.hero then
-		vcBG = 0
-		vc = 1
-	end
-	
-	card.iconTypeBG = card:CreateTexture(addonName.."_Card_".._CardNr.."_TypeBG", "ARTWORK")
-	card.iconTypeBG:SetDrawLayer("ARTWORK", 1)
-	card.iconTypeBG:SetTexture(TEXTURE_CARD_ICONBG)
-	card.iconTypeBG:SetVertexColor(vcBG, vcBG, vcBG, .75)
-		-- card.iconMeleeBG:SetTexCoord(4/32, 28/32, 4/32, 28/32)
-	card.iconTypeBG:SetTexCoord(0.3, 0.45,0.1, 0.4)
-	card.iconTypeBG:SetPoint("left", card)
-	card.iconTypeBG:SetHeight(GwentAddon.NUM_CARD_WIDTH/2)
-	card.iconTypeBG:SetWidth(GwentAddon.NUM_CARD_WIDTH/2)
-		
-	card.iconType = card:CreateTexture(addonName.."_Card_".._CardNr.."_Type", "art")
-	card.iconType:SetDrawLayer("ARTWORK", 2)
-	card.iconType:SetTexture(self.cardList:GetTypeIcon(self))
-	card.iconType:SetVertexColor(vc, vc, vc)
-	card.iconType:SetWidth(GwentAddon.NUM_CARD_WIDTH*0.5)
-	card.iconType:SetHeight(GwentAddon.NUM_CARD_WIDTH*0.5)
-	card.iconType:SetPoint("center", card.iconTypeBG)
-		-- card.iconMelee:SetPoint("bottomleft", card, "bottomleft", (GwentAddon.NUM_CARD_WIDTH/2)*count, 0)
-	count = count + 1
-
-end
-
-
+-- Create the frame for the card
 function Card:CreateFrame()
 	local cardData = self.data
 
@@ -201,6 +170,116 @@ function Card:CreateFrame()
 	return card
 end
 
+-- Create the icon for combat type
+function Card:CreateCardTypeIcons(card)
+	local count = 0;
+	local vcBG = 1
+	local vc = 0
+	if self.data.cardType.hero then
+		vcBG = 0
+		vc = 1
+	end
+	
+	card.iconTypeBG = card:CreateTexture(addonName.."_Card_".._CardNr.."_TypeBG", "ARTWORK")
+	card.iconTypeBG:SetDrawLayer("ARTWORK", 1)
+	card.iconTypeBG:SetTexture(TEXTURE_CARD_ICONBG)
+	card.iconTypeBG:SetVertexColor(vcBG, vcBG, vcBG, .75)
+		-- card.iconMeleeBG:SetTexCoord(4/32, 28/32, 4/32, 28/32)
+	card.iconTypeBG:SetTexCoord(0.3, 0.45,0.1, 0.4)
+	card.iconTypeBG:SetPoint("left", card)
+	card.iconTypeBG:SetHeight(GwentAddon.NUM_CARD_WIDTH/2)
+	card.iconTypeBG:SetWidth(GwentAddon.NUM_CARD_WIDTH/2)
+		
+	card.iconType = card:CreateTexture(addonName.."_Card_".._CardNr.."_Type", "art")
+	card.iconType:SetDrawLayer("ARTWORK", 2)
+	card.iconType:SetTexture(self.cardList:GetTypeIcon(self))
+	card.iconType:SetVertexColor(vc, vc, vc)
+	card.iconType:SetWidth(GwentAddon.NUM_CARD_WIDTH*0.5)
+	card.iconType:SetHeight(GwentAddon.NUM_CARD_WIDTH*0.5)
+	card.iconType:SetPoint("center", card.iconTypeBG)
+		-- card.iconMelee:SetPoint("bottomleft", card, "bottomleft", (GwentAddon.NUM_CARD_WIDTH/2)*count, 0)
+	count = count + 1
+
+end
+
+-- Update the strength display of a card including buff/debuff color
+function Card:UpdateCardStrength()
+	local frame = self.frame
+	frame.strength:SetTextColor(0, 0, 0)
+	if self.data.cardType.hero then
+		frame.strength:SetTextColor(1, 1, 1)
+	end
+	frame.strength:SetText(self.data.calcStrength)
+	
+	if ( self.data.calcStrength > self.data.strength ) then -- buffed
+		frame.strength:SetTextColor(0.2, 1, 0.2)
+	elseif ( self.data.calcStrength < self.data.strength ) then -- nerfed
+		frame.strength:SetTextColor(1, 0.7, 0.7)
+	end
+	
+end
+
+-- Select or deselect the card for discard at the start of the game
+function Card:SelectForDiscard()
+	-- only allow during discard phase
+	if GwentAddon.currentState ~= GwentAddon.states.playerDiscard and GwentAddon.currentState ~= GwentAddon.states.enemyDoneDiscarding then
+		return
+	end
+
+	local nr = GwentAddon:NumberInList(self, _InitialDiscardSelected)
+	if nr > -1 then
+		-- Already selected
+		self.frame.darken:Hide()
+		table.remove(_InitialDiscardSelected, nr)
+	else
+		-- Not yet selected
+		if #_InitialDiscardSelected < 2 then
+			table.insert(_InitialDiscardSelected, self)
+			self.frame.darken:Show()
+		end
+	end
+end
+
+-- Start dragging the card
+function Card:StartDragging()
+	-- only allow during player's turn and when card is movable
+	if not self.frame:IsMovable() or  GwentAddon.currentState ~= GwentAddon.states.playerTurn then
+		return
+	end
+	
+	GwentAddon.cards.draggedCard = self
+	self.frame:StartMoving()
+end
+
+-- Stop dragging the card and places in new area if needed
+function Card:StopDragging(card)
+	-- only allow during player's turn and when card is movable
+	if not self.frame:IsMovable() or GwentAddon.currentState ~= GwentAddon.states.playerTurn then 
+		return
+	end
+
+	local success, area, position = GwentAddon:DropCardArea(GwentAddon.cards.draggedCard)
+	if success and GwentAddon.cards.draggedCard  ~= nil then
+		GwentAddon.cards.draggedCard  = nil
+
+		SendAddonMessage(addonName, GwentAddon.messages.placeCard..string.format(GwentAddon.messages.placeInArea, area, self.data.Id, position), "whisper" , GwentAddon.challengerName)
+		
+		-- don't end your turn if enemy passed
+		if not GwentAddon.enemyPassed then
+			GwentAddon:ChangeState(GwentAddon.states.enemyTurn)
+			--GwentAddon:IsYourTurn(false)
+		end
+		
+	end
+
+	GwentAddon.cards.draggedCard  = nil
+	self.frame:StopMovingOrSizing()
+	GwentAddon:PlaceAllCards()
+	
+	
+
+end
+
 function CardList.new()
 	local self = setmetatable({}, CardList)
 	self.list = {}
@@ -226,6 +305,7 @@ function GwentAddon:CreateCard(id, cardList)
 	return Card(id, cardList)
 end
 
+-- Create a list containing the data of the card for later access
 function CardList:CreateCardsDatalist(name, faction, strength, cardType, ability, texture, subText)
 	local data = {name = "Name missing" ,faction = "Faction Missing" ,strength = 0 ,cardType = {melee = false, ranged = false, siege = false, hero = false, leader = false} 
 					,ability = nil ,texture = "",subText = nil, calcStrength = 0}
@@ -243,6 +323,22 @@ function CardList:CreateCardsDatalist(name, faction, strength, cardType, ability
 	return data
 end
 
+-- Add all the cards to the list and gives them an id
+function CardList:CreateCardsList()
+	
+	self.list = {}
+
+	self:AddNorthCards()
+	self:AddNeutralCards()
+
+	for k, v in ipairs(self.list) do
+		v.Id = k
+	end
+
+	
+end
+
+-- Adds all the Northern Realms cards
 function CardList:AddNorthCards()
 	-----------------------------------------------------------------------------------------------
 	-- Northern Realms
@@ -748,6 +844,7 @@ function CardList:AddNorthCards()
 			-- })
 end
 
+-- Adds all the Neutral cards
 function CardList:AddNeutralCards()
 	-----------------------------------------------------------------------------------------------
 	-- Neutral
@@ -864,24 +961,7 @@ function CardList:AddNeutralCards()
 			-- })
 end
 
-function CardList:CreateCardsList()
-	
-	self.list = {}
-
-	
-	self:AddNorthCards()
-	self:AddNeutralCards()
-	
-	
-	
-
-	for k, v in ipairs(self.list) do
-		v.Id = k
-	end
-
-	
-end
-
+-- Get the path of the combat type texture
 function CardList:GetTypeIcon(card)
 	local types = card.data.cardType
 	
@@ -898,6 +978,7 @@ function CardList:GetTypeIcon(card)
 	return nil
 end
 
+-- Get all the data of a card using an id
 function CardList:GetCardDataOfId(id)
 
 	for k, v in ipairs(self.list) do
@@ -909,6 +990,7 @@ function CardList:GetCardDataOfId(id)
 	return nil
 end
 
+-- Thing we don't need this?
 function CardList:CreateCardTypeIcons(card)
 	local count = 0;
 	local vcBG = 1
@@ -940,164 +1022,7 @@ function CardList:CreateCardTypeIcons(card)
 
 end
 
-function Card:UpdateCardStrength()
-	local frame = self.frame
-	frame.strength:SetTextColor(0, 0, 0)
-	if self.data.cardType.hero then
-		frame.strength:SetTextColor(1, 1, 1)
-	end
-	frame.strength:SetText(self.data.calcStrength)
-	
-	if ( self.data.calcStrength > self.data.strength ) then -- buffed
-		frame.strength:SetTextColor(0.2, 1, 0.2)
-	elseif ( self.data.calcStrength < self.data.strength ) then -- nerfed
-		frame.strength:SetTextColor(1, 0.7, 0.7)
-	end
-	
-end
---[[
-function CardList:CreateCardOfId(id)
-
-	Card(id, self)
-
-	local cardData = self:GetCardDataOfId(id)
-	
-	GwentAddon:DEBUGMessageSent("Trying to create card with id "..id)
-	
-	if not cardData then
-		GwentAddon:DEBUGMessageSent("Could not create card with Id "..id)
-		return
-	end
-
-	local card = CreateFrame("frame", addonName.."_Card_".._CardNr, GwentAddon.playFrame)
-	card.data = cardData
-	card.nr = _CardNr
-	card.leftSpacing = 0
-	card.rightSpacing = 0
-	card:SetPoint("topleft", GwentAddon.playFrame, "topleft", 0, 0)
-	card:SetHeight(GwentAddon.NUM_CARD_HEIGHT)
-	card:SetWidth(GwentAddon.NUM_CARD_WIDTH)
-	card:SetBackdrop({bgFile = TEXTURE_CARD_BG,
-		edgeFile = TEXTURE_CARD_BORDER,
-
-	  tileSize = 0, edgeSize = 4,
-      insets = { left = 0, right = 0, top 
-	  = 0, bottom = 0 }
-	  })
-	
-	card.texture = card:CreateTexture(addonName.."_Card_".._CardNr.."_Texture", "ARTWORK")
-	card.texture:SetDrawLayer("ARTWORK", 0)
-	card.texture:SetTexture(TEXTURE_CUSTOM_PATH..cardData.texture)
-	card.texture:SetTexCoord(COORDS_SMALLCARD.left, COORDS_SMALLCARD.right, COORDS_SMALLCARD.top, COORDS_SMALLCARD.bottom)
-	card.texture:SetPoint("topleft", card, 2, -2)
-	card.texture:SetPoint("bottomright", card, -2, 2)
-	
-	card.darken = card:CreateTexture(addonName.."_Card_".._CardNr.."_Darken", "ARTWORK")
-	card.darken:SetDrawLayer("ARTWORK", 7)
-	card.darken:SetTexture(TEXTURE_CARD_DARKEN)
-	card.darken:SetVertexColor(0, 0, 0, 1)
-	card.darken:SetPoint("topleft", card, 0, 0)
-	card.darken:SetPoint("bottomright", card, 0, 0)
-	card.darken:Hide()
-	
-	card:SetMovable(false)
-	card:RegisterForDrag("LeftButton")
-	card:SetScript("OnDragStart", function(c) self:StartDragging(c) end)
-	card:SetScript("OnDragStop", function(c) self:StopDragging(c) end)
-	card:SetScript("OnMouseDown", function(c)  self:SelectForDiscard(c) end)
-	--card:SetScript("OnLeave", function(self) GwentAddon.playFrame.cardTooltip:Hide() end)
-	card:SetScript("OnEnter", function(c) GwentAddon:SetCardTooltip(c) end)
-	card:SetScript("OnLeave", function(c) GwentAddon.playFrame.cardTooltip:Hide() end)
-	--card:EnableMouse(false)
-	  
-	
-	local vc = 1
-	local font = "GameFontBlack"
-	if card.data.cardType.hero then
-		font = "GameFontWhite"
-		vc = 0
-	end
-	
-	card.strengthBG = card:CreateTexture(addonName.."_Card_".._CardNr.."_StrengthBG", "ARTWORK")
-	card.strengthBG:SetDrawLayer("ARTWORK", 1)
-	card.strengthBG:SetTexture(TEXTURE_CARD_ICONBG)
-	card.strengthBG:SetVertexColor(vc, vc, vc, .75)
-	card.strengthBG:SetTexCoord(0.3, 0.45,0.1, 0.4)
-	card.strengthBG:SetPoint("topleft", card, 0, 0)
-	card.strengthBG:SetHeight(GwentAddon.NUM_CARD_WIDTH/2)
-	card.strengthBG:SetWidth(GwentAddon.NUM_CARD_WIDTH/2)
-	
-	card.abilityBG = card:CreateTexture(addonName.."_Card_".._CardNr.."_AbilityBG", "ARTWORK")
-	card.abilityBG:SetDrawLayer("ARTWORK", 1)
-	card.abilityBG:SetTexture(TEXTURE_CARD_ICONBG)
-	card.abilityBG:SetVertexColor(vc, vc, vc, .75)
-	card.abilityBG:SetTexCoord(0.3, 0.45,0.1, 0.4)
-	card.abilityBG:SetPoint("bottomleft", card)
-	card.abilityBG:SetHeight(GwentAddon.NUM_CARD_WIDTH/2)
-	card.abilityBG:SetWidth(GwentAddon.NUM_CARD_WIDTH/2)
-	card.abilityBG:Hide()
-	
-	card.iconAbility = card:CreateTexture(addonName.."_Card_".._CardNr.."_AbilityIcon", "ARTWORK")
-	card.iconAbility:SetDrawLayer("ARTWORK", 2)
-	card.iconAbility:SetPoint("center", card.abilityBG)
-	card.iconAbility:SetHeight(GwentAddon.NUM_CARD_WIDTH/2)
-	card.iconAbility:SetWidth(GwentAddon.NUM_CARD_WIDTH/2)
-	card.iconAbility:SetVertexColor(0, 0, 0)
-	
-	if card.data.ability ~= nil then
-		GwentAddon:SetAblityIcon(card)
-	end
-	
-	card.nrTxt = card:CreateFontString(nil, nil, "QuestTitleFontBlackShadow")
-	card.nrTxt:SetPoint("bottomright", card)
-	card.nrTxt:SetText(card.nr)
-	
-	
-	--card.strengthBG:SetPoint("bottomright", card, -2, 2)
-	
-	card.strength = card:CreateFontString(nil, nil, font)
-	--card.strength:SetDrawLayer("ARTWORK", 1)
-	card.strength:SetPoint("topleft", card.strengthBG)
-	card.strength:SetPoint("bottomright", card.strengthBG)
-	--card.strength:SetPoint("bottomright", card, "bottomright", -2, -7)
-	card.strength:SetJustifyH("center")
-	card.strength:SetJustifyV("middle")
-	card.strength:SetText(cardData.calcStrength)
-	--card.strength:SetTextColor(0,0,0)
-	if card.data.cardType.hero then
-		--card.strength:SetTextColor(1,1,1)
-	end
-	  
-	self:CreateCardTypeIcons(card)
-	  
-	_CardNr = _CardNr + 1
-	
-	
-	  
-	return card
-end
-]]--
-
-function Card:SelectForDiscard()
-	-- only allow during discard phase
-	if GwentAddon.currentState ~= GwentAddon.states.playerDiscard and GwentAddon.currentState ~= GwentAddon.states.enemyDoneDiscarding then
-		return
-	end
-
-	local nr = GwentAddon:NumberInList(self, _InitialDiscardSelected)
-	if nr > -1 then
-		-- Already selected
-		self.frame.darken:Hide()
-		table.remove(_InitialDiscardSelected, nr)
-	else
-		-- Not yet selected
-		if #_InitialDiscardSelected < 2 then
-			table.insert(_InitialDiscardSelected, self)
-			self.frame.darken:Show()
-		end
-	end
-end
-
+-- Discard the selected cards at the beginning of the game
 function CardList:DiscardSelectedCards() 
 
 	for k, card in ipairs(_InitialDiscardSelected) do
@@ -1126,6 +1051,7 @@ function CardList:DiscardSelectedCards()
 	
 end
 
+-- Remove a card from the hand
 function CardList:RemoveCardFromHand(card)
 	local cardToRemove = nil
 	
@@ -1144,10 +1070,7 @@ function CardList:RemoveCardFromHand(card)
 	
 end
 
---function CardList:RemoveAll()
-
---end
-
+-- Place all the cards in their areas on the board
 function GwentAddon:PlaceAllCards()
 	local playerPoints = 0
 	GwentAddon:PlaceCardsOnFrame(GwentAddon.lists.playerHand, GwentAddon.playFrame.playerHand)
@@ -1166,6 +1089,7 @@ function GwentAddon:PlaceAllCards()
 
 end
 
+-- Change the left and right spacing for the card depending if a card is being dragged over
 function CardList:UpdateCardSpaceing(card, mouseX, mouseY)
 	
 
@@ -1191,6 +1115,8 @@ function CardList:UpdateCardSpaceing(card, mouseX, mouseY)
 	return false
 end
 
+-- Draw a random card from the deck
+-- TODO: Change to random shuffle and draw top card
 function CardList:DrawCard()
 
 	local deckCardNr = math.random(#GwentAddon.lists.playerDeck)
@@ -1201,6 +1127,7 @@ function CardList:DrawCard()
 	GwentAddon:PlaceAllCards()
 end
 
+-- Draw 10 cards as starter hand
 function CardList:DrawStartHand()
 
 	for i=1,10 do
@@ -1208,47 +1135,10 @@ function CardList:DrawStartHand()
 	end
 end
 
-function Card:StartDragging()
-	-- only allow during player's turn and when card is movable
-	if not self.frame:IsMovable() or  GwentAddon.currentState ~= GwentAddon.states.playerTurn then
-		return
-	end
-	
-	GwentAddon.cards.draggedCard = self
-	self.frame:StartMoving()
-end
-
-function Card:StopDragging(card)
-	-- only allow during player's turn and when card is movable
-	if not self.frame:IsMovable() or GwentAddon.currentState ~= GwentAddon.states.playerTurn then 
-		return
-	end
-
-	local success, area, position = GwentAddon:DropCardArea(GwentAddon.cards.draggedCard)
-	if success and GwentAddon.cards.draggedCard  ~= nil then
-		GwentAddon.cards.draggedCard  = nil
-
-		SendAddonMessage(addonName, string.format(GwentAddon.messages.placeInArea, area, self.data.Id, position), "whisper" , GwentAddon.challengerName)
-		
-		-- don't end your turn if enemy passed
-		if not GwentAddon.enemyPassed then
-			GwentAddon:ChangeState(GwentAddon.states.enemyTurn)
-			--GwentAddon:IsYourTurn(false)
-		end
-		
-	end
-
-	GwentAddon.cards.draggedCard  = nil
-	self.frame:StopMovingOrSizing()
-	GwentAddon:PlaceAllCards()
-	
-	
-
-end
-
+-- Add a card for the opponent depending on recieved message
 function CardList:AddEnemyCard(message)
 	--print(message, string.match(message, "(%a+)#(%d+)"))
-	local areaType, id, pos = string.match(message, "(%a+)#(%d+)#(%d+)")
+	local areaType, id, pos = string.match(message, GwentAddon.messages.placeCard.."#(%a+)#(%d+)#(%d+)")
 	--GwentAddon:DEBUGMessageSent(message .. " - ".. string.match(message, "(%a+)#(%d+)"))
 	local card = GwentAddon:CreateCard(id, self) --self:CreateCardOfId(id)
 	if areaType == TEXT_SIEGE then
@@ -1267,6 +1157,7 @@ function CardList:AddEnemyCard(message)
 	GwentAddon:PlaceAllCards()
 end
 
+-- Check if a card is being dropped on the left side of the area (for position in list)
 local function DroppedOnLeftSideOfArea()
 	local left, bottom, width, height = frame:GetBoundsRect()
 	local mouseX, mouseY = GetCursorPosition()
@@ -1280,6 +1171,7 @@ local function DroppedOnLeftSideOfArea()
 	return false
 end
 
+-- Add a card to a new list in a specific position
 function CardList:AddCardToNewList(card, name, position)
 	
 	local list = GwentAddon:GetListByName(name)
