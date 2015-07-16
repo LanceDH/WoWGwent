@@ -82,12 +82,12 @@ function Card:CreateFrame()
 	  = 0, bottom = 0 }
 	  })
 	
-	-- card.texture = card:CreateTexture(addonName.."_Card_".._CardNr.."_Texture", "ARTWORK")
-	-- card.texture:SetDrawLayer("ARTWORK", 0)
-	-- card.texture:SetTexture(TEXTURE_CUSTOM_PATH..cardData.texture)
-	-- card.texture:SetTexCoord(COORDS_SMALLCARD.left, COORDS_SMALLCARD.right, COORDS_SMALLCARD.top, COORDS_SMALLCARD.bottom)
-	-- card.texture:SetPoint("topleft", card, 2, -2)
-	-- card.texture:SetPoint("bottomright", card, -2, 2)
+	card.texture = card:CreateTexture(addonName.."_Card_".._CardNr.."_Texture", "ARTWORK")
+	card.texture:SetDrawLayer("ARTWORK", 0)
+	card.texture:SetTexture(TEXTURE_CUSTOM_PATH..cardData.texture)
+	card.texture:SetTexCoord(COORDS_SMALLCARD.left, COORDS_SMALLCARD.right, COORDS_SMALLCARD.top, COORDS_SMALLCARD.bottom)
+	card.texture:SetPoint("topleft", card, 2, -2)
+	card.texture:SetPoint("bottomright", card, -2, 2)
 	
 	card.darken = card:CreateTexture(addonName.."_Card_".._CardNr.."_Darken", "ARTWORK")
 	card.darken:SetDrawLayer("ARTWORK", 7)

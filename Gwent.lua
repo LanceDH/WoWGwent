@@ -30,6 +30,9 @@ local TEXTURE_TYPE_MELEE = TEXTURE_CUSTOM_PATH.."TypeMelee"
 local TEXTURE_TYPE_RANGED = TEXTURE_CUSTOM_PATH.."TypeRanged"
 local TEXTURE_TYPE_SIEGE = TEXTURE_CUSTOM_PATH.."TypeSiege"
 local TEXTURE_ABILITY_COMMANDER = TEXTURE_CUSTOM_PATH.."AbilityCommander"
+local TEXTURE_SHADOW_CORNERS = "Interface\\BankFrame\\CornersShadow"
+local TEXTURE_SHADOW_VERTICAL = "Interface\\BankFrame\\VertShadow"
+local TEXTURE_SHADOW_HORIZONTAL = "Interface\\BankFrame\\HorizShadow"
 
 local COORDS_ICON_LIFE = {["x"]=64*7, ["y"]=64*11}
 local COORDS_ICON_MELEE = {["x"]=64*7, ["y"]=64*7}
@@ -243,23 +246,27 @@ end
 
 -- Updates to borders of player's total points depending on highest total
 function GwentAddon:UpdateTotalBorders(playerPoints, enemyPoints)
-	GwentAddon.playFrame.playerTotal:SetTexture(TEXTURE_TOTAL_BORDERNORMAL)
-	GwentAddon.playFrame.enemyTotal:SetTexture(TEXTURE_TOTAL_BORDERNORMAL)
+	-- GwentAddon.playFrame.playerTotal:SetTexture(TEXTURE_TOTAL_BORDERNORMAL)
+	-- GwentAddon.playFrame.enemyTotal:SetTexture(TEXTURE_TOTAL_BORDERNORMAL)
+	GwentAddon.playFrame.player.total.border:Hide()
+	GwentAddon.playFrame.enemy.total.border:Hide()
 	
 	if playerPoints > enemyPoints  then
-		GwentAddon.playFrame.playerTotal:SetTexture(TEXTURE_TOTAL_BORDERWINNING)
+		-- GwentAddon.playFrame.playerTotal:SetTexture(TEXTURE_TOTAL_BORDERWINNING)
+		GwentAddon.playFrame.player.total.border:Show()
 	elseif enemyPoints > playerPoints then
-		GwentAddon.playFrame.enemyTotal:SetTexture(TEXTURE_TOTAL_BORDERWINNING)
+		-- GwentAddon.playFrame.enemyTotal:SetTexture(TEXTURE_TOTAL_BORDERWINNING)
+		GwentAddon.playFrame.enemy.total.border:Show()
 	end
 	
 end
 
 -- Update the total points for both players
 function GwentAddon:UpdateTotalPoints(playerPoints, enemyPoints)
-	GwentAddon.playFrame.playerTotal.points:SetText(playerPoints)
-	GwentAddon.playFrame.playerTotal.amount = playerPoints
-	GwentAddon.playFrame.enemyTotal.points:SetText(enemyPoints)
-	GwentAddon.playFrame.enemyTotal.amount = enemyPoints
+	GwentAddon.playFrame.player.total:SetText(playerPoints)
+	GwentAddon.playFrame.player.Totalamount = playerPoints
+	GwentAddon.playFrame.enemy.total:SetText(enemyPoints)
+	GwentAddon.playFrame.enemy.Totalamount = enemyPoints
 end
 
 -- Places card frames in a list into the card pool, removing them from the game
@@ -295,7 +302,7 @@ function GwentAddon:SetCardTooltip(card)
 	tp.typeBG:SetVertexColor(vcBG, vcBG, vcBG, .75)
 	tp.type:SetVertexColor(vc, vc, vc)
 	tp.strength:SetTextColor(vc, vc, vc)
-	--tp.texture:SetTexture(TEXTURE_CUSTOM_PATH..card.data.texture)
+	tp.texture:SetTexture(TEXTURE_CUSTOM_PATH..card.data.texture)
 	
 	
 	
@@ -337,59 +344,6 @@ function GwentAddon:SetCardTooltip(card)
 	
 end
 
-local function CreateCardArea(name, parent, texture)
-	local frame = CreateFrame("frame", addonName.."PlayFrame_" .. name, parent)
-	frame:SetHeight(GwentAddon.NUM_CARD_HEIGHT)
-	frame:SetWidth(GwentAddon.NUM_CARD_WIDTH * 10)
-	frame:SetBackdrop({bgFile = TEXTURE_CARD_DARKEN,
-      edgeFile = nil,
-	  tileSize = 0, edgeSize = 16,
-      insets = { left = 0, right = 0, top = 0, bottom = 0 }
-	  })
-	  
-	frame.cardContainer = CreateFrame("frame", addonName.."PlayFrame_" .. name.."_Cardcontainer", parent)
-	frame.cardContainer:SetPoint("center", frame)
-	frame.cardContainer:SetHeight(GwentAddon.NUM_CARD_HEIGHT)
-
-	 
-	frame.commander = CreateFrame("frame", addonName.."PlayFrame_" .. name .."_Commander", parent)
-	frame.commander:SetHeight(GwentAddon.NUM_CARD_HEIGHT)
-	frame.commander:SetWidth(GwentAddon.NUM_CARD_HEIGHT)
-	frame.commander:SetPoint("right", frame, "left", -5, 0)
-	frame.commander:SetBackdrop({bgFile = TEXTURE_CARD_DARKEN,
-      edgeFile = nil,
-	  tileSize = 0, edgeSize = 16,
-      insets = { left = 0, right = 0, top = 0, bottom = 0 }
-	  })
-	 
-	frame.commander.icon = frame.commander:CreateTexture(addonName.."PlayFrame_"..name.."_ICONCOMMANDER", "art")
-	frame.commander.icon:SetTexture(TEXTURE_ABILITY_COMMANDER)
-	--frame.commander.icon:SetTexCoord(coords.x/TEXTURE_ICONS.width, (coords.x+NUM_SIZE_ICON)/TEXTURE_ICONS.width, coords.y/TEXTURE_ICONS.height, (coords.y+NUM_SIZE_ICON)/TEXTURE_ICONS.height)
-	frame.commander.icon:SetVertexColor(1, 1, 1, NUM_ICON_OPACITY)
-	frame.commander.icon:SetWidth(GwentAddon.NUM_CARD_HEIGHT)
-	frame.commander.icon:SetHeight(GwentAddon.NUM_CARD_HEIGHT)
-	frame.commander.icon:SetPoint("center", frame.commander)
-	  
-	frame.points = frame:CreateFontString(nil, nil, "GameFontNormal")
-	frame.points:SetPoint("right", frame.commander, "left", -20, 0)
-	frame.points:SetText(0)
-	
-	
-	
-	frame.icon = frame:CreateTexture(addonName.."PlayFrame_"..name.."_ICON", "art")
-	frame.icon:SetTexture(texture)
-	frame.icon:SetTexCoord(0, 1, 0, 1)
-
-	
-	
-	frame.icon:SetVertexColor(1, 1, 1, NUM_ICON_OPACITY)
-	frame.icon:SetWidth(GwentAddon.NUM_CARD_HEIGHT)
-	frame.icon:SetHeight(GwentAddon.NUM_CARD_HEIGHT)
-	frame.icon:SetPoint("center", frame)
-	
-	return frame
-end
-
 local function CreateCardTooltip(parent)
 	parent.cardTooltip = CreateFrame("frame", addonName.."parent_CardTooltip", parent)
 	parent.cardTooltip:SetPoint("right", parent, "right", -50, 0)
@@ -402,11 +356,11 @@ local function CreateCardTooltip(parent)
 	  })
 	parent.cardTooltip:Hide()
 	
-	-- parent.cardTooltip.texture = parent.cardTooltip:CreateTexture(addonName.."_Card_".._CardNr.."_Texture", "ARTWORK")
-	-- parent.cardTooltip.texture:SetDrawLayer("ARTWORK", 0)
-	-- parent.cardTooltip.texture:SetTexCoord(0, 1, 0, 464/512)
-	-- parent.cardTooltip.texture:SetPoint("topleft", parent.cardTooltip, 2, -2)
-	-- parent.cardTooltip.texture:SetPoint("bottomright", parent.cardTooltip, -2, 2)
+	parent.cardTooltip.texture = parent.cardTooltip:CreateTexture(addonName.."_Card_".._CardNr.."_Texture", "ARTWORK")
+	parent.cardTooltip.texture:SetDrawLayer("ARTWORK", 0)
+	parent.cardTooltip.texture:SetTexCoord(0, 1, 0, 464/512)
+	parent.cardTooltip.texture:SetPoint("topleft", parent.cardTooltip, 2, -2)
+	parent.cardTooltip.texture:SetPoint("bottomright", parent.cardTooltip, -2, 2)
 	  
 	parent.cardTooltip.strengthBG = parent.cardTooltip:CreateTexture(addonName.."parent_CardTooltip_StrengthBG", "ARTWORK")
 	parent.cardTooltip.strengthBG:SetDrawLayer("ARTWORK", 1)
@@ -516,9 +470,310 @@ function GwentAddon:GetCardMouseOverInLisT(list)
 	return nil
 end
 
+-- Creates inner shadow textures for a frame
+local function CreateInnerShadow(parent, multiplier)
+	local mult = 1
+	if multiplier ~= nil then
+		mult = multiplier
+	end
+	
+	local drawlayer = 0
+
+	parent.topleft = parent:CreateTexture(parent:GetName().."Shadow_TL", "BACKGROUND")
+	parent.topleft:SetTexture(TEXTURE_SHADOW_CORNERS)
+	parent.topleft:SetTexCoord(0, 46/64, 0, 46/256)
+	parent.topleft:SetWidth(32*mult)
+	parent.topleft:SetHeight(32*mult)
+	parent.topleft:SetDrawLayer("background", drawlayer+2)
+	parent.topleft:SetPoint("topleft", parent)
+	
+	parent.bottomleft = parent:CreateTexture(parent:GetName().."Shadow_BL", "BACKGROUND")
+	parent.bottomleft:SetTexture(TEXTURE_SHADOW_CORNERS)
+	parent.bottomleft:SetTexCoord(0, 46/64, 46/256, 92/256)
+	parent.bottomleft:SetWidth(32*mult)
+	parent.bottomleft:SetHeight(32*mult)
+	parent.bottomleft:SetDrawLayer("background", drawlayer+2)
+	parent.bottomleft:SetPoint("bottomleft", parent)
+	
+	parent.topright = parent:CreateTexture(parent:GetName().."Shadow_TR", "BACKGROUND")
+	parent.topright:SetTexture(TEXTURE_SHADOW_CORNERS)
+	parent.topright:SetTexCoord(0, 46/64, 92/256, 138/256)
+	parent.topright:SetWidth(32*mult)
+	parent.topright:SetHeight(32*mult)
+	parent.topright:SetDrawLayer("background", drawlayer+2)
+	parent.topright:SetPoint("topright", parent)
+	
+	parent.bottomright = parent:CreateTexture(parent:GetName().."Shadow_BR", "BACKGROUND")
+	parent.bottomright:SetTexture(TEXTURE_SHADOW_CORNERS)
+	parent.bottomright:SetTexCoord(0, 46/64, 138/256, 184/256)
+	parent.bottomright:SetWidth(32*mult)
+	parent.bottomright:SetHeight(32*mult)
+	parent.bottomright:SetDrawLayer("background", drawlayer+2)
+	parent.bottomright:SetPoint("bottomright", parent)
+	
+	parent.top = parent:CreateTexture(parent:GetName().."Shadow_T", "BACKGROUND")
+	parent.top:SetTexture(TEXTURE_SHADOW_HORIZONTAL, true)
+	parent.top:SetTexCoord(0, 1, 19/64, 38/64)
+	parent.top:SetHeight(14*mult)
+	parent.top:SetDrawLayer("background", drawlayer+2)
+	parent.top:SetPoint("topleft", parent.topleft, "topright")
+	parent.top:SetPoint("topright", parent.topright, "topleft")
+	
+	
+	parent.bottom = parent:CreateTexture(parent:GetName().."Shadow_B", "BACKGROUND")
+	parent.bottom:SetTexture(TEXTURE_SHADOW_HORIZONTAL, true)
+	parent.bottom:SetTexCoord(0, 1, 0, 19/64)
+	parent.bottom:SetHeight(14*mult)
+	parent.bottom:SetDrawLayer("background", drawlayer+2)
+	parent.bottom:SetPoint("bottomleft", parent.bottomleft, "bottomright")
+	parent.bottom:SetPoint("bottomright", parent.bottomright, "bottomleft")
+	
+	parent.left = parent:CreateTexture(parent:GetName().."Shadow_L", "BACKGROUND")
+	parent.left:SetTexture(TEXTURE_SHADOW_VERTICAL)
+	parent.left:SetTexCoord(19/64, 38/64, 0, 1)
+	parent.left:SetWidth(14*mult)
+	parent.left:SetDrawLayer("background", drawlayer+2)
+	parent.left:SetPoint("topleft", parent.topleft, "bottomleft")
+	parent.left:SetPoint("bottomleft", parent.bottomleft, "topleft")
+	
+	parent.right = parent:CreateTexture(parent:GetName().."Shadow_R", "BACKGROUND")
+	parent.right:SetTexture(TEXTURE_SHADOW_VERTICAL)
+	parent.right:SetTexCoord(0, 19/64, 0, 1)
+	parent.right:SetWidth(14*mult)
+	parent.right:SetDrawLayer("background", drawlayer+2)
+	parent.right:SetPoint("topright", parent.topright, "bottomright")
+	parent.right:SetPoint("bottomright", parent.bottomright, "topright")
+end
+
+local function CreateCardArea(name, parent, texture)
+	local frame = CreateFrame("frame", addonName.."PlayFrame_" .. name, parent)
+	frame:SetHeight(GwentAddon.NUM_CARD_HEIGHT)
+	frame:SetWidth(GwentAddon.NUM_CARD_WIDTH * 10)
+	
+	frame.bg = frame:CreateTexture(addonName.."PlayFrame_"..name.."BG")
+	frame.bg:SetTexture(TEXTURE_CARD_BG)
+	frame.bg:SetDrawLayer("background", 1)
+	frame.bg:SetPoint("topleft", frame)
+	frame.bg:SetPoint("bottomright", frame)
+	-- frame:SetBackdrop({bgFile = TEXTURE_CARD_BG,
+      -- edgeFile = nil,
+	  -- tileSize = 0, edgeSize = 16,
+      -- insets = { left = 0, right = 0, top = 0, bottom = 0 }
+	  -- })
+	  
+	CreateInnerShadow(frame, 0.5)
+	  
+	frame.cardContainer = CreateFrame("frame", addonName.."PlayFrame_" .. name.."_Cardcontainer", parent)
+	frame.cardContainer:SetPoint("center", frame)
+	frame.cardContainer:SetHeight(GwentAddon.NUM_CARD_HEIGHT)
+	 
+	frame.commander = CreateFrame("frame", addonName.."PlayFrame_" .. name .."_Commander", parent)
+	frame.commander:SetHeight(GwentAddon.NUM_CARD_HEIGHT)
+	frame.commander:SetWidth(GwentAddon.NUM_CARD_HEIGHT)
+	frame.commander:SetPoint("right", frame, "left", -5, 0)
+	-- frame.commander:SetBackdrop({bgFile = TEXTURE_CARD_BG,
+      -- edgeFile = nil,
+	  -- tileSize = 0, edgeSize = 16,
+      -- insets = { left = 0, right = 0, top = 0, bottom = 0 }
+	  -- })
+	CreateInnerShadow(frame.commander, 0.5)
+	 
+	frame.commander.bg = frame.commander:CreateTexture(addonName.."PlayFrame_"..name.."_ICONCOMMANDERBG")
+	frame.commander.bg:SetTexture(TEXTURE_CARD_BG)
+	frame.commander.bg:SetDrawLayer("background", 1)
+	frame.commander.bg:SetPoint("topleft", frame.commander)
+	frame.commander.bg:SetPoint("bottomright", frame.commander)
+	 
+	frame.commander.icon = frame.commander:CreateTexture(addonName.."PlayFrame_"..name.."_ICONCOMMANDER", "art")
+	frame.commander.icon:SetTexture(TEXTURE_ABILITY_COMMANDER)
+	--frame.commander.icon:SetTexCoord(coords.x/TEXTURE_ICONS.width, (coords.x+NUM_SIZE_ICON)/TEXTURE_ICONS.width, coords.y/TEXTURE_ICONS.height, (coords.y+NUM_SIZE_ICON)/TEXTURE_ICONS.height)
+	frame.commander.icon:SetVertexColor(1, 1, 1, NUM_ICON_OPACITY)
+	frame.commander.icon:SetWidth(GwentAddon.NUM_CARD_HEIGHT)
+	frame.commander.icon:SetHeight(GwentAddon.NUM_CARD_HEIGHT)
+	frame.commander.icon:SetPoint("center", frame.commander)
+	  
+	frame.points = frame:CreateFontString(nil, nil, "GameFontNormal")
+	frame.points:SetPoint("right", frame.commander, "left", -20, 0)
+	frame.points:SetText(0)
+	
+	
+	
+	frame.icon = frame:CreateTexture(addonName.."PlayFrame_"..name.."_ICON", "art")
+	frame.icon:SetTexture(texture)
+	frame.icon:SetTexCoord(0, 1, 0, 1)
+
+	
+	
+	frame.icon:SetVertexColor(1, 1, 1, NUM_ICON_OPACITY)
+	frame.icon:SetWidth(GwentAddon.NUM_CARD_HEIGHT)
+	frame.icon:SetHeight(GwentAddon.NUM_CARD_HEIGHT)
+	frame.icon:SetPoint("center", frame)
+	
+	return frame
+end
+
+-- Create a sidebar to use for player details, weather area and leader cards
+local function CreateSidebar(parent)
+	parent.sideBar = CreateFrame("frame", addonName.."SideBar", parent)
+	parent.sideBar:SetPoint("topleft", parent, "topleft", 23, -22)
+	parent.sideBar:SetPoint("bottomright", parent, "bottomleft", 259, 23)
+	--parent.playerHand:SetHeight(GwentAddon.NUM_CARD_HEIGHT)
+	--parent.playerHand:SetWidth(GwentAddon.NUM_CARD_WIDTH * 10)
+	-- parent.playerHand:SetBackdrop({bgFile = TEXTURE_CARD_DARKEN,
+      -- edgeFile = nil,
+	  -- tileSize = 0, edgeSize = 16,
+      -- insets = { left = 0, right = 0, top = 0, bottom = 0 }
+	  -- })
+	  
+	parent.sideBar.tex = parent.sideBar:CreateTexture(addonName.."SideBarBG", "BACKGROUND")
+	-- parent.sideBar.tex:SetTexture("Interface\\ACHIEVEMENTFRAME\\UI-GuildAchievement-Parchment")
+	parent.sideBar.tex:SetTexture("Interface\\Garrison\\GarrisonLandingPageMiddleTile", true)
+
+	-- parent.sideBar.tex:SetTexture("Interface\\PETBATTLES\\MountJournal-BG")
+	parent.sideBar.tex:SetTexCoord(0, 1, 0, 4)
+	--parent.sideBar.tex:SetTexture("Interface\\PETBATTLES\\MountJournal-BG")
+	-- parent.sideBar.tex:SetTexCoord(0, 1, 0, 404/512)
+	parent.sideBar.tex:SetVertexColor(135/255, 105/255, 70/255)
+	parent.sideBar.tex:SetPoint("topleft", parent.sideBar)
+	parent.sideBar.tex:SetPoint("bottomright", parent.sideBar)
+	
+	CreateInnerShadow(parent.sideBar, 0.5)
+	return parent.sideBar
+end
+
+-- Create a frame to use for cards ares, card tooltip, graveyards and decks
+local function CreatePlayField(parent)
+	parent.playField = CreateFrame("frame", addonName.."playField", parent)
+	parent.playField:SetPoint("topleft", parent.sideBar, "topright", 0, 0)
+	parent.playField:SetPoint("bottomright", parent, "bottomright", -23, 23)
+
+	parent.playField.tex = parent.playField:CreateTexture(addonName.."SideBarBG", "BACKGROUND")
+	--parent.playField.tex:SetTexture("Interface\\ACHIEVEMENTFRAME\\UI-GuildAchievement-Parchment")
+	--parent.playField.tex:SetTexture("Interface\\HELPFRAME\\HELPFRAME-BOTTOM", true)
+	parent.playField.tex:SetTexture("Interface\\Garrison\\GarrisonLandingPageMiddleTile", true)
+
+	-- parent.sideBar.tex:SetTexture("Interface\\PETBATTLES\\MountJournal-BG")
+	parent.playField.tex:SetTexCoord(0, 5, 0, 4)
+	parent.playField.tex:SetVertexColor(175/255, 135/255, 90/255)
+	-- parent.playField.tex:SetVertexColor(135/255, 105/255, 70/255)
+	parent.playField.tex:SetPoint("topleft", parent.playField)
+	parent.playField.tex:SetPoint("bottomright", parent.playField)
+	
+	CreateInnerShadow(parent.playField)
+	
+	return parent.playField
+end
+
+-- Create a frame for a players' portair, total point, name, faction and live points
+local function CreatePlayerDisplay(parent, xPos, yPos, name)
+	local collection = {}
+	collection.details = CreateFrame("frame", parent:GetName() .. name.."Details", parent)
+	collection.details:SetPoint("left", parent, "left", xPos, yPos)
+	collection.details:SetPoint("right", parent, "right", xPos, yPos)
+	collection.details:SetHeight(GwentAddon.NUM_CARD_HEIGHT+10)
+	collection.detailsBG = collection.details:CreateTexture(parent:GetName() .. name.."DetailsBG", "BACKGROUND")
+	collection.detailsBG:SetTexture("Interface\\Cooldown\\LoC-ShadowBG")
+	collection.detailsBG:SetPoint("topleft", collection.details)
+	collection.detailsBG:SetPoint("bottomright", collection.details)
+	
+	-- player total Points
+	collection.total = collection.details:CreateFontString(nil, nil, "QuestTitleFontBlackShadow")
+	collection.total:SetPoint("right", collection.details, "right", 20, 0)
+	collection.total:SetWidth(NUM_BORDERSIZE_TOTAL)
+	collection.total:SetHeight(NUM_BORDERSIZE_TOTAL)
+	--collection.total:SetPoint("right", collection.total)
+	collection.total:SetText(0)
+
+	collection.total.bg = collection.details:CreateTexture(parent:GetName() .. name.."TotalBG", "ARTWORK")
+	collection.total.bg:SetDrawLayer("ARTWORK", 0)
+	collection.total.bg:SetTexture("Interface\\PETBATTLES\\BattleBar-AbilityBadge-Neutral")
+	--collection.total.bg:SetTexture("Interface\\ACHIEVEMENTFRAME\\UI-ACHIEVEMENT-SHIELDS")
+	--collection.total.bg:SetTexCoord(0.5, 1, 0, 0.5)
+	collection.total.bg:SetWidth(NUM_BORDERSIZE_TOTAL*0.6)
+	collection.total.bg:SetHeight(NUM_BORDERSIZE_TOTAL*0.6)
+	collection.total.bg:SetPoint("center", collection.total, 0, 0)
+	
+	collection.total.border = collection.details:CreateTexture(parent:GetName() .. name.."Total", "ARTWORK")
+	collection.total.border:SetDrawLayer("ARTWORK", 1)
+	collection.total.border:SetTexture(TEXTURE_ICONS.path)
+	collection.total.border:SetTexCoord((0)/TEXTURE_ICONS.width, (1 + NUM_SIZE_ICON)/TEXTURE_ICONS.width, (0)/TEXTURE_ICONS.height, (1+ NUM_SIZE_ICON)/TEXTURE_ICONS.height)
+	collection.total.border:SetVertexColor(220/255, 185/255, 0)
+	collection.total.border:SetWidth(NUM_BORDERSIZE_TOTAL*0.75)
+	collection.total.border:SetHeight(NUM_BORDERSIZE_TOTAL*1.1)
+	collection.total.border:SetPoint("center", collection.total, 0, -6)
+	collection.total.border:Hide()
+	
+	-- collection.total.points = collection.details:CreateFontString(nil, nil, "QuestTitleFontBlackShadow")
+	-- collection.total.points:SetPoint("topleft", collection.total)
+	-- collection.total.points:SetPoint("bottomright", collection.total)
+	-- collection.total.points:SetText(0)
+
+	-- player portrait
+	collection.portrait = collection.details:CreateTexture(parent:GetName() .. name.."Portrait", "ARTWORK")
+	collection.portrait:SetDrawLayer("ARTWORK", 0)
+	collection.portrait:SetWidth(GwentAddon.NUM_CARD_HEIGHT-10)
+	collection.portrait:SetHeight(GwentAddon.NUM_CARD_HEIGHT-10)
+	collection.portrait:SetPoint("left", collection.details, "left", 10, 0)
+	
+	SetPortraitTexture(collection.portrait, TEXTURE_PORTAITDEFAULT)
+	
+	collection.portraitborder = collection.details:CreateTexture(parent:GetName() .. name.."PortraitBorder", "ARTWORK")
+	collection.portraitborder:SetDrawLayer("ARTWORK", 1)
+	collection.portraitborder:SetTexture(TEXTURE_TOTAL_BORDERNORMAL)
+	collection.portraitborder:SetWidth(GwentAddon.NUM_CARD_HEIGHT+50)
+	collection.portraitborder:SetHeight(GwentAddon.NUM_CARD_HEIGHT+50)
+	collection.portraitborder:SetPoint("center", collection.portrait)
+	
+	-- player nametag
+	collection.nametag = collection.details:CreateFontString(nil, nil, "GameFontNormal")
+	collection.nametag:SetPoint("left", collection.portrait, "right", 10, -5)
+	collection.nametag:SetPoint("right", collection.details, "right", -10, -5)
+	collection.nametag:SetJustifyH("left")
+	collection.nametag:SetText("Enemy name")
+	
+	-- player deck
+	collection.faction = collection.details:CreateFontString(nil, nil, "GameFontNormal")
+	collection.faction:SetPoint("topleft", collection.nametag, "bottomleft", 0, 0)
+	collection.faction:SetPoint("topright", collection.nametag, "bottomright", 0, 0)
+	collection.faction:SetJustifyH("left")
+	collection.faction:SetText("Faction here")
+	
+	collection.life1 = collection.details:CreateTexture(parent:GetName() .. name.."Life1", "ARTWORK")
+	collection.life1:SetDrawLayer("ARTWORK", 1)
+	collection.life1:SetTexture(TEXTURE_ICONS.path)
+	collection.life1:SetTexCoord((COORDS_ICON_LIFE.x+5)/TEXTURE_ICONS.width, (COORDS_ICON_LIFE.x + NUM_SIZE_ICON-5)/TEXTURE_ICONS.width, (COORDS_ICON_LIFE.y+5)/TEXTURE_ICONS.height, (COORDS_ICON_LIFE.y + NUM_SIZE_ICON -5)/TEXTURE_ICONS.height)
+	collection.life1:SetVertexColor(0.8, 0.1, 0.1)
+	collection.life1:SetWidth(GwentAddon.NUM_CARD_HEIGHT/2)
+	collection.life1:SetHeight(GwentAddon.NUM_CARD_HEIGHT/2)
+	collection.life1:SetPoint("bottomleft", collection.nametag, "topleft")
+	
+	
+	-- player life 2
+	collection.life2 = collection.details:CreateTexture(parent:GetName() .. name.."Life2", "ARTWORK")
+	collection.life2:SetDrawLayer("ARTWORK", 1)
+	collection.life2:SetTexture(TEXTURE_ICONS.path)
+	collection.life2:SetTexCoord((COORDS_ICON_LIFE.x+5)/TEXTURE_ICONS.width, (COORDS_ICON_LIFE.x + NUM_SIZE_ICON-5)/TEXTURE_ICONS.width, (COORDS_ICON_LIFE.y+5)/TEXTURE_ICONS.height, (COORDS_ICON_LIFE.y + NUM_SIZE_ICON -5)/TEXTURE_ICONS.height)
+	collection.life2:SetVertexColor(0.8, 0.1, 0.1)
+	collection.life2:SetWidth(GwentAddon.NUM_CARD_HEIGHT/2)
+	collection.life2:SetHeight(GwentAddon.NUM_CARD_HEIGHT/2)
+	collection.life2:SetPoint("left", collection.life1, "right")
+	
+	-- Turn highlight
+	collection.turn = collection.details:CreateTexture(parent:GetName() .. name.."Turn")
+	collection.turn:SetDrawLayer("overlay", 1)
+	collection.turn:SetTexture("Interface\\PVPFrame\\PvPMegaQueue")
+	collection.turn:SetTexCoord(0, 328/512, 788/1024, 851/1024)
+	collection.turn:SetVertexColor(1, 1, 1, 0.5)
+	collection.turn:SetPoint("topleft", collection.details)
+	collection.turn:SetPoint("bottomright", collection.details)
+	collection.turn:SetBlendMode("add")
+	collection.turn:Hide()
+	
+	return collection
+end
+
 local function CreatePlayFrame()
-	
-	
+
 	GwentAddon.draggingOver.timer = 0
 	local GwentUpdater = CreateFrame("frame", "GwentUpdater", UIParent)
 	
@@ -556,11 +811,7 @@ local function CreatePlayFrame()
 	
 	
 	
-	
-	
-	
-	
-	local PlayFrame = CreateFrame("frame", addonName.."PlayFrame", UIParent)
+		local PlayFrame = CreateFrame("frame", addonName.."PlayFrame", UIParent)
 	PlayFrame:SetHeight(780)
 	PlayFrame:SetWidth(1200)
 	PlayFrame:SetMovable(true)
@@ -570,79 +821,279 @@ local function CreatePlayFrame()
 	PlayFrame:SetScript("OnDragStop", PlayFrame.StopMovingOrSizing)
 	PlayFrame:EnableMouse(true)
 	
-	PlayFrame.topleft = PlayFrame:CreateTexture(addonName.."PlayFrame_TL", "BACKGROUND")
-	PlayFrame.topleft:SetTexture("Interface\\HELPFRAME\\HelpFrame-TopLeft")
-	PlayFrame.topleft:SetTexCoord(0, 1, 0, 0.25)
-	PlayFrame.topleft:SetWidth(128)
+	PlayFrame:SetBackdrop({bgFile = nil,
+      edgeFile = "Interface\\ACHIEVEMENTFRAME\\UI-Achievement-WoodBorder",
+	  tileSize = 32, edgeSize = 64,
+      insets = { left = 0, right = 0, top = 0, bottom = 0 }
+	  })
+	
+	-- PlayFrame.bottomleft = PlayFrame:CreateTexture(addonName.."PlayFrame_BL", "BACKGROUND")
+	-- PlayFrame.bottomleft:SetTexture("Interface\\ACHIEVEMENTFRAME\\UI-Achievement-WoodBorder")
+	-- PlayFrame.bottomleft:SetTexCoord(0.75, 0.875, 0, 1)
+	-- PlayFrame.bottomleft:SetWidth(64)
+	-- PlayFrame.bottomleft:SetHeight(64)
+	-- PlayFrame.bottomleft:SetPoint("bottomleft", PlayFrame)
+	
+	-- PlayFrame.topright = PlayFrame:CreateTexture(addonName.."PlayFrame_TR", "BACKGROUND")
+	-- PlayFrame.topright:SetTexture("Interface\\ACHIEVEMENTFRAME\\UI-Achievement-WoodBorder")
+	-- PlayFrame.topright:SetTexCoord(0.625, 0.75, 0, 1)
+	-- PlayFrame.topright:SetWidth(64)
+	-- PlayFrame.topright:SetHeight(64)
+	-- PlayFrame.topright:SetPoint("topright", PlayFrame)
+	
+	-- PlayFrame.bottomright = PlayFrame:CreateTexture(addonName.."PlayFrame_BR", "BACKGROUND")
+	-- PlayFrame.bottomright:SetTexture("Interface\\ACHIEVEMENTFRAME\\UI-Achievement-WoodBorder")
+	-- PlayFrame.bottomright:SetTexCoord(0.875, 1, 0, 1)
+	-- PlayFrame.bottomright:SetWidth(64)
+	-- PlayFrame.bottomright:SetHeight(64)
+	-- PlayFrame.bottomright:SetPoint("bottomright", PlayFrame)
+	
+	-- PlayFrame.top = PlayFrame:CreateTexture(addonName.."PlayFrame_T", "BACKGROUND")
+	-- PlayFrame.top:SetTexture("Interface\\ACHIEVEMENTFRAME\\UI-Achievement-WoodBorder", true)
+	-- PlayFrame.top:SetRotation(-math.pi/2)
+
+	
+	-- PlayFrame.top:SetPoint("topleft", PlayFrame.topleft, "topright")
+	-- PlayFrame.top:SetPoint("bottomright", PlayFrame.topright, "bottomleft")
+	
+	-- PlayFrame.bottom = PlayFrame:CreateTexture(addonName.."PlayFrame_B", "BACKGROUND")
+	-- PlayFrame.bottom:SetTexture("Interface\\ACHIEVEMENTFRAME\\UI-Achievement-WoodBorder")
+	-- PlayFrame.bottom:SetRotation(-math.pi/2)
+	-- PlayFrame.bottom:SetTexCoord(0, 1, 0.25, 0.325)
+	
+	-- PlayFrame.bottom:SetPoint("topleft", PlayFrame.bottomleft, "topright")
+	-- PlayFrame.bottom:SetWidth(250)
+	-- PlayFrame.bottom:SetHeight(250)
+
+	local bSat = 0.6
+	
+	PlayFrame.left = PlayFrame:CreateTexture(addonName.."PlayFrame_L")
+	PlayFrame.left:SetTexture("Interface\\AchievementFrame\\UI-Achievement-MetalBorder-Left")
+	PlayFrame.left:SetTexCoord(0, 1, 0, .87)
+	PlayFrame.left:SetDrawLayer("ARTWORK", 0)
+	PlayFrame.left:SetWidth(16)
+	PlayFrame.left:SetVertexColor(bSat, bSat, bSat)
+	PlayFrame.left:SetPoint("topleft", PlayFrame, "topleft", 15, -25)
+	PlayFrame.left:SetPoint("bottomleft", PlayFrame, "bottomleft", 15, 25)
+	
+	PlayFrame.right = PlayFrame:CreateTexture(addonName.."PlayFrame_R")
+	PlayFrame.right:SetTexture("Interface\\AchievementFrame\\UI-Achievement-MetalBorder-Left")
+	PlayFrame.right:SetTexCoord(1, 0, 0, .87)
+	PlayFrame.right:SetDrawLayer("ARTWORK", 0)
+	PlayFrame.right:SetWidth(16)
+	PlayFrame.right:SetVertexColor(bSat, bSat, bSat)
+	PlayFrame.right:SetPoint("topright", PlayFrame, "topright", -15, -25)
+	PlayFrame.right:SetPoint("bottomright", PlayFrame, "bottomright", -15, 25)
+	
+	PlayFrame.bottom = PlayFrame:CreateTexture(addonName.."PlayFrame_B")
+	PlayFrame.bottom:SetTexture("Interface\\AchievementFrame\\UI-Achievement-MetalBorder-Top")
+	PlayFrame.bottom:SetTexCoord(0, .87, 1, 0)
+	PlayFrame.bottom:SetDrawLayer("ARTWORK", 0)
+	PlayFrame.bottom:SetHeight(16)
+	PlayFrame.bottom:SetVertexColor(bSat, bSat, bSat)
+	PlayFrame.bottom:SetPoint("bottomleft", PlayFrame, "bottomleft", 30, 15)
+	PlayFrame.bottom:SetPoint("bottomright", PlayFrame, "bottomright", -30, 15)
+	
+	PlayFrame.top = PlayFrame:CreateTexture(addonName.."PlayFrame_T")
+	PlayFrame.top:SetTexture("Interface\\AchievementFrame\\UI-Achievement-MetalBorder-Top")
+	PlayFrame.top:SetTexCoord(0, .87, 0, 1)
+	PlayFrame.top:SetDrawLayer("ARTWORK", 0)
+	PlayFrame.top:SetHeight(16)
+	PlayFrame.top:SetVertexColor(bSat, bSat, bSat)
+	PlayFrame.top:SetPoint("topleft", PlayFrame, "topleft", 30, -15)
+	PlayFrame.top:SetPoint("topright", PlayFrame, "topright", -30, -15)
+	
+	PlayFrame.topleft = PlayFrame:CreateTexture(addonName.."PlayFrame_TL")
+	PlayFrame.topleft:SetTexture("Interface\\AchievementFrame\\UI-Achievement-MetalBorder-Joint")
+	PlayFrame.topleft:SetTexCoord(1, 0, 1, 0)
+	PlayFrame.topleft:SetDrawLayer("ARTWORK", 2)
+	PlayFrame.topleft:SetWidth(32)
 	PlayFrame.topleft:SetHeight(32)
-	PlayFrame.topleft:SetPoint("topleft", PlayFrame)
+	PlayFrame.topleft:SetVertexColor(bSat, bSat, bSat)
+	PlayFrame.topleft:SetPoint("topleft", PlayFrame, 10, -10)
 	
-	PlayFrame.bottomleft = PlayFrame:CreateTexture(addonName.."PlayFrame_BL", "BACKGROUND")
-	PlayFrame.bottomleft:SetTexture("Interface\\HELPFRAME\\HELPFRAME-BOTLEFT")
-	PlayFrame.bottomleft:SetTexCoord(0, 1, 0.75, 1)
-	PlayFrame.bottomleft:SetWidth(128)
-	PlayFrame.bottomleft:SetHeight(32)
-	PlayFrame.bottomleft:SetPoint("bottomleft", PlayFrame)
+	PlayFrame.topleftDetail = PlayFrame:CreateTexture(addonName.."PlayFrame_TLDetail")
+	PlayFrame.topleftDetail:SetTexture("Interface\\AchievementFrame\\UI-Achievement-WoodBorder-Corner")
+	PlayFrame.topleftDetail:SetTexCoord(0, 1, 0, 1)
+	PlayFrame.topleftDetail:SetDrawLayer("ARTWORK", 1)
+	PlayFrame.topleftDetail:SetWidth(64)
+	PlayFrame.topleftDetail:SetHeight(64)
+	PlayFrame.topleftDetail:SetPoint("topleft", PlayFrame, 3, -2)
 	
-	PlayFrame.topright = PlayFrame:CreateTexture(addonName.."PlayFrame_TR", "BACKGROUND")
-	PlayFrame.topright:SetTexture("Interface\\HELPFRAME\\HelpFrame-TopRight")
-	PlayFrame.topright:SetTexCoord(0, 1, 0, 0.25)
-	PlayFrame.topright:SetWidth(64)
+	PlayFrame.topright = PlayFrame:CreateTexture(addonName.."PlayFrame_TR")
+	PlayFrame.topright:SetTexture("Interface\\AchievementFrame\\UI-Achievement-MetalBorder-Joint")
+	PlayFrame.topright:SetTexCoord(0, 1, 1, 0)
+	PlayFrame.topright:SetDrawLayer("ARTWORK", 2)
+	PlayFrame.topright:SetWidth(32)
 	PlayFrame.topright:SetHeight(32)
-	PlayFrame.topright:SetPoint("topright", PlayFrame)
+	PlayFrame.topright:SetVertexColor(bSat, bSat, bSat)
+	PlayFrame.topright:SetPoint("topright", PlayFrame, -10, -10)
 	
-	PlayFrame.bottomright = PlayFrame:CreateTexture(addonName.."PlayFrame_BR", "BACKGROUND")
-	PlayFrame.bottomright:SetTexture("Interface\\HELPFRAME\\HELPFRAME-BOTRIGHT")
-	PlayFrame.bottomright:SetTexCoord(0, 1, 0.75, 1)
-	PlayFrame.bottomright:SetWidth(64)
+	PlayFrame.toprightDetail = PlayFrame:CreateTexture(addonName.."PlayFrame_TRDetail")
+	PlayFrame.toprightDetail:SetTexture("Interface\\AchievementFrame\\UI-Achievement-WoodBorder-Corner")
+	PlayFrame.toprightDetail:SetTexCoord(1, 0, 0, 1)
+	PlayFrame.toprightDetail:SetDrawLayer("ARTWORK", 1)
+	PlayFrame.toprightDetail:SetWidth(64)
+	PlayFrame.toprightDetail:SetHeight(64)
+	PlayFrame.toprightDetail:SetPoint("topright", PlayFrame, -3, -2)
+	
+	PlayFrame.bottomleft = PlayFrame:CreateTexture(addonName.."PlayFrame_BL")
+	PlayFrame.bottomleft:SetTexture("Interface\\AchievementFrame\\UI-Achievement-MetalBorder-Joint")
+	PlayFrame.bottomleft:SetTexCoord(1, 0, 0, 1)
+	PlayFrame.bottomleft:SetDrawLayer("ARTWORK", 2)
+	PlayFrame.bottomleft:SetWidth(32)
+	PlayFrame.bottomleft:SetHeight(32)
+	PlayFrame.bottomleft:SetVertexColor(bSat, bSat, bSat)
+	PlayFrame.bottomleft:SetPoint("bottomleft", PlayFrame, 10, 10)
+	
+	PlayFrame.bottomleftDetail = PlayFrame:CreateTexture(addonName.."PlayFrame_BLDetail")
+	PlayFrame.bottomleftDetail:SetTexture("Interface\\AchievementFrame\\UI-Achievement-WoodBorder-Corner")
+	PlayFrame.bottomleftDetail:SetTexCoord(0, 1, 1, 0)
+	PlayFrame.bottomleftDetail:SetDrawLayer("ARTWORK", 2)
+	PlayFrame.bottomleftDetail:SetWidth(64)
+	PlayFrame.bottomleftDetail:SetHeight(64)
+	PlayFrame.bottomleftDetail:SetPoint("bottomleft", PlayFrame, 3, 2)
+	
+	PlayFrame.bottomright = PlayFrame:CreateTexture(addonName.."PlayFrame_BR")
+	PlayFrame.bottomright:SetTexture("Interface\\AchievementFrame\\UI-Achievement-MetalBorder-Joint")
+	PlayFrame.bottomright:SetTexCoord(0, 1, 0, 1)
+	PlayFrame.bottomright:SetDrawLayer("ARTWORK", 2)
+	PlayFrame.bottomright:SetWidth(32)
 	PlayFrame.bottomright:SetHeight(32)
-	PlayFrame.bottomright:SetPoint("bottomright", PlayFrame)
+	PlayFrame.bottomright:SetVertexColor(bSat, bSat, bSat)
+	PlayFrame.bottomright:SetPoint("bottomright", PlayFrame, -10, 10)
 	
-	PlayFrame.top = PlayFrame:CreateTexture(addonName.."PlayFrame_T", "BACKGROUND")
-	PlayFrame.top:SetTexture("Interface\\HELPFRAME\\HelpFrame-Top", true)
-	PlayFrame.top:SetTexCoord(0, 3, 0, 0.25)
-	PlayFrame.top:SetPoint("topleft", PlayFrame.topleft, "topright")
-	PlayFrame.top:SetPoint("bottomright", PlayFrame.topright, "bottomleft")
+	PlayFrame.bottomrightDetail = PlayFrame:CreateTexture(addonName.."PlayFrame_BRDetail")
+	PlayFrame.bottomrightDetail:SetTexture("Interface\\AchievementFrame\\UI-Achievement-WoodBorder-Corner")
+	PlayFrame.bottomrightDetail:SetTexCoord(1, 0, 1, 0)
+	PlayFrame.bottomrightDetail:SetDrawLayer("ARTWORK", 1)
+	PlayFrame.bottomrightDetail:SetWidth(64)
+	PlayFrame.bottomrightDetail:SetHeight(64)
+	PlayFrame.bottomrightDetail:SetPoint("bottomright", PlayFrame, -3, 2)
 	
-	PlayFrame.bottom = PlayFrame:CreateTexture(addonName.."PlayFrame_B", "BACKGROUND")
-	PlayFrame.bottom:SetTexture("Interface\\HELPFRAME\\HELPFRAME-BOTTOM", true)
-	PlayFrame.bottom:SetTexCoord(0, 3, 0.75, 1)
-	PlayFrame.bottom:SetPoint("topleft", PlayFrame.bottomleft, "topright")
-	PlayFrame.bottom:SetPoint("bottomright", PlayFrame.bottomright, "bottomleft")
+	PlayFrame.header = CreateFrame("frame", addonName.."PlayFrameHeader", PlayFrame)
+	PlayFrame.header:SetHeight(106)
+	PlayFrame.header:SetWidth(726)
+	PlayFrame.header:SetPoint("bottom", PlayFrame ,"top", 0, -41)
 	
-	PlayFrame.left = PlayFrame:CreateTexture(addonName.."PlayFrame_L", "BACKGROUND")
-	PlayFrame.left:SetTexture("Interface\\HELPFRAME\\HelpFrame-TopLeft")
-	PlayFrame.left:SetTexCoord(0, 1, 0.5, 1)
-	PlayFrame.left:SetPoint("topleft", PlayFrame.topleft, "bottomleft")
-	PlayFrame.left:SetPoint("bottomright", PlayFrame.bottomleft, "topright")
 	
-	PlayFrame.right = PlayFrame:CreateTexture(addonName.."PlayFrame_R", "BACKGROUND")
-	PlayFrame.right:SetTexture("Interface\\HELPFRAME\\HelpFrame-TopRight")
-	PlayFrame.right:SetTexCoord(0, 1, 0.5, 1)
-	PlayFrame.right:SetPoint("topleft", PlayFrame.topright, "bottomleft")
-	PlayFrame.right:SetPoint("bottomright", PlayFrame.bottomright, "topright")
+	PlayFrame.headerLeft = PlayFrame.header:CreateTexture(addonName.."PlayFrameHeaderLeft")
+	PlayFrame.headerLeft:SetTexture("Interface\\AchievementFrame\\UI-Achievement-Header")
+	PlayFrame.headerLeft:SetTexCoord(0, 1, 0, 0.4140625)
+	PlayFrame.headerLeft:SetDrawLayer("ARTWORK", 0)
+	PlayFrame.headerLeft:SetWidth(512)
+	PlayFrame.headerLeft:SetHeight(106)
+	PlayFrame.headerLeft:SetPoint("bottomleft", PlayFrame.header)
 	
-	PlayFrame.center = PlayFrame:CreateTexture(addonName.."PlayFrame_C", "BACKGROUND")
-	PlayFrame.center:SetTexture("Interface\\HELPFRAME\\HelpFrame-TopLeft")
-	PlayFrame.center:SetTexCoord(0.5, 1, 0.5, 1)
-	PlayFrame.center:SetPoint("topleft", PlayFrame.topleft, "bottomright")
-	PlayFrame.center:SetPoint("bottomright", PlayFrame.bottomright, "topleft")
+	PlayFrame.headerRight = PlayFrame.header:CreateTexture(addonName.."PlayFrameHeaderRight")
+	PlayFrame.headerRight:SetTexture("Interface\\AchievementFrame\\UI-Achievement-Header")
+	PlayFrame.headerRight:SetTexCoord(0, 0.419921875, 0.4140625, 0.8046875)
+	PlayFrame.headerRight:SetDrawLayer("ARTWORK", 0)
+	PlayFrame.headerRight:SetWidth(214)
+	PlayFrame.headerRight:SetHeight(100)
+	PlayFrame.headerRight:SetPoint("bottomright", PlayFrame.header, 0, -6)
+	
+	-- PlayFrame.right = PlayFrame:CreateTexture(addonName.."PlayFrame_R", "BACKGROUND")
+	-- PlayFrame.right:SetTexture("Interface\\ACHIEVEMENTFRAME\\UI-Achievement-WoodBorder", true)
+	-- PlayFrame.right:SetTexCoord(0.125, 0.25, 0, 15)
+	-- PlayFrame.right:SetPoint("topleft", PlayFrame.topright, "bottomleft")
+	-- PlayFrame.right:SetPoint("bottomright", PlayFrame.bottomright, "topright")
+	
+	-- PlayFrame.center = PlayFrame:CreateTexture(addonName.."PlayFrame_C", "BACKGROUND")
+	-- PlayFrame.center:SetTexture("Interface\\ACHIEVEMENTFRAME\\UI-Achievement-WoodBorder")
+	-- PlayFrame.center:SetTexCoord(0.5, 1, 0.5, 1)
+	-- PlayFrame.center:SetPoint("topleft", PlayFrame.topleft, "bottomright")
+	-- PlayFrame.center:SetPoint("bottomright", PlayFrame.bottomright, "topleft")
+	
+	
+	
+	-- local PlayFrame = CreateFrame("frame", addonName.."PlayFrame", UIParent)
+	-- PlayFrame:SetHeight(780)
+	-- PlayFrame:SetWidth(1200)
+	-- PlayFrame:SetMovable(true)
+	-- PlayFrame:SetPoint("Center", 0, 0)
+	-- PlayFrame:RegisterForDrag("LeftButton")
+	-- PlayFrame:SetScript("OnDragStart", PlayFrame.StartMoving )
+	-- PlayFrame:SetScript("OnDragStop", PlayFrame.StopMovingOrSizing)
+	-- PlayFrame:EnableMouse(true)
+	
+	-- PlayFrame.topleft = PlayFrame:CreateTexture(addonName.."PlayFrame_TL", "BACKGROUND")
+	-- PlayFrame.topleft:SetTexture("Interface\\HELPFRAME\\HelpFrame-TopLeft")
+	-- PlayFrame.topleft:SetTexCoord(0, 1, 0, 0.25)
+	-- PlayFrame.topleft:SetWidth(128)
+	-- PlayFrame.topleft:SetHeight(32)
+	-- PlayFrame.topleft:SetPoint("topleft", PlayFrame)
+	
+	-- PlayFrame.bottomleft = PlayFrame:CreateTexture(addonName.."PlayFrame_BL", "BACKGROUND")
+	-- PlayFrame.bottomleft:SetTexture("Interface\\HELPFRAME\\HELPFRAME-BOTLEFT")
+	-- PlayFrame.bottomleft:SetTexCoord(0, 1, 0.75, 1)
+	-- PlayFrame.bottomleft:SetWidth(128)
+	-- PlayFrame.bottomleft:SetHeight(32)
+	-- PlayFrame.bottomleft:SetPoint("bottomleft", PlayFrame)
+	
+	-- PlayFrame.topright = PlayFrame:CreateTexture(addonName.."PlayFrame_TR", "BACKGROUND")
+	-- PlayFrame.topright:SetTexture("Interface\\HELPFRAME\\HelpFrame-TopRight")
+	-- PlayFrame.topright:SetTexCoord(0, 1, 0, 0.25)
+	-- PlayFrame.topright:SetWidth(64)
+	-- PlayFrame.topright:SetHeight(32)
+	-- PlayFrame.topright:SetPoint("topright", PlayFrame)
+	
+	-- PlayFrame.bottomright = PlayFrame:CreateTexture(addonName.."PlayFrame_BR", "BACKGROUND")
+	-- PlayFrame.bottomright:SetTexture("Interface\\HELPFRAME\\HELPFRAME-BOTRIGHT")
+	-- PlayFrame.bottomright:SetTexCoord(0, 1, 0.75, 1)
+	-- PlayFrame.bottomright:SetWidth(64)
+	-- PlayFrame.bottomright:SetHeight(32)
+	-- PlayFrame.bottomright:SetPoint("bottomright", PlayFrame)
+	
+	-- PlayFrame.top = PlayFrame:CreateTexture(addonName.."PlayFrame_T", "BACKGROUND")
+	-- PlayFrame.top:SetTexture("Interface\\HELPFRAME\\HelpFrame-Top", true)
+	-- PlayFrame.top:SetTexCoord(0, 3, 0, 0.25)
+	-- PlayFrame.top:SetPoint("topleft", PlayFrame.topleft, "topright")
+	-- PlayFrame.top:SetPoint("bottomright", PlayFrame.topright, "bottomleft")
+	
+	-- PlayFrame.bottom = PlayFrame:CreateTexture(addonName.."PlayFrame_B", "BACKGROUND")
+	-- PlayFrame.bottom:SetTexture("Interface\\HELPFRAME\\HELPFRAME-BOTTOM", true)
+	-- PlayFrame.bottom:SetTexCoord(0, 3, 0.75, 1)
+	-- PlayFrame.bottom:SetPoint("topleft", PlayFrame.bottomleft, "topright")
+	-- PlayFrame.bottom:SetPoint("bottomright", PlayFrame.bottomright, "bottomleft")
+	
+	-- PlayFrame.left = PlayFrame:CreateTexture(addonName.."PlayFrame_L", "BACKGROUND")
+	-- PlayFrame.left:SetTexture("Interface\\HELPFRAME\\HelpFrame-TopLeft")
+	-- PlayFrame.left:SetTexCoord(0, 1, 0.5, 1)
+	-- PlayFrame.left:SetPoint("topleft", PlayFrame.topleft, "bottomleft")
+	-- PlayFrame.left:SetPoint("bottomright", PlayFrame.bottomleft, "topright")
+	
+	-- PlayFrame.right = PlayFrame:CreateTexture(addonName.."PlayFrame_R", "BACKGROUND")
+	-- PlayFrame.right:SetTexture("Interface\\HELPFRAME\\HelpFrame-TopRight")
+	-- PlayFrame.right:SetTexCoord(0, 1, 0.5, 1)
+	-- PlayFrame.right:SetPoint("topleft", PlayFrame.topright, "bottomleft")
+	-- PlayFrame.right:SetPoint("bottomright", PlayFrame.bottomright, "topright")
+	
+	-- PlayFrame.center = PlayFrame:CreateTexture(addonName.."PlayFrame_C", "BACKGROUND")
+	-- PlayFrame.center:SetTexture("Interface\\HELPFRAME\\HelpFrame-TopLeft")
+	-- PlayFrame.center:SetTexCoord(0.5, 1, 0.5, 1)
+	-- PlayFrame.center:SetPoint("topleft", PlayFrame.topleft, "bottomright")
+	-- PlayFrame.center:SetPoint("bottomright", PlayFrame.bottomright, "topleft")
 
 	
 	CreateCardTooltip(PlayFrame)
 	CreateWeatherArea(PlayFrame)
+	local sidebar = CreateSidebar(PlayFrame)
+	local playfield = CreatePlayField(PlayFrame)
+	
 	
 	-- player hand
-	PlayFrame.playerHand = CreateFrame("frame", addonName.."playerHand", PlayFrame)
+	PlayFrame.playerHand = CreateFrame("frame", addonName.."playerHand", playfield)
 	GwentAddon.areas.playerHand = PlayFrame.playerHand
-	PlayFrame.playerHand:SetPoint("bottom", PlayFrame, "bottom", 0, 23)
+	PlayFrame.playerHand:SetPoint("bottom", playfield, "bottom", -30, 0)
 	PlayFrame.playerHand:SetHeight(GwentAddon.NUM_CARD_HEIGHT)
 	PlayFrame.playerHand:SetWidth(GwentAddon.NUM_CARD_WIDTH * 10)
-	PlayFrame.playerHand:SetBackdrop({bgFile = TEXTURE_CARD_DARKEN,
-      edgeFile = nil,
-	  tileSize = 0, edgeSize = 16,
-      insets = { left = 0, right = 0, top = 0, bottom = 0 }
-	  })
+	CreateInnerShadow(PlayFrame.playerHand, 0.5)
+	-- PlayFrame.playerHand:SetBackdrop({bgFile = TEXTURE_CARD_DARKEN,
+      -- edgeFile = nil,
+	  -- tileSize = 0, edgeSize = 16,
+      -- insets = { left = 0, right = 0, top = 0, bottom = 0 }
+	  -- })
 	  
 	PlayFrame.playerHand.cardContainer = CreateFrame("frame", addonName.."playerHandContainer", PlayFrame.playerHand)
 	PlayFrame.playerHand.cardContainer:SetPoint("center", PlayFrame.playerHand)
@@ -661,81 +1112,13 @@ local function CreatePlayFrame()
 	GwentAddon.areas.playerMelee = PlayFrame.playerMelee
 	PlayFrame.playerMelee:SetPoint("bottom", PlayFrame.playerRanged, "top", 0, 10)
 	
-	PlayFrame.playerDetails = CreateFrame("frame", PlayFrame:GetName() .. "_PlayerDetails", PlayFrame)
-	PlayFrame.playerDetails:SetPoint("left", PlayFrame, "left", 10, -GwentAddon.NUM_CARD_HEIGHT *2)
-	PlayFrame.playerDetails:SetHeight(GwentAddon.NUM_CARD_HEIGHT)
-	PlayFrame.playerDetails:SetWidth(GwentAddon.NUM_CARD_WIDTH * 4)
-	PlayFrame.playerDetailsBG = PlayFrame.playerDetails:CreateTexture(addonName.."PlayFrame_PlayerDetailsBG", "BACKGROUND")
-	--PlayFrame.playerDetailsBG:SetDrawLayer("BACKGROUND", -1)
-	PlayFrame.playerDetailsBG:SetTexture("Interface\\DialogFrame\\UI-DialogBox-Gold-Background")
-	PlayFrame.playerDetailsBG:SetPoint("topleft", PlayFrame.playerDetails)
-	PlayFrame.playerDetailsBG:SetPoint("bottomright", PlayFrame.playerDetails)
+	------------------------------------------------------------------------------
+	PlayFrame.player = CreatePlayerDisplay(sidebar, 0, -GwentAddon.NUM_CARD_HEIGHT *2, "player")
+	PlayFrame.player.nametag:SetText(GetUnitName("player", false))
+	GwentAddon.playerLives.texture1 = PlayFrame.player.life1
+	GwentAddon.playerLives.texture2 = PlayFrame.player.life2
 	
-	-- player total Points
-	PlayFrame.playerTotal = PlayFrame:CreateTexture(addonName.."PlayFrame_PlayerTotal", "ARTWORK")
-	PlayFrame.playerTotal:SetDrawLayer("ARTWORK", 0)
-	PlayFrame.playerTotal:SetTexture(TEXTURE_TOTAL_BORDERNORMAL)
-	PlayFrame.playerTotal:SetWidth(NUM_BORDERSIZE_TOTAL)
-	PlayFrame.playerTotal:SetHeight(NUM_BORDERSIZE_TOTAL)
-	PlayFrame.playerTotal:SetPoint("bottomright", PlayFrame.playerDetails, "topright", 10, -10)
 	
-	PlayFrame.playerTotal.points = PlayFrame:CreateFontString(nil, nil, "QuestTitleFontBlackShadow")
-	PlayFrame.playerTotal.points:SetPoint("topleft", PlayFrame.playerTotal)
-	PlayFrame.playerTotal.points:SetPoint("bottomright", PlayFrame.playerTotal)
-	PlayFrame.playerTotal.points:SetText(0)
-
-	-- player portrait
-	PlayFrame.playerPortrait = PlayFrame.playerDetails:CreateTexture(addonName.."PlayFrame_PlayerPortrait", "ARTWORK")
-	PlayFrame.playerPortrait:SetDrawLayer("ARTWORK", 0)
-	PlayFrame.playerPortrait:SetWidth(GwentAddon.NUM_CARD_HEIGHT-10)
-	PlayFrame.playerPortrait:SetHeight(GwentAddon.NUM_CARD_HEIGHT-10)
-	PlayFrame.playerPortrait:SetPoint("left", PlayFrame.playerDetails, "left", 10, 0)
-	
-	SetPortraitTexture(PlayFrame.playerPortrait, "player")
-	
-	PlayFrame.playerPortraitborder = PlayFrame.playerDetails:CreateTexture(addonName.."PlayFrame_PlayerPortraitBorder", "ARTWORK")
-	PlayFrame.playerPortraitborder:SetDrawLayer("ARTWORK", 1)
-	PlayFrame.playerPortraitborder:SetTexture(TEXTURE_TOTAL_BORDERNORMAL)
-	PlayFrame.playerPortraitborder:SetWidth(GwentAddon.NUM_CARD_HEIGHT+50)
-	PlayFrame.playerPortraitborder:SetHeight(GwentAddon.NUM_CARD_HEIGHT+50)
-	PlayFrame.playerPortraitborder:SetPoint("center", PlayFrame.playerPortrait)
-	
-	-- player nametag
-	PlayFrame.playerNametag = PlayFrame.playerDetails:CreateFontString(nil, nil, "GameFontNormal")
-	PlayFrame.playerNametag:SetPoint("left", PlayFrame.playerPortrait, "right", 10, -5)
-	PlayFrame.playerNametag:SetPoint("right", PlayFrame.playerDetails, "right", -10, -5)
-	PlayFrame.playerNametag:SetJustifyH("left")
-	PlayFrame.playerNametag:SetText(GetUnitName("player", false))
-	
-	-- player deck
-	PlayFrame.playerFaction = PlayFrame.playerDetails:CreateFontString(nil, nil, "GameFontNormal")
-	PlayFrame.playerFaction:SetPoint("topleft", PlayFrame.playerNametag, "bottomleft", 0, 0)
-	PlayFrame.playerFaction:SetPoint("topright", PlayFrame.playerNametag, "bottomright", 0, 0)
-	PlayFrame.playerFaction:SetJustifyH("left")
-	PlayFrame.playerFaction:SetText("Faction here")
-	
-	-- player life 2
-	PlayFrame.playerLife2 = PlayFrame.playerDetails:CreateTexture(addonName.."PlayFrame_PlayerLife2", "ARTWORK")
-	PlayFrame.playerLife2:SetDrawLayer("ARTWORK", 1)
-	--PlayFrame.playerLife2:SetTexture(TEXTURE_LIFECRYSTAL)
-	PlayFrame.playerLife2:SetTexture(TEXTURE_ICONS.path)
-	PlayFrame.playerLife2:SetTexCoord((COORDS_ICON_LIFE.x+5)/TEXTURE_ICONS.width, (COORDS_ICON_LIFE.x + NUM_SIZE_ICON-5)/TEXTURE_ICONS.width, (COORDS_ICON_LIFE.y+5)/TEXTURE_ICONS.height, (COORDS_ICON_LIFE.y + NUM_SIZE_ICON -5)/TEXTURE_ICONS.height)
-	PlayFrame.playerLife2:SetVertexColor(0.8, 0.1, 0.1)
-	PlayFrame.playerLife2:SetWidth(GwentAddon.NUM_CARD_HEIGHT/2)
-	PlayFrame.playerLife2:SetHeight(GwentAddon.NUM_CARD_HEIGHT/2)
-	PlayFrame.playerLife2:SetPoint("topright", PlayFrame.playerDetails)
-	GwentAddon.playerLives.texture2 = PlayFrame.playerLife2
-	
-	PlayFrame.playerLife1 = PlayFrame.playerDetails:CreateTexture(addonName.."PlayFrame_PlayerLife1", "ARTWORK")
-	PlayFrame.playerLife1:SetDrawLayer("ARTWORK", 1)
-	--PlayFrame.playerLife1:SetTexture(TEXTURE_LIFECRYSTAL)
-	PlayFrame.playerLife1:SetTexture(TEXTURE_ICONS.path)
-	PlayFrame.playerLife1:SetTexCoord((COORDS_ICON_LIFE.x+5)/TEXTURE_ICONS.width, (COORDS_ICON_LIFE.x + NUM_SIZE_ICON-5)/TEXTURE_ICONS.width, (COORDS_ICON_LIFE.y+5)/TEXTURE_ICONS.height, (COORDS_ICON_LIFE.y + NUM_SIZE_ICON -5)/TEXTURE_ICONS.height)
-	PlayFrame.playerLife1:SetVertexColor(0.8, 0.1, 0.1)
-	PlayFrame.playerLife1:SetWidth(GwentAddon.NUM_CARD_HEIGHT/2)
-	PlayFrame.playerLife1:SetHeight(GwentAddon.NUM_CARD_HEIGHT/2)
-	PlayFrame.playerLife1:SetPoint("right", PlayFrame.playerLife2, "left")
-	GwentAddon.playerLives.texture1 = PlayFrame.playerLife1
 	
 	-- player turn arrow
 	PlayFrame.playerTurn = PlayFrame:CreateTexture(addonName.."PlayFrame_PlayerTurn", "ARTWORK")
@@ -764,16 +1147,17 @@ local function CreatePlayFrame()
 	
 	
 	-- enemy hand
-	PlayFrame.enemyHand = CreateFrame("frame", addonName.."PlayFrame_EnemyHand", PlayFrame)
+	PlayFrame.enemyHand = CreateFrame("frame", addonName.."PlayFrame_EnemyHand", playfield)
 	GwentAddon.areas.enemyHand = PlayFrame.enemyHand
-	PlayFrame.enemyHand:SetPoint("top", PlayFrame, "top", 0, -30)
+	PlayFrame.enemyHand:SetPoint("top", playfield, "top", -30, 0)
 	PlayFrame.enemyHand:SetHeight(GwentAddon.NUM_CARD_HEIGHT)
 	PlayFrame.enemyHand:SetWidth(GwentAddon.NUM_CARD_WIDTH * 10)
-	PlayFrame.enemyHand:SetBackdrop({bgFile = TEXTURE_CARD_DARKEN,
-      edgeFile = nil,
-	  tileSize = 0, edgeSize = 16,
-      insets = { left = 0, right = 0, top = 0, bottom = 0 }
-	  })
+	CreateInnerShadow(PlayFrame.enemyHand, 0.5)
+	-- PlayFrame.enemyHand:SetBackdrop({bgFile = TEXTURE_CARD_DARKEN,
+      -- edgeFile = nil,
+	  -- tileSize = 0, edgeSize = 16,
+      -- insets = { left = 0, right = 0, top = 0, bottom = 0 }
+	  -- })
 	  
 	PlayFrame.enemyHand.cardContainer = CreateFrame("frame", addonName.."EnemyHandContainer", PlayFrame.enemyHand)
 	PlayFrame.enemyHand.cardContainer:SetPoint("center", PlayFrame.enemyHand)
@@ -792,82 +1176,9 @@ local function CreatePlayFrame()
 	GwentAddon.areas.enemyMelee = PlayFrame.enemyMelee
 	PlayFrame.enemyMelee:SetPoint("top", PlayFrame.enemyRanged, "bottom", 0, -10)
 	
-	PlayFrame.enemyDetails = CreateFrame("frame", PlayFrame:GetName() .. "_EnemyDetails", PlayFrame)
-	PlayFrame.enemyDetails:SetPoint("left", PlayFrame, "left", 10, GwentAddon.NUM_CARD_HEIGHT *2)
-	PlayFrame.enemyDetails:SetHeight(GwentAddon.NUM_CARD_HEIGHT)
-	PlayFrame.enemyDetails:SetWidth(GwentAddon.NUM_CARD_WIDTH * 4)
-	PlayFrame.enemyDetailsBG = PlayFrame.enemyDetails:CreateTexture(addonName.."PlayFrame_PlayerDetailsBG", "BACKGROUND")
-	--PlayFrame.playerDetailsBG:SetDrawLayer("BACKGROUND", -1)
-	PlayFrame.enemyDetailsBG:SetTexture("Interface\\DialogFrame\\UI-DialogBox-Gold-Background")
-	PlayFrame.enemyDetailsBG:SetPoint("topleft", PlayFrame.enemyDetails)
-	PlayFrame.enemyDetailsBG:SetPoint("bottomright", PlayFrame.enemyDetails)
-	
-	-- player total Points
-	PlayFrame.enemyTotal = PlayFrame:CreateTexture(addonName.."PlayFrame_EnemyTotal", "ARTWORK")
-	PlayFrame.enemyTotal:SetDrawLayer("ARTWORK", -7)
-	PlayFrame.enemyTotal:SetTexture(TEXTURE_TOTAL_BORDERNORMAL)
-	PlayFrame.enemyTotal:SetWidth(NUM_BORDERSIZE_TOTAL)
-	PlayFrame.enemyTotal:SetHeight(NUM_BORDERSIZE_TOTAL)
-	PlayFrame.enemyTotal:SetPoint("topright", PlayFrame.enemyDetails, "bottomright", 10, 10)
-	
-	PlayFrame.enemyTotal.points = PlayFrame:CreateFontString(nil, nil, "QuestTitleFontBlackShadow")
-	PlayFrame.enemyTotal.points:SetPoint("topleft", PlayFrame.enemyTotal)
-	PlayFrame.enemyTotal.points:SetPoint("bottomright", PlayFrame.enemyTotal)
-	PlayFrame.enemyTotal.points:SetText(0)
-	
-	-- player portrait
-	PlayFrame.enemyPortrait = PlayFrame.enemyDetails:CreateTexture(addonName.."PlayFrame_EnemyPortrait", "art")
-	PlayFrame.enemyPortrait:SetDrawLayer("ARTWORK", 0)
-	PlayFrame.enemyPortrait:SetTexture(TEXTURE_PORTAITDEFAULT)
-	PlayFrame.enemyPortrait:SetWidth(GwentAddon.NUM_CARD_HEIGHT-10)
-	PlayFrame.enemyPortrait:SetHeight(GwentAddon.NUM_CARD_HEIGHT-10)
-	PlayFrame.enemyPortrait:SetPoint("left", PlayFrame.enemyDetails, "left", 10, 0)
-	--SetPortraitTexture(PlayFrame.playerPortrait, "player")
-	
-	PlayFrame.enemyPortraitborder = PlayFrame.enemyDetails:CreateTexture(addonName.."PlayFrame_EnemyPortraitBorder", "ARTWORK")
-	PlayFrame.enemyPortraitborder:SetDrawLayer("ARTWORK", 1)
-	PlayFrame.enemyPortraitborder:SetTexture(TEXTURE_TOTAL_BORDERNORMAL)
-	PlayFrame.enemyPortraitborder:SetWidth(GwentAddon.NUM_CARD_HEIGHT+50)
-	PlayFrame.enemyPortraitborder:SetHeight(GwentAddon.NUM_CARD_HEIGHT+50)
-	PlayFrame.enemyPortraitborder:SetPoint("center", PlayFrame.enemyPortrait)
-	
-	-- enemy nametag
-	PlayFrame.enemyNametag = PlayFrame.enemyDetails:CreateFontString(nil, nil, "GameFontNormal")
-	PlayFrame.enemyNametag:SetPoint("left", PlayFrame.enemyPortrait, "right", 10, -10)
-	PlayFrame.enemyNametag:SetPoint("right", PlayFrame.enemyDetails, "right", -10, -10)
-	PlayFrame.enemyNametag:SetJustifyH("left")
-	PlayFrame.enemyNametag:SetWordWrap(false)
-	PlayFrame.enemyNametag:SetText("Enemy name")
-	
-	-- enemy deck
-	PlayFrame.enemyFaction = PlayFrame.enemyDetails:CreateFontString(nil, nil, "GameFontNormal")
-	PlayFrame.enemyFaction:SetPoint("topleft", PlayFrame.enemyNametag, "bottomleft", 0, 0)
-	PlayFrame.enemyFaction:SetPoint("topright", PlayFrame.enemyNametag, "bottomright", 0, 0)
-	PlayFrame.enemyFaction:SetJustifyH("left")
-	PlayFrame.enemyFaction:SetText("Enemy faction")
-	
-	-- enemy life 2
-	PlayFrame.enemyLife2 = PlayFrame.enemyDetails:CreateTexture(addonName.."PlayFrame_EnemyLife2", "ARTWORK")
-	PlayFrame.enemyLife2:SetDrawLayer("ARTWORK", 1)
-	-- PlayFrame.enemyLife2:SetTexture(TEXTURE_LIFECRYSTAL)
-	PlayFrame.enemyLife2:SetTexture(TEXTURE_ICONS.path)
-	PlayFrame.enemyLife2:SetTexCoord((COORDS_ICON_LIFE.x+5)/TEXTURE_ICONS.width, (COORDS_ICON_LIFE.x + NUM_SIZE_ICON-5)/TEXTURE_ICONS.width, (COORDS_ICON_LIFE.y+5)/TEXTURE_ICONS.height, (COORDS_ICON_LIFE.y + NUM_SIZE_ICON -5)/TEXTURE_ICONS.height)
-	PlayFrame.enemyLife2:SetVertexColor(0.8, 0.1, 0.1)
-	PlayFrame.enemyLife2:SetWidth(GwentAddon.NUM_CARD_HEIGHT/2)
-	PlayFrame.enemyLife2:SetHeight(GwentAddon.NUM_CARD_HEIGHT/2)
-	PlayFrame.enemyLife2:SetPoint("topright", PlayFrame.enemyDetails)
-	GwentAddon.enemyLives.texture2 = PlayFrame.enemyLife2
-	
-	PlayFrame.enemyLife1 = PlayFrame.enemyDetails:CreateTexture(addonName.."PlayFrame_EnemyLife1", "ARTWORK")
-	PlayFrame.enemyLife1:SetDrawLayer("ARTWORK", 1)
-	-- PlayFrame.enemyLife1:SetTexture(TEXTURE_LIFECRYSTAL)
-	PlayFrame.enemyLife1:SetTexture(TEXTURE_ICONS.path)
-	PlayFrame.enemyLife1:SetTexCoord((COORDS_ICON_LIFE.x+5)/TEXTURE_ICONS.width, (COORDS_ICON_LIFE.x + NUM_SIZE_ICON-5)/TEXTURE_ICONS.width, (COORDS_ICON_LIFE.y+5)/TEXTURE_ICONS.height, (COORDS_ICON_LIFE.y + NUM_SIZE_ICON -5)/TEXTURE_ICONS.height)
-	PlayFrame.enemyLife1:SetVertexColor(0.8, 0.1, 0.1)
-	PlayFrame.enemyLife1:SetWidth(GwentAddon.NUM_CARD_HEIGHT/2)
-	PlayFrame.enemyLife1:SetHeight(GwentAddon.NUM_CARD_HEIGHT/2)
-	PlayFrame.enemyLife1:SetPoint("right", PlayFrame.enemyLife2, "left")
-	GwentAddon.enemyLives.texture1 = PlayFrame.enemyLife1
+	PlayFrame.enemy = CreatePlayerDisplay(sidebar, 0, GwentAddon.NUM_CARD_HEIGHT *2, "player")
+	GwentAddon.enemyLives.texture1 = PlayFrame.enemy.life1
+	GwentAddon.enemyLives.texture2 = PlayFrame.enemy.life2
 	
 	-- player turn arrow
 	PlayFrame.enemyTurn = PlayFrame:CreateTexture(addonName.."PlayFrame_EnemyTurn", "ARTWORK")
@@ -877,7 +1188,6 @@ local function CreatePlayFrame()
 	PlayFrame.enemyTurn:SetHeight(NUM_SIZE_ICON)
 	PlayFrame.enemyTurn:SetPoint("right", PlayFrame.enemySiege.commander, "left", -75, 0)
 	PlayFrame.enemyTurn:Hide()
-	
 	
 	return PlayFrame
 end
@@ -968,7 +1278,7 @@ function GwentAddon:ChangeChallenger(sender, race, gender)
 	end
 		
 	GwentAddon.challengerName = sender
-	GwentAddon.playFrame.enemyNametag:SetText(GwentAddon.challengerName)
+	GwentAddon.playFrame.enemy.nametag:SetText(GwentAddon.challengerName)
 	
 	local challenger = GetUnitName("target", true)	
 	if race ~= nil and gender ~= nil then
@@ -978,10 +1288,10 @@ function GwentAddon:ChangeChallenger(sender, race, gender)
 			gender = "FEMALE"
 		end
 		
-		SetPortraitToTexture(GwentAddon.playFrame.enemyPortrait, "Interface\\CHARACTERFRAME\\TemporaryPortrait-"..gender.."-"..race)
+		SetPortraitToTexture(GwentAddon.playFrame.enemy.portrait, "Interface\\CHARACTERFRAME\\TemporaryPortrait-"..gender.."-"..race)
 		
 	elseif challenger ~= nil then
-		SetPortraitTexture(GwentAddon.playFrame.enemyPortrait, "target")
+		SetPortraitTexture(GwentAddon.playFrame.enemy.portrait, "target")
 		
 	end
 end
@@ -1008,12 +1318,12 @@ function GwentAddon:ResetGame()
 	
 	pf.playerTurn:Hide()
 	
-	pf.enemyFaction:SetText("")
-	pf.enemyNametag:SetText("")
-	pf.enemyTurn:Hide()
-	pf.enemyPortrait:SetTexture(TEXTURE_PORTAITDEFAULT)
-	pf.playerTotal.amount = 0
-	pf.enemyTotal.amount = 0
+	pf.enemy.faction:SetText("")
+	pf.enemy.nametag:SetText("")
+	pf.enemy.turn:Hide()
+	pf.enemy.portrait:SetTexture(TEXTURE_PORTAITDEFAULT)
+	pf.player.total.amount = 0
+	pf.enemy.total.amount = 0
 		
 	GwentAddon:ChangeChallenger(nil)
 	
@@ -1085,8 +1395,8 @@ end
 function GwentAddon:ChangeState(state)
 	GwentAddon.currentState = state
 	GwentAddon.playFrame.discardButton:Hide()
-	GwentAddon.playFrame.playerTurn:Hide()
-	GwentAddon.playFrame.enemyTurn:Hide()
+	GwentAddon.playFrame.player.turn:Hide()
+	GwentAddon.playFrame.enemy.turn:Hide()
 	GwentAddon.playFrame.passButton:Enable()
 	
 	if GwentAddon.currentState == GwentAddon.states.playerDiscard or GwentAddon.currentState == GwentAddon.states.enemyDoneDiscarding then
@@ -1100,14 +1410,14 @@ function GwentAddon:ChangeState(state)
 		else
 			GwentAddon.popup:ShowMessage("Your turn.")
 		end
-		GwentAddon.playFrame.playerTurn:Show()
+		GwentAddon.playFrame.player.turn:Show()
 		for k, card in ipairs(GwentAddon.lists.playerHand) do
 			card.frame:SetMovable(true)
 		end
 		
 	elseif GwentAddon.currentState == GwentAddon.states.enemyTurn then
 		GwentAddon.popup:ShowMessage("Opponent turn.")
-		GwentAddon.playFrame.enemyTurn:Show()
+		GwentAddon.playFrame.enemy.turn:Show()
 		for k, card in ipairs(GwentAddon.lists.playerHand) do
 			card.frame:SetMovable(false)
 		end
