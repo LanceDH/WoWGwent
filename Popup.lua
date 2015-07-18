@@ -33,7 +33,7 @@ function GwentAddon:CreatePopupClass(parent)
 end
 
 function Popup:CreateFrame(parent)
-	frame = CreateFrame("Frame", addonName.."_Popup");
+	frame = CreateFrame("Frame", addonName.."_Popup", parent);
 	frame:SetFrameLevel(parent:GetFrameLevel()+2)
 	frame:ClearAllPoints();
 	frame:SetHeight(100);

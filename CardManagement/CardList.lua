@@ -23,9 +23,9 @@ setmetatable(CardList, {
   end,
 })
 
-local Card = {}
-Card.__index = Card
-setmetatable(Card, {
+GwentAddon.Card = {}
+GwentAddon.Card.__index = GwentAddon.Card
+setmetatable(GwentAddon.Card, {
   __call = function (cls, ...)
     return cls.new(...)
   end,
@@ -39,11 +39,10 @@ local ABILITY_Command = "Commander's Horn"
 local ABILITY_SCORCH = "Scorch"
 local ABILITY_Hero = "Immune to special CardList"
 
-function Card.new(id, cardList)
-	local self = setmetatable({}, Card)
+function GwentAddon.Card.new(id, cardList)
+	local self = setmetatable({}, GwentAddon.Card)
 	
-	print("class using " .. id)
-	print("class # " .. #Card)
+	print("card using " .. id)
 	self.cardList = cardList
 	self.leftSpacing = 0
 	self.rightSpacing = 0
@@ -59,7 +58,7 @@ function Card.new(id, cardList)
 end
 
 -- Create the frame for the card
-function Card:CreateFrame()
+function GwentAddon.Card:CreateFrame()
 	local cardData = self.data
 
 	if not cardData then
@@ -171,7 +170,7 @@ function Card:CreateFrame()
 end
 
 -- Create the icon for combat type
-function Card:CreateCardTypeIcons(card)
+function GwentAddon.Card:CreateCardTypeIcons(card)
 	local count = 0;
 	local vcBG = 1
 	local vc = 0
@@ -203,7 +202,7 @@ function Card:CreateCardTypeIcons(card)
 end
 
 -- Update the strength display of a card including buff/debuff color
-function Card:UpdateCardStrength()
+function GwentAddon.Card:UpdateCardStrength()
 	local frame = self.frame
 	frame.strength:SetTextColor(0, 0, 0)
 	if self.data.cardType.hero then
@@ -220,7 +219,7 @@ function Card:UpdateCardStrength()
 end
 
 -- Select or deselect the card for discard at the start of the game
-function Card:SelectForDiscard()
+function GwentAddon.Card:SelectForDiscard()
 	-- only allow during discard phase
 	if GwentAddon.currentState ~= GwentAddon.states.playerDiscard and GwentAddon.currentState ~= GwentAddon.states.enemyDoneDiscarding then
 		return
@@ -241,7 +240,7 @@ function Card:SelectForDiscard()
 end
 
 -- Start dragging the card
-function Card:StartDragging()
+function GwentAddon.Card:StartDragging()
 	-- only allow during player's turn and when card is movable
 	if not self.frame:IsMovable() or  GwentAddon.currentState ~= GwentAddon.states.playerTurn then
 		return
@@ -252,7 +251,7 @@ function Card:StartDragging()
 end
 
 -- Stop dragging the card and places in new area if needed
-function Card:StopDragging(card)
+function GwentAddon.Card:StopDragging(card)
 	-- only allow during player's turn and when card is movable
 	if not self.frame:IsMovable() or GwentAddon.currentState ~= GwentAddon.states.playerTurn then 
 		return
@@ -302,7 +301,7 @@ function GwentAddon:CreateCardsClass()
 end
 
 function GwentAddon:CreateCard(id, cardList)
-	return Card(id, cardList)
+	return GwentAddon.Card(id, cardList)
 end
 
 -- Create a list containing the data of the card for later access
@@ -1027,14 +1026,17 @@ function CardList:DiscardSelectedCards()
 
 	for k, card in ipairs(_InitialDiscardSelected) do
 		self:RemoveCardFromHand(card)
+		GwentAddon.lists.baseDeck:AddCardById(card.data.Id)
 	end
 	
 	local discAmm = #_InitialDiscardSelected
 	
 	GwentAddon:DestroyCardsInList(_InitialDiscardSelected)
 	
+	GwentAddon.lists.baseDeck:Shuffle()
+	
 	for i = 1, discAmm do
-		self:DrawCard()
+		table.insert(GwentAddon.lists.playerHand, GwentAddon.lists.baseDeck:DrawCard())
 	end
 	
 	GwentAddon:PlaceAllCards()
@@ -1119,10 +1121,10 @@ end
 -- TODO: Change to random shuffle and draw top card
 function CardList:DrawCard()
 
-	local deckCardNr = math.random(#GwentAddon.lists.playerDeck)
-	table.insert(GwentAddon.lists.playerHand, Card(GwentAddon.lists.playerDeck[deckCardNr].Id, self))--self:CreateCardOfId(GwentAddon.lists.playerDeck[deckCardNr].Id))
+	local deckCardNr = math.random(#GwentAddon.lists.baseDeck)
+	table.insert(GwentAddon.lists.playerHand, GwentAddon.Card(GwentAddon.lists.baseDeck[deckCardNr].Id, self))--self:CreateCardOfId(GwentAddon.lists.baseDeck[deckCardNr].Id))
 	
-	table.remove(GwentAddon.lists.playerDeck, deckCardNr)
+	table.remove(GwentAddon.lists.baseDeck, deckCardNr)
 	
 	GwentAddon:PlaceAllCards()
 end
