@@ -34,20 +34,22 @@ end
 
 function Popup:CreateFrame(parent)
 	frame = CreateFrame("Frame", addonName.."_Popup", parent);
-	frame:SetFrameLevel(parent:GetFrameLevel()+2)
+	frame:SetFrameLevel(parent:GetFrameLevel()+10)
 	frame:ClearAllPoints();
-	frame:SetHeight(100);
-	frame:SetWidth(300);
-	frame:SetBackdrop({bgFile = "Interface\\DialogFrame\\UI-DialogBox-Gold-Background",
+	frame:SetHeight(GwentAddon.NUM_CARD_HEIGHT*2);
+	--frame:SetWidth(300);
+	frame:SetBackdrop({bgFile = "Interface\\Cooldown\\LoC-ShadowBG",--"Interface\\DialogFrame\\UI-DialogBox-Gold-Background", --:SetTexture("Interface\\Cooldown\\LoC-ShadowBG")
       edgeFile = nil,
 	  tileSize = 0, edgeSize = 16,
       insets = { left = 0, right = 0, top = 0, bottom = 0 }
 	  })
 	frame:SetScript("OnUpdate", function() self:OnUpdate() end);
-	frame:SetPoint("center", parent);
+	--frame:SetPoint("center", parent);
+	frame:SetPoint("left", parent);
+	frame:SetPoint("right", parent);
 	frame.text = frame:CreateFontString(nil, nil, "PVPInfoTextFont");
-	frame.text:SetPoint("topleft", frame);
-	frame.text:SetPoint("bottomright", frame);
+	frame.text:SetPoint("left", frame, 200);
+	frame.text:SetPoint("right", frame, -200);
 	frame.text:SetText("default text");
 	
 	return frame

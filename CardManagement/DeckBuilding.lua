@@ -8,38 +8,43 @@ local DECK_NEUTRAL = "Neutral"
 -- Create a test deck to play with
 -- Uses all north and neutral cards
 
-local Deck = {}
-Deck.__index = Deck
-setmetatable(Deck, {
+GwentAddon.DeckB = {}
+GwentAddon.DeckB.__index = GwentAddon.DeckB
+setmetatable(GwentAddon.DeckB, {
   __call = function (cls, ...)
     return cls.new(...)
   end,
 })
 
 
-function Deck.new(leaderId)
-	local self = setmetatable({}, Deck)
+function GwentAddon.DeckB.new(leaderId, basedeck, backTex)
+	local self = setmetatable({}, GwentAddon.DeckB)
+	self.leader = {}
+	self.leader.used = false
+	self.leader.data = self:SetLeaderById(leaderId)
+	self.cards = {}
 	
-	self.leader = self:SetLeaderById(leaderId)
-	self.baseDeck = {}
-	
-	print("deck created")
+	if basedeck ~= nil then
+		for k, v in ipairs(basedeck) do
+			table.insert(self.cards, v)
+		end
+	end	
 	--self.cardback = TEXTURE_CUSTOM_PATH .. texture
 	
 	return self
 end
 
-function Deck:AddCardById(id)
+function GwentAddon.DeckB:AddCardById(id)
 	--print("Adding id " .. id)
 	for k, v in ipairs(GwentAddon.cards.list) do
 		if (v.Id == id) then
-			table.insert(self.baseDeck, v)
+			table.insert(self.cards, v)
 			return
 		end
 	end
 end
 
-function Deck:SetLeaderById(id)
+function GwentAddon.DeckB:SetLeaderById(id)
 	for k, v in ipairs(GwentAddon.cards.list) do
 		if (v.Id == id) then
 			return v
@@ -47,13 +52,13 @@ function Deck:SetLeaderById(id)
 	end
 end
 
-function Deck:PrintDeck()
+function GwentAddon.DeckB:PrintDeck()
 	
 	print("leader: " .. (self.leader ~= nil and self.leader.name or "nil"))
-	print("#: " .. (#self.baseDeck))
+	print("#: " .. (#self.cards))
 	local text = "{ "
 	
-	for k, v in ipairs(self.baseDeck) do
+	for k, v in ipairs(self.cards) do
 		text = text..v.Id .. " "
 	end
 	
@@ -61,30 +66,30 @@ function Deck:PrintDeck()
 	print(text)
 end
 
-function Deck:Shuffle()
+function GwentAddon.DeckB:Shuffle()
 	
-	local array = self.baseDeck
+	local array = self.cards
     local n = #array
     local j
     for i=n-1, 1, -1 do
         j = math.random(i)
         array[j],array[i] = array[i],array[j]
     end
-    self.baseDeck = array
+    self.cards = array
 end
 
-function Deck:DrawCard()
-	local id = self.baseDeck[1].Id
+function GwentAddon.DeckB:DrawCard()
+	local id = self.cards[1].Id
 	
 	local card = GwentAddon.Card(id, GwentAddon.cards)
 	
-	table.remove(self.baseDeck, 1)
+	table.remove(self.cards, 1)
 	
 	return card
 end
 
 function GwentAddon:CreateTestDeck()
-	local pDeck = Deck(1)
+	local pDeck = GwentAddon.DeckB(1)
 	local factions = GwentAddon.cards.factions
 
 	

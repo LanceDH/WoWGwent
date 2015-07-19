@@ -42,7 +42,6 @@ local ABILITY_Hero = "Immune to special CardList"
 function GwentAddon.Card.new(id, cardList)
 	local self = setmetatable({}, GwentAddon.Card)
 	
-	print("card using " .. id)
 	self.cardList = cardList
 	self.leftSpacing = 0
 	self.rightSpacing = 0
@@ -66,6 +65,7 @@ function GwentAddon.Card:CreateFrame()
 	end
 
 	local card = CreateFrame("frame", addonName.."_Card_".._CardNr, GwentAddon.playFrame)
+	card:SetFrameLevel(GwentAddon.playFrame:GetFrameLevel() + 4) 
 	card.data = cardData
 	card.nr = _CardNr
 	card.leftSpacing = 0
@@ -73,20 +73,22 @@ function GwentAddon.Card:CreateFrame()
 	card:SetPoint("topleft", GwentAddon.playFrame, "topleft", 0, 0)
 	card:SetHeight(GwentAddon.NUM_CARD_HEIGHT)
 	card:SetWidth(GwentAddon.NUM_CARD_WIDTH)
-	card:SetBackdrop({bgFile = TEXTURE_CARD_BG,
-		edgeFile = TEXTURE_CARD_BORDER,
+	card:SetBackdrop({bgFile = nil, --TEXTURE_CARD_BG,
+		edgeFile = nil, --TEXTURE_CARD_BORDER,
 
 	  tileSize = 0, edgeSize = 4,
       insets = { left = 0, right = 0, top 
 	  = 0, bottom = 0 }
 	  })
+	  
+	GwentAddon:CreateOuterCardShadow(card, 0.5)
 	
 	card.texture = card:CreateTexture(addonName.."_Card_".._CardNr.."_Texture", "ARTWORK")
 	card.texture:SetDrawLayer("ARTWORK", 0)
 	card.texture:SetTexture(TEXTURE_CUSTOM_PATH..cardData.texture)
 	card.texture:SetTexCoord(COORDS_SMALLCARD.left, COORDS_SMALLCARD.right, COORDS_SMALLCARD.top, COORDS_SMALLCARD.bottom)
-	card.texture:SetPoint("topleft", card, 2, -2)
-	card.texture:SetPoint("bottomright", card, -2, 2)
+	card.texture:SetPoint("topleft", card, 1, -1)
+	card.texture:SetPoint("bottomright", card, -1, 1)
 	
 	card.darken = card:CreateTexture(addonName.."_Card_".._CardNr.."_Darken", "ARTWORK")
 	card.darken:SetDrawLayer("ARTWORK", 7)
@@ -246,6 +248,7 @@ function GwentAddon.Card:StartDragging()
 		return
 	end
 	
+	self.frame:SetFrameLevel(self.frame:GetFrameLevel() + 1) 
 	GwentAddon.cards.draggedCard = self
 	self.frame:StartMoving()
 end
@@ -271,6 +274,7 @@ function GwentAddon.Card:StopDragging(card)
 		
 	end
 
+	self.frame:SetFrameLevel(self.frame:GetFrameLevel() - 1) 
 	GwentAddon.cards.draggedCard  = nil
 	self.frame:StopMovingOrSizing()
 	GwentAddon:PlaceAllCards()
@@ -343,504 +347,49 @@ function CardList:AddNorthCards()
 	-- Northern Realms
 	-----------------------------------------------------------------------------------------------
 	
-	table.insert(self.list, self:CreateCardsDatalist("Foltest, King of Temeria", self.factions.north, 0, {melee = false, ranged = false, siege = false, hero = false, leader = true}, GwentAddon:GetAbilitydataByName("NYI"), "peasant"))
-	
-	-- table.insert(self.list, {
-				-- name = "Foltest, King of Temeria"
-				-- ,faction = self.factions.north
-				-- ,strength = 0
-				-- ,cardType = {melee = false, ranged = false, siege = false, hero = false, leader = true}
-				-- ,ability = "NYI"
-				-- ,texture = "peasant"
-			-- })
-	
-	table.insert(self.list, self:CreateCardsDatalist("Foltest, Lord Commander Of The North", self.factions.north, 0, {melee = false, ranged = false, siege = false, hero = false, leader = true}, GwentAddon:GetAbilitydataByName("NYI"), "peasant"))
-	
-	-- table.insert(self.list, {
-				-- name = "Foltest, Lord Commander Of The North"
-				-- ,faction = self.factions.north
-				-- ,strength = 0
-				-- ,cardType = {melee = false, ranged = false, siege = false, hero = false, leader = true}
-				-- ,ability = "NYI"
-				-- ,texture = "peasant"
-			-- })
-			
-	table.insert(self.list, self:CreateCardsDatalist("Foltest The Steel-forged", self.factions.north, 0, {melee = false, ranged = false, siege = false, hero = false, leader = true}, GwentAddon:GetAbilitydataByName("NYI"), "peasant"))
-			
-	-- table.insert(self.list, {
-				-- name = "Foltest The Steel-forged"
-				-- ,faction = self.factions.north
-				-- ,strength = 0
-				-- ,cardType = {melee = false, ranged = false, siege = false, hero = false, leader = true}
-				-- ,ability = "NYI"
-				-- ,texture = "peasant"
-			-- })
-			
-	table.insert(self.list, self:CreateCardsDatalist("Foltest The Siegemaster", self.factions.north, 0, {melee = false, ranged = false, siege = false, hero = false, leader = true}, GwentAddon:GetAbilitydataByName("NYI"), "peasant"))
-	
-	-- table.insert(self.list, {
-				-- name = "Foltest The Siegemaster"
-				-- ,faction = self.factions.north
-				-- ,strength = 0
-				-- ,cardType = {melee = false, ranged = false, siege = false, hero = false, leader = true}
-				-- ,ability = "NYI"
-				-- ,texture = "peasant"
-			-- })
-			
-	table.insert(self.list, self:CreateCardsDatalist("Philippa Eilhart", self.factions.north, 10, {melee = false, ranged = true, siege = false, hero = true, leader = false}, GwentAddon:GetAbilitydataByName(ABILITY_Hero), "peasant"))	
-		
-	-- table.insert(self.list, {
-				-- name = "Philippa Eilhart"
-				-- ,faction = self.factions.north
-				-- ,strength = 10
-				-- ,cardType = {melee = false, ranged = true, siege = false, hero = true, leader = false}
-				-- ,ability = ABILITY_Hero
-				-- ,texture = "peasant"
-			-- })
-			
-	table.insert(self.list, self:CreateCardsDatalist("Vernon Roche", self.factions.north, 10, {melee = true, ranged = false, siege = false, hero = true, leader = false}, GwentAddon:GetAbilitydataByName(ABILITY_Hero), "peasant"))	
-			
-	-- table.insert(self.list, {
-				-- name = "Vernon Roche"
-				-- ,faction = self.factions.north
-				-- ,strength = 10
-				-- ,cardType = {melee = true, ranged = false, siege = false, hero = true, leader = false}
-				-- ,ability = ABILITY_Hero
-				-- ,texture = "peasant"
-			-- })
-			
-	table.insert(self.list, self:CreateCardsDatalist("Esterad Thyssen", self.factions.north, 10, {melee = true, ranged = false, siege = false, hero = true, leader = false}, GwentAddon:GetAbilitydataByName(ABILITY_Hero), "peasant"))	
-	
-	-- table.insert(self.list, {
-				-- name = "Esterad Thyssen"
-				-- ,faction = self.factions.north
-				-- ,strength = 10
-				-- ,cardType = {melee = true, ranged = false, siege = false, hero = true, leader = false}
-				-- ,ability = ABILITY_Hero
-				-- ,texture = "peasant"
-			-- })
-	
-	table.insert(self.list, self:CreateCardsDatalist("John Natalis", self.factions.north, 10, {melee = true, ranged = false, siege = false, hero = true, leader = false}, GwentAddon:GetAbilitydataByName(ABILITY_Hero), "peasant"))	
-	
-	-- table.insert(self.list, {
-				-- name = "John Natalis"
-				-- ,faction = self.factions.north
-				-- ,strength = 10
-				-- ,cardType = {melee = true, ranged = false, siege = false, hero = true, leader = false}
-				-- ,ability = ABILITY_Hero
-				-- ,texture = "peasant"
-			-- })
-			
-	table.insert(self.list, self:CreateCardsDatalist("Thaler", self.factions.north, 1, {melee = false, ranged = false, siege = true, hero = false, leader = false}, GwentAddon:GetAbilitydataByName(ABILITY_Spy), "peasant"))	
-	
-	-- table.insert(self.list, {
-				-- name = "Thaler"
-				-- ,faction = self.factions.north
-				-- ,strength = 1
-				-- ,cardType = {melee = false, ranged = false, siege = true, hero = false, leader = false}
-				-- ,ability = ABILITY_Spy
-				-- ,texture = "peasant"
-			-- })
-			
-	table.insert(self.list, self:CreateCardsDatalist("Redanian Foot Soldier", self.factions.north, 1, {melee = true, ranged = false, siege = false, hero = false, leader = false}, nil, "peasant", "1/2"))
-			
-	-- table.insert(self.list, {
-			-- name = "Redanian Foot Soldier"
-				-- ,faction = self.factions.north
-				-- ,strength = 1
-				-- ,cardType = {melee = true, ranged = false, siege = false, hero = false, leader = false}
-				-- ,ability = nil
-				-- ,texture = "peasant"
-				-- ,subText = "1/2"
-			-- })
-			
-	table.insert(self.list, self:CreateCardsDatalist("Redanian Foot Soldier", self.factions.north, 1, {melee = true, ranged = false, siege = false, hero = false, leader = false}, nil, "peasant", "2/2"))
-	
-	-- table.insert(self.list, {
-			-- name = "Redanian Foot Soldier"
-				-- ,faction = self.factions.north
-				-- ,strength = 1
-				-- ,cardType = {melee = true, ranged = false, siege = false, hero = false, leader = false}
-				-- ,ability = nil
-				-- ,texture = "peasant"
-				-- ,subText = "2/2"
-			-- })
-			
+	table.insert(self.list, self:CreateCardsDatalist("Foltest, King of Temeria", self.factions.north, 0, {melee = false, ranged = false, siege = false, hero = false, leader = true}, GwentAddon:GetAbilitydataByName("NYI"), "Leader01"))
+	table.insert(self.list, self:CreateCardsDatalist("Foltest, Lord Commander Of The North", self.factions.north, 0, {melee = false, ranged = false, siege = false, hero = false, leader = true}, GwentAddon:GetAbilitydataByName("NYI"), "Blank"))
+	table.insert(self.list, self:CreateCardsDatalist("Foltest The Steel-forged", self.factions.north, 0, {melee = false, ranged = false, siege = false, hero = false, leader = true}, GwentAddon:GetAbilitydataByName("NYI"), "Blank"))
+	table.insert(self.list, self:CreateCardsDatalist("Foltest The Siegemaster", self.factions.north, 0, {melee = false, ranged = false, siege = false, hero = false, leader = true}, GwentAddon:GetAbilitydataByName("NYI"), "Blank"))
+	table.insert(self.list, self:CreateCardsDatalist("Philippa Eilhart", self.factions.north, 10, {melee = false, ranged = true, siege = false, hero = true, leader = false}, GwentAddon:GetAbilitydataByName(ABILITY_Hero), "Blank"))	
+	table.insert(self.list, self:CreateCardsDatalist("Vernon Roche", self.factions.north, 10, {melee = true, ranged = false, siege = false, hero = true, leader = false}, GwentAddon:GetAbilitydataByName(ABILITY_Hero), "Blank"))	
+	table.insert(self.list, self:CreateCardsDatalist("Esterad Thyssen", self.factions.north, 10, {melee = true, ranged = false, siege = false, hero = true, leader = false}, GwentAddon:GetAbilitydataByName(ABILITY_Hero), "Blank"))	
+	table.insert(self.list, self:CreateCardsDatalist("John Natalis", self.factions.north, 10, {melee = true, ranged = false, siege = false, hero = true, leader = false}, GwentAddon:GetAbilitydataByName(ABILITY_Hero), "Blank"))	
+	table.insert(self.list, self:CreateCardsDatalist("Thaler", self.factions.north, 1, {melee = false, ranged = false, siege = true, hero = false, leader = false}, GwentAddon:GetAbilitydataByName(ABILITY_Spy), "Blank"))	
+	table.insert(self.list, self:CreateCardsDatalist("Redanian Foot Soldier", self.factions.north, 1, {melee = true, ranged = false, siege = false, hero = false, leader = false}, nil, "Blank", "1/2"))
+	table.insert(self.list, self:CreateCardsDatalist("Redanian Foot Soldier", self.factions.north, 1, {melee = true, ranged = false, siege = false, hero = false, leader = false}, nil, "Blank", "2/2"))
 	table.insert(self.list, self:CreateCardsDatalist("Poor Fucking Infantry", self.factions.north, 1, {melee = true, ranged = false, siege = false, hero = false, leader = false}, GwentAddon:GetAbilitydataByName(ABILITY_Bond), "peasant", "1/3"))
-	
-	-- table.insert(self.list, {
-				-- name = "Poor Fucking Infantry"
-				-- ,faction = self.factions.north
-				-- ,strength = 1
-				-- ,cardType = {melee = true, ranged = false, siege = false, hero = false, leader = false}
-				-- ,ability = ABILITY_Bond
-				-- ,texture = "peasant"
-				-- ,subText = "1/3"
-			-- })
-			
 	table.insert(self.list, self:CreateCardsDatalist("Poor Fucking Infantry", self.factions.north, 1, {melee = true, ranged = false, siege = false, hero = false, leader = false}, GwentAddon:GetAbilitydataByName(ABILITY_Bond), "peasant", "2/3"))
-			
-	-- table.insert(self.list, {
-				-- name = "Poor Fucking Infantry"
-				-- ,faction = self.factions.north
-				-- ,strength = 1
-				-- ,cardType = {melee = true, ranged = false, siege = false, hero = false, leader = false}
-				-- ,ability = ABILITY_Bond
-				-- ,texture = "peasant"
-				-- ,subText = "2/3"
-			-- })
-			
 	table.insert(self.list, self:CreateCardsDatalist("Poor Fucking Infantry", self.factions.north, 1, {melee = true, ranged = false, siege = false, hero = false, leader = false}, GwentAddon:GetAbilitydataByName(ABILITY_Bond), "peasant", "3/3"))
-			
-	-- table.insert(self.list, {
-				-- name = "Poor Fucking Infantry"
-				-- ,faction = self.factions.north
-				-- ,strength = 1
-				-- ,cardType = {melee = true, ranged = false, siege = false, hero = false, leader = false}
-				-- ,ability = ABILITY_Bond
-				-- ,texture = "peasant"
-				-- ,subText = "3/3"
-			-- })
-
-	table.insert(self.list, self:CreateCardsDatalist("Kaedweni Siege Expert", self.factions.north, 1, {melee = false, ranged = false, siege = true, hero = false, leader = false}, GwentAddon:GetAbilitydataByName(ABILITY_Morale), "peasant", "1/3"))
-	
-	-- table.insert(self.list, {
-				-- name = "Kaedweni Siege Expert"
-				-- ,faction = self.factions.north
-				-- ,strength = 1
-				-- ,cardType = {melee = false, ranged = false, siege = true, hero = false, leader = false}
-				-- ,ability = ABILITY_Morale
-				-- ,texture = "balista"
-				-- ,subText = "1/3"
-			-- })
-			
-	table.insert(self.list, self:CreateCardsDatalist("Kaedweni Siege Expert", self.factions.north, 1, {melee = false, ranged = false, siege = true, hero = false, leader = false}, GwentAddon:GetAbilitydataByName(ABILITY_Morale), "peasant", "2/3"))
-	
-	-- table.insert(self.list, {
-				-- name = "Kaedweni Siege Expert"
-				-- ,faction = self.factions.north
-				-- ,strength = 1
-				-- ,cardType = {melee = false, ranged = false, siege = true, hero = false, leader = false}
-				-- ,ability = ABILITY_Morale
-				-- ,texture = "balista"
-				-- ,subText = "2/3"
-			-- })
-
-	table.insert(self.list, self:CreateCardsDatalist("Kaedweni Siege Expert", self.factions.north, 1, {melee = false, ranged = false, siege = true, hero = false, leader = false}, GwentAddon:GetAbilitydataByName(ABILITY_Morale), "peasant", "3/3"))
-	
-	-- table.insert(self.list, {
-				-- name = "Kaedweni Siege Expert"
-				-- ,faction = self.factions.north
-				-- ,strength = 1
-				-- ,cardType = {melee = false, ranged = false, siege = true, hero = false, leader = false}
-				-- ,ability = ABILITY_Morale
-				-- ,texture = "balista"
-				-- ,subText = "3/3"
-			-- })
-			
-	table.insert(self.list, self:CreateCardsDatalist("Yarpen Zigrin", self.factions.north, 2, {melee = true, ranged = false, siege = false, hero = false, leader = false}, nil, "peasant"))
-			
-	-- table.insert(self.list, {
-				-- name = "Yarpen Zigrin"
-				-- ,faction = self.factions.north
-				-- ,strength = 2
-				-- ,cardType = {melee = true, ranged = false, siege = false, hero = false, leader = false}
-				-- ,ability = nil
-				-- ,texture = "balista"
-			-- })
-			
-	table.insert(self.list, self:CreateCardsDatalist("Sigismund Dijkstra", self.factions.north, 4, {melee = true, ranged = false, siege = false, hero = false, leader = false}, GwentAddon:GetAbilitydataByName(ABILITY_Spy), "peasant"))
-			
-	-- table.insert(self.list, {
-				-- name = "Sigismund Dijkstra"
-				-- ,faction = self.factions.north
-				-- ,strength = 4
-				-- ,cardType = {melee = true, ranged = false, siege = false, hero = false, leader = false}
-				-- ,ability = ABILITY_Spy
-				-- ,texture = "balista"
-			-- })
-			
-	table.insert(self.list, self:CreateCardsDatalist("Sheldon Skaggs", self.factions.north, 4, {melee = false, ranged = true, siege = false, hero = false, leader = false}, nil, "peasant"))
-			
-	-- table.insert(self.list, {
-				-- name = "Sheldon Skaggs"
-				-- ,faction = self.factions.north
-				-- ,strength = 4
-				-- ,cardType = {melee = false, ranged = true, siege = false, hero = false, leader = false}
-				-- ,ability = nil
-				-- ,texture = "balista"
-			-- })
-	
-	table.insert(self.list, self:CreateCardsDatalist("Blue Stripes Commando", self.factions.north, 4, {melee = true, ranged = false, siege = false, hero = false, leader = false}, GwentAddon:GetAbilitydataByName(ABILITY_Bond), "peasant", "1/3"))
-	
-	-- table.insert(self.list, {
-				-- name = "Blue Stripes Commando"
-				-- ,faction = self.factions.north
-				-- ,strength = 4
-				-- ,cardType = {melee = true, ranged = false, siege = false, hero = false, leader = false}
-				-- ,ability = ABILITY_Bond
-				-- ,texture = "balista"
-				-- ,subText = "1/3"
-			-- })
-			
-	table.insert(self.list, self:CreateCardsDatalist("Blue Stripes Commando", self.factions.north, 4, {melee = true, ranged = false, siege = false, hero = false, leader = false}, GwentAddon:GetAbilitydataByName(ABILITY_Bond), "peasant", "2/3"))
-			
-	-- table.insert(self.list, {
-				-- name = "Blue Stripes Commando"
-				-- ,faction = self.factions.north
-				-- ,strength = 4
-				-- ,cardType = {melee = true, ranged = false, siege = false, hero = false, leader = false}
-				-- ,ability = ABILITY_Bond
-				-- ,texture = "balista"
-				-- ,subText = "2/3"
-			-- })
-			
-	table.insert(self.list, self:CreateCardsDatalist("Blue Stripes Commando", self.factions.north, 4, {melee = true, ranged = false, siege = false, hero = false, leader = false}, GwentAddon:GetAbilitydataByName(ABILITY_Bond), "peasant", "3/3"))
-			
-	-- table.insert(self.list, {
-				-- name = "Blue Stripes Commando"
-				-- ,faction = self.factions.north
-				-- ,strength = 4
-				-- ,cardType = {melee = true, ranged = false, siege = false, hero = false, leader = false}
-				-- ,ability = ABILITY_Bond
-				-- ,texture = "balista"
-				-- ,subText = "3/3"
-			-- })
-	
-	table.insert(self.list, self:CreateCardsDatalist("Sabrina Gevissig", self.factions.north, 4, {melee = false, ranged = true, siege = false, hero = false, leader = false}, nil, "peasant"))
-	
-	-- table.insert(self.list, {
-				-- name = "Sabrina Gevissig"
-				-- ,faction = self.factions.north
-				-- ,strength = 4
-				-- ,cardType = {melee = false, ranged = true, siege = false, hero = false, leader = false}
-				-- ,ability = nil
-				-- ,texture = "balista"
-			-- })
-	
-	table.insert(self.list, self:CreateCardsDatalist("Ves", self.factions.north, 5, {melee = true, ranged = false, siege = false, hero = false, leader = false}, nil, "peasant"))
-	
-	-- table.insert(self.list, {
-				-- name = "Ves"
-				-- ,faction = self.factions.north
-				-- ,strength = 5
-				-- ,cardType = {melee = true, ranged = false, siege = false, hero = false, leader = false}
-				-- ,ability = nil
-				-- ,texture = "peasant"
-			-- })
-	
-	table.insert(self.list, self:CreateCardsDatalist("Siegfried of Denesle", self.factions.north, 5, {melee = true, ranged = false, siege = false, hero = false, leader = false}, nil, "peasant", "1/2"))
-	
-	-- table.insert(self.list, {
-				-- name = "Siegfried of Denesle"
-				-- ,faction = self.factions.north
-				-- ,strength = 5
-				-- ,cardType = {melee = true, ranged = false, siege = false, hero = false, leader = false}
-				-- ,ability = nil
-				-- ,texture = "peasant"
-				-- ,subText = "1/2"
-			-- })
-	
-	table.insert(self.list, self:CreateCardsDatalist("Siegfried of Denesle", self.factions.north, 5, {melee = true, ranged = false, siege = false, hero = false, leader = false}, nil, "peasant", "2/2"))
-	
-	-- table.insert(self.list, {
-				-- name = "Siegfried of Denesle"
-				-- ,faction = self.factions.north
-				-- ,strength = 5
-				-- ,cardType = {melee = true, ranged = false, siege = false, hero = false, leader = false}
-				-- ,ability = nil
-				-- ,texture = "peasant"
-				-- ,subText = "2/2"
-			-- })
-	
-	table.insert(self.list, self:CreateCardsDatalist("Prince Stennis", self.factions.north, 5, {melee = true, ranged = false, siege = false, hero = false, leader = false}, GwentAddon:GetAbilitydataByName(ABILITY_Spy), "peasant"))
-	
-	-- table.insert(self.list, {
-				-- name = "Prince Stennis"
-				-- ,faction = self.factions.north
-				-- ,strength = 5
-				-- ,cardType = {melee = true, ranged = false, siege = false, hero = false, leader = false}
-				-- ,ability = ABILITY_Spy
-				-- ,texture = "balista"
-			-- })
-			
-	table.insert(self.list, self:CreateCardsDatalist("Crinfrid Reavers Dragon Hunter", self.factions.north, 5, {melee = false, ranged = true, siege = false, hero = false, leader = false}, GwentAddon:GetAbilitydataByName(ABILITY_Bond), "peasant", "1/3"))
-	
-	-- table.insert(self.list, {
-				-- name = "Crinfrid Reavers Dragon Hunter"
-				-- ,faction = self.factions.north
-				-- ,strength = 5
-				-- ,cardType = {melee = false, ranged = true, siege = false, hero = false, leader = false}
-				-- ,ability = ABILITY_Bond
-				-- ,texture = "balista"
-				-- ,subText = "1/3"
-			-- })
-	
-	table.insert(self.list, self:CreateCardsDatalist("Crinfrid Reavers Dragon Hunter", self.factions.north, 5, {melee = false, ranged = true, siege = false, hero = false, leader = false}, GwentAddon:GetAbilitydataByName(ABILITY_Bond), "peasant", "2/3"))
-	
-	-- table.insert(self.list, {
-				-- name = "Crinfrid Reavers Dragon Hunter"
-				-- ,faction = self.factions.north
-				-- ,strength = 5
-				-- ,cardType = {melee = false, ranged = true, siege = false, hero = false, leader = false}
-				-- ,ability = ABILITY_Bond
-				-- ,texture = "balista"
-				-- ,subText = "2/3"
-			-- })
-		
-	table.insert(self.list, self:CreateCardsDatalist("Crinfrid Reavers Dragon Hunter", self.factions.north, 5, {melee = false, ranged = true, siege = false, hero = false, leader = false}, GwentAddon:GetAbilitydataByName(ABILITY_Bond), "peasant", "3/3"))
-			
-	-- table.insert(self.list, {
-				-- name = "Crinfrid Reavers Dragon Hunter"
-				-- ,faction = self.factions.north
-				-- ,strength = 5
-				-- ,cardType = {melee = false, ranged = true, siege = false, hero = false, leader = false}
-				-- ,ability = ABILITY_Bond
-				-- ,texture = "balista"
-				-- ,subText = "3/3"
-			-- })
-	
-	table.insert(self.list, self:CreateCardsDatalist("Keira Metz", self.factions.north, 5, {melee = false, ranged = true, siege = false, hero = false, leader = false}, nil, "peasant"))
-	
-	-- table.insert(self.list, {
-				-- name = "Keira Metz"
-				-- ,faction = self.factions.north
-				-- ,strength = 5
-				-- ,cardType = {melee = false, ranged = true, siege = false, hero = false, leader = false}
-				-- ,ability = nil
-				-- ,texture = "balista"
-			-- })
-		
-	table.insert(self.list, self:CreateCardsDatalist("Dun Banner Medic", self.factions.north, 5, {melee = false, ranged = false, siege = true, hero = false, leader = false}, GwentAddon:GetAbilitydataByName(ABILITY_Medic), "peasant", "1/2"))
-		
-	-- table.insert(self.list, {
-				-- name = "Dun Banner Medic"
-				-- ,faction = self.factions.north
-				-- ,strength = 5
-				-- ,cardType = {melee = false, ranged = false, siege = true, hero = false, leader = false}
-				-- ,ability = ABILITY_Medic
-				-- ,texture = "balista"
-				-- ,subText = "1/2"
-			-- })
-	
-	table.insert(self.list, self:CreateCardsDatalist("Dun Banner Medic", self.factions.north, 5, {melee = false, ranged = false, siege = true, hero = false, leader = false}, GwentAddon:GetAbilitydataByName(ABILITY_Medic), "peasant", "2/2"))
-	
-	-- table.insert(self.list, {
-				-- name = "Dun Banner Medic"
-				-- ,faction = self.factions.north
-				-- ,strength = 5
-				-- ,cardType = {melee = false, ranged = false, siege = true, hero = false, leader = false}
-				-- ,ability = ABILITY_Medic
-				-- ,texture = "balista"
-				-- ,subText = "2/2"
-			-- })
-		
-	table.insert(self.list, self:CreateCardsDatalist("Sile de Tansarville", self.factions.north, 5, {melee = false, ranged = true, siege = false, hero = false, leader = false}, nil, "peasant"))
-		
-	-- table.insert(self.list, {
-				-- name = "Sile de Tansarville"
-				-- ,faction = self.factions.north
-				-- ,strength = 5
-				-- ,cardType = {melee = false, ranged = true, siege = false, hero = false, leader = false}
-				-- ,ability = nil
-				-- ,texture = "balista"
-			-- })
-	
-	table.insert(self.list, self:CreateCardsDatalist("Siege Tower", self.factions.north, 6, {melee = false, ranged = false, siege = true, hero = false, leader = false}, nil, "peasant", "1/2"))
-	
-	-- table.insert(self.list, {
-				-- name = "Siege Tower"
-				-- ,faction = self.factions.north
-				-- ,strength = 6
-				-- ,cardType = {melee = false, ranged = false, siege = true, hero = false, leader = false}
-				-- ,ability = nil
-				-- ,texture = "peasant"
-				-- ,subText = "1/2"
-			-- })
-			
-	table.insert(self.list, self:CreateCardsDatalist("Siege Tower", self.factions.north, 6, {melee = false, ranged = false, siege = true, hero = false, leader = false}, nil, "peasant", "2/2"))
-			
-	-- table.insert(self.list, {
-				-- name = "Siege Tower"
-				-- ,faction = self.factions.north
-				-- ,strength = 6
-				-- ,cardType = {melee = false, ranged = false, siege = true, hero = false, leader = false}
-				-- ,ability = nil
-				-- ,texture = "peasant"
-				-- ,subText = "2/2"
-			-- })
-		
-	table.insert(self.list, self:CreateCardsDatalist("Trebuchet", self.factions.north, 6, {melee = false, ranged = false, siege = true, hero = false, leader = false}, nil, "peasant", "1/2"))
-		
-	-- table.insert(self.list, {
-				-- name = "Trebuchet"
-				-- ,faction = self.factions.north
-				-- ,strength = 6
-				-- ,cardType = {melee = false, ranged = false, siege = true, hero = false, leader = false}
-				-- ,ability = nil
-				-- ,texture = "peasant"
-				-- ,subText = "1/2"
-			-- })
-	
-	table.insert(self.list, self:CreateCardsDatalist("Trebuchet", self.factions.north, 6, {melee = false, ranged = false, siege = true, hero = false, leader = false}, nil, "peasant", "2/2"))
-	
-	-- table.insert(self.list, {
-				-- name = "Trebuchet"
-				-- ,faction = self.factions.north
-				-- ,strength = 6
-				-- ,cardType = {melee = false, ranged = false, siege = true, hero = false, leader = false}
-				-- ,ability = nil
-				-- ,texture = "peasant"
-				-- ,subText = "2/2"
-			-- })
-	
-	table.insert(self.list, self:CreateCardsDatalist("Ballista", self.factions.north, 6, {melee = false, ranged = false, siege = true, hero = false, leader = false}, nil, "peasant", "1/2"))
-	
-	-- table.insert(self.list, {
-				-- name = "Ballista"
-				-- ,faction = self.factions.north
-				-- ,strength = 6
-				-- ,cardType = {melee = false, ranged = false, siege = true, hero = false, leader = false}
-				-- ,ability = nil
-				-- ,texture = "balista"
-				-- ,subText = "1/2"
-			-- })
-		
-	table.insert(self.list, self:CreateCardsDatalist("Ballista", self.factions.north, 6, {melee = false, ranged = false, siege = true, hero = false, leader = false}, nil, "peasant", "2/2"))
-	
-	-- table.insert(self.list, {
-				-- name = "Ballista"
-				-- ,faction = self.factions.north
-				-- ,strength = 6
-				-- ,cardType = {melee = false, ranged = false, siege = true, hero = false, leader = false}
-				-- ,ability = nil
-				-- ,texture = "balista"
-				-- ,subText = "2/2"
-			-- })
-		
-	table.insert(self.list, self:CreateCardsDatalist("Catapult", self.factions.north, 8, {melee = false, ranged = false, siege = true, hero = false, leader = false}, GwentAddon:GetAbilitydataByName(ABILITY_Bond), "peasant", "1/2"))
-		
-	-- table.insert(self.list, {
-				-- name = "Catapult"
-				-- ,faction = self.factions.north
-				-- ,strength = 8
-				-- ,cardType = {melee = false, ranged = false, siege = true, hero = false, leader = false}
-				-- ,ability = ABILITY_Bond
-				-- ,texture = "peasant"
-				-- ,subText = "1/2"
-			-- })
-	
-	table.insert(self.list, self:CreateCardsDatalist("Catapult", self.factions.north, 8, {melee = false, ranged = false, siege = true, hero = false, leader = false}, GwentAddon:GetAbilitydataByName(ABILITY_Bond), "peasant", "2/2"))
-	
-	-- table.insert(self.list, {
-				-- name = "Catapult"
-				-- ,faction = self.factions.north
-				-- ,strength = 8
-				-- ,cardType = {melee = false, ranged = false, siege = true, hero = false, leader = false}
-				-- ,ability = ABILITY_Bond
-				-- ,texture = "peasant"
-				-- ,subText = "2/2"
-			-- })
+	table.insert(self.list, self:CreateCardsDatalist("Kaedweni Siege Expert", self.factions.north, 1, {melee = false, ranged = false, siege = true, hero = false, leader = false}, GwentAddon:GetAbilitydataByName(ABILITY_Morale), "Blank", "1/3"))
+	table.insert(self.list, self:CreateCardsDatalist("Kaedweni Siege Expert", self.factions.north, 1, {melee = false, ranged = false, siege = true, hero = false, leader = false}, GwentAddon:GetAbilitydataByName(ABILITY_Morale), "Blank", "2/3"))
+	table.insert(self.list, self:CreateCardsDatalist("Kaedweni Siege Expert", self.factions.north, 1, {melee = false, ranged = false, siege = true, hero = false, leader = false}, GwentAddon:GetAbilitydataByName(ABILITY_Morale), "Blank", "3/3"))
+	table.insert(self.list, self:CreateCardsDatalist("Yarpen Zigrin", self.factions.north, 2, {melee = true, ranged = false, siege = false, hero = false, leader = false}, nil, "Blank"))
+	table.insert(self.list, self:CreateCardsDatalist("Sigismund Dijkstra", self.factions.north, 4, {melee = true, ranged = false, siege = false, hero = false, leader = false}, GwentAddon:GetAbilitydataByName(ABILITY_Spy), "Blank"))
+	table.insert(self.list, self:CreateCardsDatalist("Sheldon Skaggs", self.factions.north, 4, {melee = false, ranged = true, siege = false, hero = false, leader = false}, nil, "Blank"))
+	table.insert(self.list, self:CreateCardsDatalist("Blue Stripes Commando", self.factions.north, 4, {melee = true, ranged = false, siege = false, hero = false, leader = false}, GwentAddon:GetAbilitydataByName(ABILITY_Bond), "Blank", "1/3"))
+	table.insert(self.list, self:CreateCardsDatalist("Blue Stripes Commando", self.factions.north, 4, {melee = true, ranged = false, siege = false, hero = false, leader = false}, GwentAddon:GetAbilitydataByName(ABILITY_Bond), "Blank", "2/3"))
+	table.insert(self.list, self:CreateCardsDatalist("Blue Stripes Commando", self.factions.north, 4, {melee = true, ranged = false, siege = false, hero = false, leader = false}, GwentAddon:GetAbilitydataByName(ABILITY_Bond), "Blank", "3/3"))
+	table.insert(self.list, self:CreateCardsDatalist("Sabrina Gevissig", self.factions.north, 4, {melee = false, ranged = true, siege = false, hero = false, leader = false}, nil, "Blank"))
+	table.insert(self.list, self:CreateCardsDatalist("Ves", self.factions.north, 5, {melee = true, ranged = false, siege = false, hero = false, leader = false}, nil, "Blank"))
+	table.insert(self.list, self:CreateCardsDatalist("Siegfried of Denesle", self.factions.north, 5, {melee = true, ranged = false, siege = false, hero = false, leader = false}, nil, "Blank", "1/2"))
+	table.insert(self.list, self:CreateCardsDatalist("Siegfried of Denesle", self.factions.north, 5, {melee = true, ranged = false, siege = false, hero = false, leader = false}, nil, "Blank", "2/2"))
+	table.insert(self.list, self:CreateCardsDatalist("Prince Stennis", self.factions.north, 5, {melee = true, ranged = false, siege = false, hero = false, leader = false}, GwentAddon:GetAbilitydataByName(ABILITY_Spy), "Blank"))
+	table.insert(self.list, self:CreateCardsDatalist("Crinfrid Reavers Dragon Hunter", self.factions.north, 5, {melee = false, ranged = true, siege = false, hero = false, leader = false}, GwentAddon:GetAbilitydataByName(ABILITY_Bond), "Blank", "1/3"))
+	table.insert(self.list, self:CreateCardsDatalist("Crinfrid Reavers Dragon Hunter", self.factions.north, 5, {melee = false, ranged = true, siege = false, hero = false, leader = false}, GwentAddon:GetAbilitydataByName(ABILITY_Bond), "Blank", "2/3"))
+	table.insert(self.list, self:CreateCardsDatalist("Crinfrid Reavers Dragon Hunter", self.factions.north, 5, {melee = false, ranged = true, siege = false, hero = false, leader = false}, GwentAddon:GetAbilitydataByName(ABILITY_Bond), "Blank", "3/3"))
+	table.insert(self.list, self:CreateCardsDatalist("Keira Metz", self.factions.north, 5, {melee = false, ranged = true, siege = false, hero = false, leader = false}, nil, "Blank"))
+	table.insert(self.list, self:CreateCardsDatalist("Dun Banner Medic", self.factions.north, 5, {melee = false, ranged = false, siege = true, hero = false, leader = false}, GwentAddon:GetAbilitydataByName(ABILITY_Medic), "Blank", "1/2"))
+	table.insert(self.list, self:CreateCardsDatalist("Dun Banner Medic", self.factions.north, 5, {melee = false, ranged = false, siege = true, hero = false, leader = false}, GwentAddon:GetAbilitydataByName(ABILITY_Medic), "Blank", "2/2"))
+	table.insert(self.list, self:CreateCardsDatalist("Sile de Tansarville", self.factions.north, 5, {melee = false, ranged = true, siege = false, hero = false, leader = false}, nil, "Blank"))
+	table.insert(self.list, self:CreateCardsDatalist("Siege Tower", self.factions.north, 6, {melee = false, ranged = false, siege = true, hero = false, leader = false}, nil, "Blank", "1/2"))
+	table.insert(self.list, self:CreateCardsDatalist("Siege Tower", self.factions.north, 6, {melee = false, ranged = false, siege = true, hero = false, leader = false}, nil, "Blank", "2/2"))
+	table.insert(self.list, self:CreateCardsDatalist("Trebuchet", self.factions.north, 6, {melee = false, ranged = false, siege = true, hero = false, leader = false}, nil, "Blank", "1/2"))
+	table.insert(self.list, self:CreateCardsDatalist("Trebuchet", self.factions.north, 6, {melee = false, ranged = false, siege = true, hero = false, leader = false}, nil, "Blank", "2/2"))
+	table.insert(self.list, self:CreateCardsDatalist("Ballista", self.factions.north, 6, {melee = false, ranged = false, siege = true, hero = false, leader = false}, nil, "Balista", "1/2"))
+	table.insert(self.list, self:CreateCardsDatalist("Ballista", self.factions.north, 6, {melee = false, ranged = false, siege = true, hero = false, leader = false}, nil, "Balista", "2/2"))
+	table.insert(self.list, self:CreateCardsDatalist("Catapult", self.factions.north, 8, {melee = false, ranged = false, siege = true, hero = false, leader = false}, GwentAddon:GetAbilitydataByName(ABILITY_Bond), "Blank", "1/2"))
+	table.insert(self.list, self:CreateCardsDatalist("Catapult", self.factions.north, 8, {melee = false, ranged = false, siege = true, hero = false, leader = false}, GwentAddon:GetAbilitydataByName(ABILITY_Bond), "Blank", "2/2"))
 end
 
 -- Adds all the Neutral cards
@@ -849,115 +398,17 @@ function CardList:AddNeutralCards()
 	-- Neutral
 	-----------------------------------------------------------------------------------------------
 	
-	table.insert(self.list, self:CreateCardsDatalist("Zoltan Chivay", self.factions.neutral, 5, {melee = true, ranged = false, siege = false, hero = false, leader = false}, nil, "peasant"))
+	table.insert(self.list, self:CreateCardsDatalist("Zoltan Chivay", self.factions.neutral, 5, {melee = true, ranged = false, siege = false, hero = false, leader = false}, nil, "Blank"))
+	table.insert(self.list, self:CreateCardsDatalist("Geralt of Rivia", self.factions.neutral, 15, {melee = true, ranged = false, siege = false, hero = true, leader = false}, nil, "Blank"))
+	table.insert(self.list, self:CreateCardsDatalist("Triss Merigold", self.factions.neutral, 7, {melee = true, ranged = false, siege = false, hero = true, leader = false}, nil, "Blank"))
+	table.insert(self.list, self:CreateCardsDatalist("Vesemir", self.factions.neutral, 6, {melee = true, ranged = false, siege = false, hero = false, leader = false}, nil, "Blank"))
+	table.insert(self.list, self:CreateCardsDatalist("Yennefer of Vengerberg", self.factions.neutral, 7, {melee = false, ranged = true, siege = false, hero = true, leader = false}, GwentAddon:GetAbilitydataByName(ABILITY_Medic), "Blank"))
+	table.insert(self.list, self:CreateCardsDatalist("Dandelion", self.factions.neutral, 2, {melee = true, ranged = false, siege = false, hero = false, leader = false}, GwentAddon:GetAbilitydataByName(ABILITY_Command), "Blank"))
+	table.insert(self.list, self:CreateCardsDatalist("Cirilla Fiona Elen Rianno", self.factions.neutral, 15, {melee = true, ranged = false, siege = false, hero = true, leader = false}, nil, "Blank"))
+	table.insert(self.list, self:CreateCardsDatalist("Avallac'h", self.factions.neutral, 0, {melee = true, ranged = false, siege = false, hero = true, leader = false}, GwentAddon:GetAbilitydataByName(ABILITY_Spy), "Blank"))
+	table.insert(self.list, self:CreateCardsDatalist("Emiel Regis Rohellec Terzieff", self.factions.neutral, 5, {melee = true, ranged = false, siege = false, hero = false, leader = false}, nil, "Blank"))
+	table.insert(self.list, self:CreateCardsDatalist("Villentretenmerth", self.factions.neutral, 7, {melee = true, ranged = false, siege = false, hero = false, leader = false}, GwentAddon:GetAbilitydataByName(ABILITY_SCORCH), "Blank"))
 	
-	-- table.insert(self.list, {
-				-- name = "Zoltan Chivay"
-				-- ,faction = self.factions.neutral
-				-- ,strength = 5
-				-- ,cardType = {melee = true, ranged = false, siege = false, hero = false, leader = false}
-				-- ,ability = nil
-				-- ,texture = "peasant"
-			-- })
-			
-	table.insert(self.list, self:CreateCardsDatalist("Geralt of Rivia", self.factions.neutral, 15, {melee = true, ranged = false, siege = false, hero = true, leader = false}, nil, "peasant"))
-			
-	-- table.insert(self.list, {
-				-- name = "Geralt of Rivia"
-				-- ,faction = self.factions.neutral
-				-- ,strength = 15
-				-- ,cardType = {melee = true, ranged = false, siege = false, hero = true, leader = false}
-				-- ,ability = nil
-				-- ,texture = "peasant"
-			-- })
-			
-	table.insert(self.list, self:CreateCardsDatalist("Triss Merigold", self.factions.neutral, 7, {melee = true, ranged = false, siege = false, hero = true, leader = false}, nil, "peasant"))
-			
-	-- table.insert(self.list, {
-				-- name = "Triss Merigold"
-				-- ,faction = self.factions.neutral
-				-- ,strength = 7
-				-- ,cardType = {melee = true, ranged = false, siege = false, hero = true, leader = false}
-				-- ,ability = nil
-				-- ,texture = "peasant"
-			-- })
-			
-	table.insert(self.list, self:CreateCardsDatalist("Vesemir", self.factions.neutral, 6, {melee = true, ranged = false, siege = false, hero = false, leader = false}, nil, "peasant"))
-			
-	-- table.insert(self.list, {
-				-- name = "Vesemir"
-				-- ,faction = self.factions.neutral
-				-- ,strength = 6
-				-- ,cardType = {melee = true, ranged = false, siege = false, hero = false, leader = false}
-				-- ,ability = nil
-				-- ,texture = "peasant"
-			-- })
-			
-	table.insert(self.list, self:CreateCardsDatalist("Yennefer of Vengerberg", self.factions.neutral, 7, {melee = false, ranged = true, siege = false, hero = true, leader = false}, GwentAddon:GetAbilitydataByName(ABILITY_Medic), "peasant"))
-			
-	-- table.insert(self.list, {
-				-- name = "Yennefer of Vengerberg"
-				-- ,faction = self.factions.neutral
-				-- ,strength = 7
-				-- ,cardType = {melee = false, ranged = true, siege = false, hero = true, leader = false}
-				-- ,ability = ABILITY_Medic
-				-- ,texture = "peasant"
-			-- })
-		
-	table.insert(self.list, self:CreateCardsDatalist("Dandelion", self.factions.neutral, 2, {melee = true, ranged = false, siege = false, hero = false, leader = false}, GwentAddon:GetAbilitydataByName(ABILITY_Command), "peasant"))
-		
-	-- table.insert(self.list, {
-				-- name = "Dandelion"
-				-- ,faction = self.factions.neutral
-				-- ,strength = 2
-				-- ,cardType = {melee = true, ranged = false, siege = false, hero = false, leader = false}
-				-- ,ability = ABILITY_Command
-				-- ,texture = "peasant"
-			-- })
-			
-	table.insert(self.list, self:CreateCardsDatalist("Cirilla Fiona Elen Rianno", self.factions.neutral, 15, {melee = true, ranged = false, siege = false, hero = true, leader = false}, nil, "peasant"))
-			
-	-- table.insert(self.list, {
-				-- name = "Cirilla Fiona Elen Rianno"
-				-- ,faction = self.factions.neutral
-				-- ,strength = 15
-				-- ,cardType = {melee = true, ranged = false, siege = false, hero = true, leader = false}
-				-- ,ability = nil
-				-- ,texture = "peasant"
-			-- })
-		
-	table.insert(self.list, self:CreateCardsDatalist("Avallac'h", self.factions.neutral, 0, {melee = true, ranged = false, siege = false, hero = true, leader = false}, GwentAddon:GetAbilitydataByName(ABILITY_Spy), "peasant"))
-		
-	-- table.insert(self.list, {
-				-- name = "Avallac'h"
-				-- ,faction = self.factions.neutral
-				-- ,strength = 0
-				-- ,cardType = {melee = true, ranged = false, siege = false, hero = true, leader = false}
-				-- ,ability = ABILITY_Spy
-				-- ,texture = "peasant"
-			-- })
-		
-	table.insert(self.list, self:CreateCardsDatalist("Emiel Regis Rohellec Terzieff", self.factions.neutral, 5, {melee = true, ranged = false, siege = false, hero = false, leader = false}, nil, "peasant"))
-		
-	-- table.insert(self.list, {
-				-- name = "Emiel Regis Rohellec Terzieff"
-				-- ,faction = self.factions.neutral
-				-- ,strength = 5
-				-- ,cardType = {melee = true, ranged = false, siege = false, hero = false, leader = false}
-				-- ,ability = nil
-				-- ,texture = "peasant"
-			-- })
-			
-	table.insert(self.list, self:CreateCardsDatalist("Villentretenmerth", self.factions.neutral, 7, {melee = true, ranged = false, siege = false, hero = false, leader = false}, GwentAddon:GetAbilitydataByName(ABILITY_SCORCH), "peasant"))
-			
-	-- table.insert(self.list, {
-				-- name = "Villentretenmerth"
-				-- ,faction = self.factions.neutral
-				-- ,strength = 7
-				-- ,cardType = {melee = true, ranged = false, siege = false, hero = false, leader = false}
-				-- ,ability = ABILITY_SCORCH
-				-- ,texture = "peasant"
-			-- })
 end
 
 -- Get the path of the combat type texture
@@ -1022,21 +473,21 @@ function CardList:CreateCardTypeIcons(card)
 end
 
 -- Discard the selected cards at the beginning of the game
-function CardList:DiscardSelectedCards() 
+function CardList:RedrawSelectedCards() 
 
 	for k, card in ipairs(_InitialDiscardSelected) do
 		self:RemoveCardFromHand(card)
-		GwentAddon.lists.baseDeck:AddCardById(card.data.Id)
+		GwentAddon.lists.playDeck:AddCardById(card.data.Id)
 	end
 	
 	local discAmm = #_InitialDiscardSelected
 	
 	GwentAddon:DestroyCardsInList(_InitialDiscardSelected)
 	
-	GwentAddon.lists.baseDeck:Shuffle()
+	GwentAddon.lists.playDeck:Shuffle()
 	
 	for i = 1, discAmm do
-		table.insert(GwentAddon.lists.playerHand, GwentAddon.lists.baseDeck:DrawCard())
+		table.insert(GwentAddon.lists.playerHand, GwentAddon.lists.playDeck:DrawCard())
 	end
 	
 	GwentAddon:PlaceAllCards()
@@ -1056,8 +507,6 @@ end
 -- Remove a card from the hand
 function CardList:RemoveCardFromHand(card)
 	local cardToRemove = nil
-	
-	print(card.frame:GetName())
 	
 	for k, v in ipairs(GwentAddon.lists.playerHand) do
 		if v.frame.nr == card.frame.nr then
@@ -1079,6 +528,7 @@ function GwentAddon:PlaceAllCards()
 	playerPoints = playerPoints + GwentAddon:PlaceCardsOnFrame(GwentAddon.lists.playerSiege, GwentAddon.playFrame.playerSiege)
 	playerPoints = playerPoints + GwentAddon:PlaceCardsOnFrame(GwentAddon.lists.playerRanged, GwentAddon.playFrame.playerRanged)
 	playerPoints = playerPoints + GwentAddon:PlaceCardsOnFrame(GwentAddon.lists.playerMelee, GwentAddon.playFrame.playerMelee)
+	GwentAddon:PlaceCardsOnFrame(GwentAddon.lists.graveyard, GwentAddon.playFrame.graveyard)
 	
 	local enemyPoints = 0
 	-- Place enemy hand
@@ -1121,10 +571,10 @@ end
 -- TODO: Change to random shuffle and draw top card
 function CardList:DrawCard()
 
-	local deckCardNr = math.random(#GwentAddon.lists.baseDeck)
-	table.insert(GwentAddon.lists.playerHand, GwentAddon.Card(GwentAddon.lists.baseDeck[deckCardNr].Id, self))--self:CreateCardOfId(GwentAddon.lists.baseDeck[deckCardNr].Id))
+	local deckCardNr = math.random(#GwentAddon.lists.playDeck)
+	table.insert(GwentAddon.lists.playerHand, GwentAddon.Card(GwentAddon.lists.playDeck[deckCardNr].Id, self))--self:CreateCardOfId(GwentAddon.lists.baseDeck[deckCardNr].Id))
 	
-	table.remove(GwentAddon.lists.baseDeck, deckCardNr)
+	table.remove(GwentAddon.lists.playDeck, deckCardNr)
 	
 	GwentAddon:PlaceAllCards()
 end
@@ -1178,6 +628,8 @@ function CardList:AddCardToNewList(card, name, position)
 	
 	local list = GwentAddon:GetListByName(name)
 	local area = GwentAddon:GetAreaByName(name)
+	
+	card.frame:SetFrameLevel(area:GetFrameLevel() + 2)
 	
 	local pos = DroppedOnLeftSideOfArea() and 1 or #list+1
 	-- check if it's first card in the list or not

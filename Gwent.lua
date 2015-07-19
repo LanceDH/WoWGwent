@@ -54,7 +54,8 @@ GwentAddon.messages = {["placeInArea"] = "#%s#%d#%d"
 						,["battleTie"] = "battle tied"
 						,["discarded"] = "Done discarding"
 						,["start"] = "start: "
-						,["placeCard"] = "enemyCard"}
+						,["placeCard"] = "enemyCard"
+						,["leader"] = "leader: "}
 
 	local TEXT_SIEGE = "siege"
 	local TEXT_RANGED = "ranged"
@@ -68,7 +69,9 @@ GwentAddon.lists = {["playerHand"] = {}
 					,["playerSiege"] = {}
 					,["playerRanged"] = {}
 					,["playerMelee"] = {}
-					,["baseDeck"] = {}
+					,["graveyard"] = {}
+					,["baseDeck"] = {} -- stores base deck
+					,["playDeck"] = {} -- copy deck to play with
 					,["enemyHand"] = {}
 					,["enemySiege"] = {}
 					,["enemyRanged"] = {}
@@ -78,6 +81,7 @@ GwentAddon.areas = {["playerHand"] = {}
 					,["playerSiege"] = {}
 					,["playerRanged"] = {}
 					,["playerMelee"] = {}
+					,["graveyard"] = {}
 					,["baseDeck"] = {}
 					,["enemyHand"] = {}
 					,["enemySiege"] = {}
@@ -88,9 +92,7 @@ GwentAddon.areas = {["playerHand"] = {}
 local _DraggedCard = nil
 local _DragginOverFrame = nil
 local _CardNr = 1
-local _baseDeck = {} -- basic deck, stores cards
-local _GameDeck = {} -- deck used to play games with, starts as copy of baseDeck
-
+local _enemyLeader = {}
 
 GwentAddon.currentState = 0
 GwentAddon.states = {["noGame"] = 0
@@ -230,7 +232,7 @@ function GwentAddon:PlaceCardsOnFrame(list, frame)
 	if list ~= GwentAddon.lists.playerHand then
 		for k, card in ipairs(list) do
 			if card.data.ability then
-				print(k)
+				--print(k)
 				card.data.ability.funct(card, list, k)
 			end
 		
@@ -287,13 +289,28 @@ function GwentAddon:DestroyCardsInList(list)
 	list = {}
 end
 
+-- Takes all the cards in a list and add it to the player's graveyard
+function GwentAddon:DiscardCardsInList(list)
+	for k, card in pairs(list) do
+		GwentAddon.cards:AddCardToNewList(card, "graveyard")
+		--table.insert(_CardPool, card.frame)
+		--card.frame:Hide()
+		--list[k] = nil
+	end
+	
+	list = {}
+end
+
 -- Show the mouse over tooltip for a card
 function GwentAddon:SetCardTooltip(card)
+	if card == nil or card.data == nil then return end
+
 	local tp = GwentAddon.playFrame.cardTooltip
+
 	
 	local vcBG = 1
 	local vc = 0
-	if card.data.cardType.leader then
+	if card.data.cardType.hero then
 		vcBG = 0
 		vc = 1
 	end
@@ -356,12 +373,14 @@ local function CreateCardTooltip(parent)
 	parent.cardTooltip:SetPoint("right", parent, "right", -50, 0)
 	parent.cardTooltip:SetHeight(GwentAddon.NUM_CARD_HEIGHT*4)
 	parent.cardTooltip:SetWidth(GwentAddon.NUM_CARD_WIDTH * 4)
-	parent.cardTooltip:SetBackdrop({bgFile = "Interface\\DialogFrame\\UI-DialogBox-Gold-Background",
-      edgeFile = TEXTURE_CARD_BORDER,
+	parent.cardTooltip:SetBackdrop({bgFile = nil, --"Interface\\DialogFrame\\UI-DialogBox-Gold-Background",
+      edgeFile = nil, --TEXTURE_CARD_BORDER,
 	  tileSize = 0, edgeSize = 16,
       insets = { left = 4, right = 4, top = 4, bottom = 4 }
 	  })
 	parent.cardTooltip:Hide()
+	
+	GwentAddon:CreateOuterCardShadow(parent.cardTooltip, 4)
 	
 	parent.cardTooltip.texture = parent.cardTooltip:CreateTexture(addonName.."_Card_".._CardNr.."_Texture", "ARTWORK")
 	parent.cardTooltip.texture:SetDrawLayer("ARTWORK", 0)
@@ -478,7 +497,7 @@ function GwentAddon:GetCardMouseOverInLisT(list)
 end
 
 -- Creates inner shadow textures for a frame
-local function CreateInnerShadow(parent, multiplier)
+function GwentAddon:CreateInnerShadow(parent, multiplier)
 	local mult = 1
 	if multiplier ~= nil then
 		mult = multiplier
@@ -553,7 +572,7 @@ local function CreateInnerShadow(parent, multiplier)
 end
 
 -- Creates inner shadow textures for a frame
-local function CreateOuterCardShadow(parent, multiplier)
+function GwentAddon:CreateOuterCardShadow(parent, multiplier)
 	local mult = 1
 	if multiplier ~= nil then
 		mult = multiplier
@@ -569,7 +588,7 @@ local function CreateOuterCardShadow(parent, multiplier)
 	parent.topleft:SetWidth(16*mult)
 	parent.topleft:SetHeight(16*mult)
 	parent.topleft:SetDrawLayer("background", drawlayer+2)
-	parent.topleft:SetPoint("bottomright", parent, "topleft", 6*mult, -10*mult)
+	parent.topleft:SetPoint("bottomright", parent, "topleft", 6*mult*1.1, -10*mult*1.1)
 	
 	parent.bottomleft = parent:CreateTexture(parent:GetName().."Shadow_BL", "BACKGROUND")
 	parent.bottomleft:SetTexture(tex)
@@ -577,7 +596,7 @@ local function CreateOuterCardShadow(parent, multiplier)
 	parent.bottomleft:SetWidth(16*mult)
 	parent.bottomleft:SetHeight(16*mult)
 	parent.bottomleft:SetDrawLayer("background", drawlayer+2)
-	parent.bottomleft:SetPoint("topright", parent, "bottomleft", 6*mult, 7*mult)
+	parent.bottomleft:SetPoint("topright", parent, "bottomleft", 6*mult*1.1, 7*mult*1.1)
 	
 	parent.topright = parent:CreateTexture(parent:GetName().."Shadow_TR", "BACKGROUND")
 	parent.topright:SetTexture(tex)
@@ -585,7 +604,7 @@ local function CreateOuterCardShadow(parent, multiplier)
 	parent.topright:SetWidth(16*mult)
 	parent.topright:SetHeight(16*mult)
 	parent.topright:SetDrawLayer("background", drawlayer+2)
-	parent.topright:SetPoint("bottomleft", parent, "topright", -10*mult, -10*mult)
+	parent.topright:SetPoint("bottomleft", parent, "topright", -11*mult*1.1, -11*mult*1.1)
 	
 	parent.bottomright = parent:CreateTexture(parent:GetName().."Shadow_BR", "BACKGROUND")
 	parent.bottomright:SetTexture(tex)
@@ -593,7 +612,7 @@ local function CreateOuterCardShadow(parent, multiplier)
 	parent.bottomright:SetWidth(16*mult)
 	parent.bottomright:SetHeight(16*mult)
 	parent.bottomright:SetDrawLayer("background", drawlayer+2)
-	parent.bottomright:SetPoint("topleft", parent, "bottomright", -10*mult, 7*mult)
+	parent.bottomright:SetPoint("topleft", parent, "bottomright", -11*mult*1.1, 7*mult*1.1)
 	
 	parent.top = parent:CreateTexture(parent:GetName().."Shadow_T", "BACKGROUND")
 	parent.top:SetTexture(tex, true)
@@ -630,8 +649,8 @@ end
 
 local function CreateCardArea(name, parent, texture, weatherTex)
 	local frame = CreateFrame("frame", addonName.."PlayFrame_" .. name, parent)
-	frame:SetHeight(GwentAddon.NUM_CARD_HEIGHT)
-	frame:SetWidth(GwentAddon.NUM_CARD_WIDTH * 10)
+	frame:SetHeight(GwentAddon.NUM_CARD_HEIGHT+4)
+	frame:SetWidth(GwentAddon.NUM_CARD_WIDTH * 10+4)
 	
 	frame.bg = frame:CreateTexture(addonName.."PlayFrame_"..name.."BG")
 	frame.bg:SetTexture(TEXTURE_CARD_BG)
@@ -644,7 +663,7 @@ local function CreateCardArea(name, parent, texture, weatherTex)
       -- insets = { left = 0, right = 0, top = 0, bottom = 0 }
 	  -- })
 	  
-	CreateInnerShadow(frame, 0.5)
+	GwentAddon:CreateInnerShadow(frame, 0.5)
 	  
 	frame.cardContainer = CreateFrame("frame", addonName.."PlayFrame_" .. name.."_Cardcontainer", parent)
 	frame.cardContainer:SetPoint("center", frame)
@@ -659,7 +678,7 @@ local function CreateCardArea(name, parent, texture, weatherTex)
 	  -- tileSize = 0, edgeSize = 16,
       -- insets = { left = 0, right = 0, top = 0, bottom = 0 }
 	  -- })
-	CreateInnerShadow(frame.commander, 0.5)
+	GwentAddon:CreateInnerShadow(frame.commander, 0.5)
 	 
 	frame.commander.bg = frame.commander:CreateTexture(addonName.."PlayFrame_"..name.."_ICONCOMMANDERBG")
 	frame.commander.bg:SetTexture(TEXTURE_CARD_BG)
@@ -696,7 +715,7 @@ local function CreateCardArea(name, parent, texture, weatherTex)
 	frame.weather:SetVertexColor(1, 1, 1, 0.5)
 	frame.weather:SetPoint("topleft", frame, 0, -3)
 	frame.weather:SetPoint("bottomright", frame, 0, 3)
-	--frame.weather:Hide()
+	frame.weather:Hide()
 	
 	return frame
 end
@@ -726,7 +745,7 @@ local function CreateSidebar(parent)
 	parent.sideBar.tex:SetPoint("topleft", parent.sideBar)
 	parent.sideBar.tex:SetPoint("bottomright", parent.sideBar)
 	
-	CreateInnerShadow(parent.sideBar, 0.5)
+	GwentAddon:CreateInnerShadow(parent.sideBar, 0.5)
 	return parent.sideBar
 end
 
@@ -748,7 +767,7 @@ local function CreatePlayField(parent)
 	parent.playField.tex:SetPoint("topleft", parent.playField)
 	parent.playField.tex:SetPoint("bottomright", parent.playField)
 	
-	CreateInnerShadow(parent.playField)
+	GwentAddon:CreateInnerShadow(parent.playField)
 	
 	return parent.playField
 end
@@ -1025,7 +1044,7 @@ local function CreatePlayFrame()
 	PlayFrame.bottomrightDetail:SetWidth(64)
 	PlayFrame.bottomrightDetail:SetHeight(64)
 	PlayFrame.bottomrightDetail:SetPoint("bottomright", PlayFrame, -3, 2)
-	
+
 	PlayFrame.header = CreateFrame("frame", addonName.."PlayFrameHeader", PlayFrame)
 	PlayFrame.header:SetHeight(106)
 	PlayFrame.header:SetWidth(726)
@@ -1063,6 +1082,25 @@ local function CreatePlayFrame()
 	local sidebar = CreateSidebar(PlayFrame)
 	local playfield = CreatePlayField(PlayFrame)
 	
+	PlayFrame.graveyard = CreateFrame("frame", addonName.."Graveyard", PlayFrame)
+	PlayFrame.graveyard:SetHeight(GwentAddon.NUM_CARD_HEIGHT*2)
+	PlayFrame.graveyard:SetFrameLevel(fbl + 6)
+	PlayFrame.graveyard:SetPoint("left", playfield ,"left", 0, 0)
+	PlayFrame.graveyard:SetPoint("right", playfield ,"right", 0, 0)
+	PlayFrame.graveyard:Hide()
+	
+	PlayFrame.graveyard.bg = PlayFrame.graveyard:CreateTexture(addonName.."GraveyardBG")
+	PlayFrame.graveyard.bg:SetTexture("Interface\\Cooldown\\LoC-ShadowBG") --:SetTexture(TEXTURE_CARD_BG)
+	PlayFrame.graveyard.bg:SetDrawLayer("background", 0)
+	PlayFrame.graveyard.bg:SetPoint("topleft", PlayFrame.graveyard)
+	PlayFrame.graveyard.bg:SetPoint("bottomright", PlayFrame.graveyard)
+	
+	PlayFrame.graveyard.cardContainer = CreateFrame("frame", addonName.."GraveyardContainer", PlayFrame.graveyard)
+	PlayFrame.graveyard.cardContainer:SetFrameLevel(fbl + 7)
+	PlayFrame.graveyard.cardContainer:SetPoint("center", PlayFrame.graveyard)
+	PlayFrame.graveyard.cardContainer:SetHeight(GwentAddon.NUM_CARD_HEIGHT)
+	GwentAddon.areas.graveyard = PlayFrame.graveyard
+	
 	
 	PlayFrame.weather = CreateFrame("frame", addonName.."Weather", playfield)
 	--GwentAddon.areas.playerHand = PlayFrame.playerHand
@@ -1076,7 +1114,7 @@ local function CreatePlayFrame()
 	PlayFrame.weather.bg:SetPoint("topleft", PlayFrame.weather)
 	PlayFrame.weather.bg:SetPoint("bottomright", PlayFrame.weather)
 	
-	CreateInnerShadow(PlayFrame.weather, 0.5)
+	GwentAddon:CreateInnerShadow(PlayFrame.weather, 0.5)
 	-- PlayFrame.playerHand:SetBackdrop({bgFile = TEXTURE_CARD_DARKEN,
       -- edgeFile = nil,
 	  -- tileSize = 0, edgeSize = 16,
@@ -1097,10 +1135,10 @@ local function CreatePlayFrame()
 	PlayFrame.playerHand = CreateFrame("frame", addonName.."playerHand", playfield)
 	GwentAddon.areas.playerHand = PlayFrame.playerHand
 	PlayFrame.playerHand:SetPoint("bottom", playfield, "bottom", -30, 10)
-	PlayFrame.playerHand:SetHeight(GwentAddon.NUM_CARD_HEIGHT)
-	PlayFrame.playerHand:SetWidth(GwentAddon.NUM_CARD_WIDTH * 10)
+	PlayFrame.playerHand:SetHeight(GwentAddon.NUM_CARD_HEIGHT+4)
+	PlayFrame.playerHand:SetWidth(GwentAddon.NUM_CARD_WIDTH * 10+4)
 	
-	CreateInnerShadow(PlayFrame.playerHand, 0.5)
+	GwentAddon:CreateInnerShadow(PlayFrame.playerHand, 0.5)
 	-- PlayFrame.playerHand:SetBackdrop({bgFile = TEXTURE_CARD_DARKEN,
       -- edgeFile = nil,
 	  -- tileSize = 0, edgeSize = 16,
@@ -1115,11 +1153,11 @@ local function CreatePlayFrame()
 	PlayFrame.player.deck:SetPoint("bottomright", playfield, "bottomright", -50, 50)
 	PlayFrame.player.deck:SetHeight(GwentAddon.NUM_CARD_HEIGHT)
 	PlayFrame.player.deck:SetWidth(GwentAddon.NUM_CARD_WIDTH)
-	CreateOuterCardShadow(PlayFrame.player.deck)
+	GwentAddon:CreateOuterCardShadow(PlayFrame.player.deck)
 	
 	PlayFrame.player.decktex = PlayFrame.player.deck:CreateTexture(addonName.."baseDeckBack")
 	PlayFrame.player.decktex:SetDrawLayer("ARTWORK", 0)
-	PlayFrame.player.decktex:SetTexture(TEXTURE_CUSTOM_PATH.."BackNeutral")
+	PlayFrame.player.decktex:SetTexture(TEXTURE_CUSTOM_PATH.."BackTotallyLegit")
 	PlayFrame.player.decktex:SetTexCoord(0, 1, 0, 464/512)
 	PlayFrame.player.decktex:SetPoint("topleft", PlayFrame.player.deck)
 	PlayFrame.player.decktex:SetPoint("bottomright", PlayFrame.player.deck)
@@ -1128,35 +1166,49 @@ local function CreatePlayFrame()
 	PlayFrame.player.leader:SetPoint("bottomleft", sidebar, "bottomleft", 50, 50)
 	PlayFrame.player.leader:SetHeight(GwentAddon.NUM_CARD_HEIGHT)
 	PlayFrame.player.leader:SetWidth(GwentAddon.NUM_CARD_WIDTH)
-	CreateOuterCardShadow(PlayFrame.player.leader)
+	PlayFrame.player.leader:SetScript("OnEnter", function(c) GwentAddon:SetCardTooltip(GwentAddon.lists.playDeck.leader) end)
+	PlayFrame.player.leader:SetScript("OnLeave", function(c) GwentAddon.playFrame.cardTooltip:Hide() end)
+	PlayFrame.player.leader:SetScript("OnMouseUp", function(c) 
+					-- only allow during player turn and when the it's not used yet (mainly for chat spam)
+					if GwentAddon.currentState == GwentAddon.states.playerTurn and not GwentAddon.lists.playDeck.leader.used then
+						PlayFrame.player.leaderTex:SetVertexColor(0.5, 0.5, 0.5)
+						SendAddonMessage(addonName, ""..GwentAddon.messages.leader..GwentAddon.lists.playDeck.leader.data.Id.."#1", "whisper" , GwentAddon.challengerName)
+						GwentAddon.lists.playDeck.leader.used = true
+					end
+				end)
 	
-	PlayFrame.player.herotex = PlayFrame.player.leader:CreateTexture(addonName.."playerHeroTex")
-	PlayFrame.player.herotex:SetDrawLayer("ARTWORK", 0)
-	PlayFrame.player.herotex:SetTexture(TEXTURE_CUSTOM_PATH.."BackNeutral")
-	PlayFrame.player.herotex:SetTexCoord(0, 1, 0, 464/512)
-	PlayFrame.player.herotex:SetPoint("topleft", PlayFrame.player.leader)
-	PlayFrame.player.herotex:SetPoint("bottomright", PlayFrame.player.leader)
 	
-	--CreateInnerShadow(PlayFrame.player.deck, 0.5)
+	GwentAddon:CreateOuterCardShadow(PlayFrame.player.leader)
+	
+	PlayFrame.player.leaderTex = PlayFrame.player.leader:CreateTexture(addonName.."playerHeroTex")
+	PlayFrame.player.leaderTex:SetDrawLayer("ARTWORK", 0)
+	PlayFrame.player.leaderTex:SetTexture(TEXTURE_CUSTOM_PATH.."BackTotallyLegit")
+	PlayFrame.player.leaderTex:SetTexCoord(0, 1, 0, 464/512)
+	PlayFrame.player.leaderTex:SetVertexColor(1, 1, 1)
+	PlayFrame.player.leaderTex:SetPoint("topleft", PlayFrame.player.leader)
+	PlayFrame.player.leaderTex:SetPoint("bottomright", PlayFrame.player.leader)
+	
+	
+	--GwentAddon:CreateInnerShadow(PlayFrame.player.deck, 0.5)
 	
 	PlayFrame.player.graveyard = CreateFrame("frame", addonName.."playerGY", playfield)
 	PlayFrame.player.graveyard:SetPoint("right", PlayFrame.player.deck, "left", -30, 0)
 	PlayFrame.player.graveyard:SetHeight(GwentAddon.NUM_CARD_HEIGHT)
 	PlayFrame.player.graveyard:SetWidth(GwentAddon.NUM_CARD_WIDTH)
-	CreateInnerShadow(PlayFrame.player.graveyard, 0.5)
+	GwentAddon:CreateInnerShadow(PlayFrame.player.graveyard, 0.5)
 	  
 	-- player siege
 	PlayFrame.playerSiege = CreateCardArea("playerSiege", PlayFrame, TEXTURE_TYPE_SIEGE, TEXTURE_WEATHER_RAIN)
 	GwentAddon.areas.playerSiege = PlayFrame.playerSiege
-	PlayFrame.playerSiege:SetPoint("bottom", PlayFrame.playerHand, "top", 0, 10) 
+	PlayFrame.playerSiege:SetPoint("bottom", PlayFrame.playerHand, "top", 0, 6) 
 	-- player ranged
 	PlayFrame.playerRanged = CreateCardArea("playerRanged", PlayFrame, TEXTURE_TYPE_RANGED, TEXTURE_WEATHER_FOG)
 	GwentAddon.areas.playerRanged = PlayFrame.playerRanged
-	PlayFrame.playerRanged:SetPoint("bottom", PlayFrame.playerSiege, "top", 0, 10)  
+	PlayFrame.playerRanged:SetPoint("bottom", PlayFrame.playerSiege, "top", 0, 6)  
 	-- player melee
 	PlayFrame.playerMelee = CreateCardArea("playerMelee", PlayFrame, TEXTURE_TYPE_MELEE, TEXTURE_WEATHER_FROST)
 	GwentAddon.areas.playerMelee = PlayFrame.playerMelee
-	PlayFrame.playerMelee:SetPoint("bottom", PlayFrame.playerRanged, "top", 0, 10)
+	PlayFrame.playerMelee:SetPoint("bottom", PlayFrame.playerRanged, "top", 0, 6)
 	
 	
 	
@@ -1176,7 +1228,7 @@ local function CreatePlayFrame()
 	PlayFrame.discardButton:SetFrameLevel(fbl+2)
 	PlayFrame.discardButton:SetSize(100, 25)
 	PlayFrame.discardButton:SetText("Redraw")
-	PlayFrame.discardButton:SetScript("OnClick", function() GwentAddon.cards:DiscardSelectedCards() end)	
+	PlayFrame.discardButton:SetScript("OnClick", function() GwentAddon.cards:RedrawSelectedCards() end)	
 	PlayFrame.discardButton:Hide()
 	
 	
@@ -1185,9 +1237,9 @@ local function CreatePlayFrame()
 	PlayFrame.enemyHand = CreateFrame("frame", addonName.."PlayFrame_EnemyHand", playfield)
 	GwentAddon.areas.enemyHand = PlayFrame.enemyHand
 	PlayFrame.enemyHand:SetPoint("top", playfield, "top", -30, -10)
-	PlayFrame.enemyHand:SetHeight(GwentAddon.NUM_CARD_HEIGHT)
-	PlayFrame.enemyHand:SetWidth(GwentAddon.NUM_CARD_WIDTH * 10)
-	CreateInnerShadow(PlayFrame.enemyHand, 0.5)
+	PlayFrame.enemyHand:SetHeight(GwentAddon.NUM_CARD_HEIGHT+4)
+	PlayFrame.enemyHand:SetWidth(GwentAddon.NUM_CARD_WIDTH * 10+4)
+	GwentAddon:CreateInnerShadow(PlayFrame.enemyHand, 0.5)
 	-- PlayFrame.enemyHand:SetBackdrop({bgFile = TEXTURE_CARD_DARKEN,
       -- edgeFile = nil,
 	  -- tileSize = 0, edgeSize = 16,
@@ -1206,11 +1258,11 @@ local function CreatePlayFrame()
 	PlayFrame.enemy.deck:SetPoint("topright", playfield, "topright", -50, -50)
 	PlayFrame.enemy.deck:SetHeight(GwentAddon.NUM_CARD_HEIGHT)
 	PlayFrame.enemy.deck:SetWidth(GwentAddon.NUM_CARD_WIDTH)
-	CreateOuterCardShadow(PlayFrame.enemy.deck)
+	GwentAddon:CreateOuterCardShadow(PlayFrame.enemy.deck)
 	
 	PlayFrame.enemy.decktex = PlayFrame.enemy.deck:CreateTexture(addonName.."EnemyDeckBack")
 	PlayFrame.enemy.decktex:SetDrawLayer("ARTWORK", 0)
-	PlayFrame.enemy.decktex:SetTexture(TEXTURE_CUSTOM_PATH.."BackNeutral")
+	PlayFrame.enemy.decktex:SetTexture(TEXTURE_CUSTOM_PATH.."BackTotallyLegit")
 	PlayFrame.enemy.decktex:SetTexCoord(0, 1, 0, 464/512)
 	PlayFrame.enemy.decktex:SetPoint("topleft", PlayFrame.enemy.deck)
 	PlayFrame.enemy.decktex:SetPoint("bottomright", PlayFrame.enemy.deck)
@@ -1219,33 +1271,36 @@ local function CreatePlayFrame()
 	PlayFrame.enemy.leader:SetPoint("topleft", sidebar, "topleft", 50, -50)
 	PlayFrame.enemy.leader:SetHeight(GwentAddon.NUM_CARD_HEIGHT)
 	PlayFrame.enemy.leader:SetWidth(GwentAddon.NUM_CARD_WIDTH)
-	CreateOuterCardShadow(PlayFrame.enemy.leader)
+	PlayFrame.enemy.leader:SetScript("OnEnter", function(c) GwentAddon:SetCardTooltip(_enemyLeader) end)
+	PlayFrame.enemy.leader:SetScript("OnLeave", function(c) GwentAddon.playFrame.cardTooltip:Hide() end)
 	
-	PlayFrame.enemy.herotex = PlayFrame.enemy.leader:CreateTexture(addonName.."enemyHeroTex")
-	PlayFrame.enemy.herotex:SetDrawLayer("ARTWORK", 0)
-	PlayFrame.enemy.herotex:SetTexture(TEXTURE_CUSTOM_PATH.."BackNeutral")
-	PlayFrame.enemy.herotex:SetTexCoord(0, 1, 0, 464/512)
-	PlayFrame.enemy.herotex:SetPoint("topleft", PlayFrame.enemy.leader)
-	PlayFrame.enemy.herotex:SetPoint("bottomright", PlayFrame.enemy.leader)
+	GwentAddon:CreateOuterCardShadow(PlayFrame.enemy.leader)
+	
+	PlayFrame.enemy.leaderTex = PlayFrame.enemy.leader:CreateTexture(addonName.."enemyHeroTex")
+	PlayFrame.enemy.leaderTex:SetDrawLayer("ARTWORK", 0)
+	PlayFrame.enemy.leaderTex:SetTexture(TEXTURE_CUSTOM_PATH.."BackTotallyLegit")
+	PlayFrame.enemy.leaderTex:SetTexCoord(0, 1, 0, 464/512)
+	PlayFrame.enemy.leaderTex:SetPoint("topleft", PlayFrame.enemy.leader)
+	PlayFrame.enemy.leaderTex:SetPoint("bottomright", PlayFrame.enemy.leader)
 	
 	PlayFrame.enemy.graveyard = CreateFrame("frame", addonName.."playerGY", playfield)
 	PlayFrame.enemy.graveyard:SetPoint("right", PlayFrame.enemy.deck, "left", -30, 0)
 	PlayFrame.enemy.graveyard:SetHeight(GwentAddon.NUM_CARD_HEIGHT)
 	PlayFrame.enemy.graveyard:SetWidth(GwentAddon.NUM_CARD_WIDTH)
-	CreateInnerShadow(PlayFrame.enemy.graveyard, 0.5)
+	GwentAddon:CreateInnerShadow(PlayFrame.enemy.graveyard, 0.5)
 	  
 	-- enemy siege
 	PlayFrame.enemySiege = CreateCardArea("enemyRanged", PlayFrame, TEXTURE_TYPE_SIEGE, TEXTURE_WEATHER_RAIN)
 	GwentAddon.areas.enemySiege = PlayFrame.enemySiege
-	PlayFrame.enemySiege:SetPoint("top", PlayFrame.enemyHand, "bottom", 0, -10) 
+	PlayFrame.enemySiege:SetPoint("top", PlayFrame.enemyHand, "bottom", 0, -6) 
 	-- enemy ranged
 	PlayFrame.enemyRanged = CreateCardArea("enemyRanged", PlayFrame, TEXTURE_TYPE_RANGED, TEXTURE_WEATHER_FOG)
 	GwentAddon.areas.enemyRanged = PlayFrame.enemyRanged
-	PlayFrame.enemyRanged:SetPoint("top", PlayFrame.enemySiege, "bottom", 0, -10)  
+	PlayFrame.enemyRanged:SetPoint("top", PlayFrame.enemySiege, "bottom", 0, -6)  
 	-- enemy melee
 	PlayFrame.enemyMelee = CreateCardArea("enemyMelee", PlayFrame, TEXTURE_TYPE_MELEE, TEXTURE_WEATHER_FROST)
 	GwentAddon.areas.enemyMelee = PlayFrame.enemyMelee
-	PlayFrame.enemyMelee:SetPoint("top", PlayFrame.enemyRanged, "bottom", 0, -10)
+	PlayFrame.enemyMelee:SetPoint("top", PlayFrame.enemyRanged, "bottom", 0, -6)
 
 	return PlayFrame
 end
@@ -1354,6 +1409,24 @@ function GwentAddon:ChangeChallenger(sender, race, gender)
 	end
 end
 
+-- Change the enemy leader and its state
+function GwentAddon:ChangeEnemyLeader(id, used)
+	if id == nil then -- reset
+		_enemyLeader = {}
+		GwentAddon.playFrame.enemy.leaderTex:SetTexture(TEXTURE_CUSTOM_PATH.."BackTotallyLegit")
+		GwentAddon.playFrame.enemy.leaderTex:SetVertexColor(1, 1, 1)
+		return
+	end
+
+	_enemyLeader.data = GwentAddon.cards:GetCardDataOfId(id)
+	GwentAddon.playFrame.enemy.leaderTex:SetTexture(TEXTURE_CUSTOM_PATH.._enemyLeader.data.texture)
+
+	if used then
+		GwentAddon.playFrame.enemy.leaderTex:SetVertexColor(0.5, 0.5, 0.5)
+	end
+	
+end
+
 -- Reset the entire game
 function GwentAddon:ResetGame() 
 	GwentAddon.challengerName = nil
@@ -1361,16 +1434,22 @@ function GwentAddon:ResetGame()
 	GwentAddon:DestroyCardsInList(GwentAddon.lists.playerSiege)
 	GwentAddon:DestroyCardsInList(GwentAddon.lists.playerRanged)
 	GwentAddon:DestroyCardsInList(GwentAddon.lists.playerMelee)
+	GwentAddon:DestroyCardsInList(GwentAddon.lists.graveyard)
 	GwentAddon:DestroyCardsInList(GwentAddon.lists.enemySiege)
 	GwentAddon:DestroyCardsInList(GwentAddon.lists.enemyRanged)
 	GwentAddon:DestroyCardsInList(GwentAddon.lists.enemyMelee)
 	GwentAddon:PlaceAllCards()
 	_DraggedCard = nil
 	_DragginOverFrame = nil
+	
 	GwentAddon.enemyPassed = false
 	GwentAddon.playerPassed = false
 	
+	
+	
 	GwentAddon:ChangeState(GwentAddon.states.noGame)
+	
+	
 
 	local pf = GwentAddon.playFrame
 	
@@ -1385,6 +1464,10 @@ function GwentAddon:ResetGame()
 		
 	GwentAddon:ChangeChallenger(nil)
 	
+	GwentAddon:ChangeEnemyLeader()
+	GwentAddon.playFrame.player.leaderTex:SetVertexColor(1, 1, 1)
+	GwentAddon.playFrame.player.leaderTex:SetTexture(TEXTURE_CUSTOM_PATH.."BackTotallyLegit")
+	
 	GwentAddon.playerLives.count = 2
 	GwentAddon.playerLives.texture1:SetVertexColor(0.8, 0.1, 0.1)
 	GwentAddon.playerLives.texture2:SetVertexColor(0.8, 0.1, 0.1)
@@ -1396,11 +1479,29 @@ function GwentAddon:ResetGame()
 	
 end
 
+-- Sets everything up to start a new game and sends the needed info to the opponent
+local function StartGame(opponent)
+
+	GwentAddon.lists.playDeck = GwentAddon.DeckB(GwentAddon.lists.baseDeck.leader.data.Id,  GwentAddon.lists.baseDeck.cards)
+	GwentAddon.playFrame.player.leaderTex:SetTexture(TEXTURE_CUSTOM_PATH..GwentAddon.lists.baseDeck.leader.data.texture)
+		
+	for i = 1, 10 do
+		table.insert(GwentAddon.lists.playerHand ,GwentAddon.lists.playDeck:DrawCard())
+	end
+	SendAddonMessage(addonName, ""..GwentAddon.messages.leader..GwentAddon.lists.playDeck.leader.data.Id.."#0", "whisper" , opponent)
+	
+	GwentAddon:PlaceAllCards()
+		
+	GwentAddon:ChangeState(GwentAddon.states.playerDiscard)
+end
+
 -- Resets the board to play a new round
 function GwentAddon:StartNewRound()
-	GwentAddon:DestroyCardsInList(GwentAddon.lists.playerSiege)
-	GwentAddon:DestroyCardsInList(GwentAddon.lists.playerRanged)
-	GwentAddon:DestroyCardsInList(GwentAddon.lists.playerMelee)
+	-- discard belonging to player
+	GwentAddon:DiscardCardsInList(GwentAddon.lists.playerSiege)
+	GwentAddon:DiscardCardsInList(GwentAddon.lists.playerRanged)
+	GwentAddon:DiscardCardsInList(GwentAddon.lists.playerMelee)
+	-- destroy belonging to enemy
 	GwentAddon:DestroyCardsInList(GwentAddon.lists.enemySiege)
 	GwentAddon:DestroyCardsInList(GwentAddon.lists.enemyRanged)
 	GwentAddon:DestroyCardsInList(GwentAddon.lists.enemyMelee)
@@ -1408,6 +1509,9 @@ function GwentAddon:StartNewRound()
 	GwentAddon:PlaceAllCards()
 	_DraggedCard = nil
 	_DragginOverFrame = nil
+	
+	-- Get a new deck of cards
+	--GwentAddon.lists.playDeck = GwentAddon.DeckB(GwentAddon.lists.baseDeck.leader.Id,  GwentAddon.lists.baseDeck.cards)
 	
 	GwentAddon.enemyPassed = false
 	GwentAddon.playerPassed = false
@@ -1418,7 +1522,7 @@ end
 local function FinishRound() 
 	local playerWon = false
 	
-	if GwentAddon.playFrame.playerTotal.amount == GwentAddon.playFrame.enemyTotal.amount then 
+	if GwentAddon.playFrame.player.Totalamount == GwentAddon.playFrame.enemy.Totalamount then 
 		-- Tie
 		SendAddonMessage(addonName, GwentAddon.messages.roundTie, "whisper" , GwentAddon.challengerName)
 		GwentAddon:DeductLife(GwentAddon.playerLives)
@@ -1428,7 +1532,7 @@ local function FinishRound()
 		return
 	end
 	
-	if GwentAddon.playFrame.playerTotal.amount > GwentAddon.playFrame.enemyTotal.amount then
+	if GwentAddon.playFrame.player.Totalamount > GwentAddon.playFrame.enemy.Totalamount then
 		playerWon = true
 	end
 	
@@ -1498,9 +1602,9 @@ function Gwent_EventFrame:CHAT_MSG_ADDON(prefix, message, channel, sender)
 		return
 	end
 	
-	print(message)
-	print(GwentAddon.messages.challenge)
-	print(string.find(message, GwentAddon.messages.challenge))
+	--print(message)
+	--print(GwentAddon.messages.challenge)
+	--print(string.find(message, GwentAddon.messages.challenge))
 	--GwentAddon:DEBUGMessageSent(message, sender)
 	
 	if message == TEXT_ADDONMSG_RECIEVED then
@@ -1511,11 +1615,8 @@ function Gwent_EventFrame:CHAT_MSG_ADDON(prefix, message, channel, sender)
 		
 		local race, gender = string.match(message, GwentAddon.messages.challenge.."#(%a+)#(%d+)")
 		GwentAddon:ChangeChallenger(sender, race, gender)
-		for i = 1, 10 do
-			table.insert(GwentAddon.lists.playerHand ,GwentAddon.lists.baseDeck:DrawCard())
-		end
-		GwentAddon:PlaceAllCards()
-		GwentAddon:ChangeState(GwentAddon.states.playerDiscard)
+		
+		StartGame(sender)
 	end
 	
 	if message == GwentAddon.messages.logout then
@@ -1556,6 +1657,14 @@ function Gwent_EventFrame:CHAT_MSG_ADDON(prefix, message, channel, sender)
 	if string.find(message, GwentAddon.messages.placeCard) then
 		GwentAddon.cards:AddEnemyCard(message)
 		GwentAddon:ChangeState(GwentAddon.states.playerTurn)
+	end
+	
+	
+	if string.find(message, GwentAddon.messages.leader) then
+		local id, used = string.match(message, GwentAddon.messages.leader.."(%d+)#(%d+)")
+		GwentAddon:ChangeEnemyLeader(id, (tonumber(used) == 1 and true or false))
+		--GwentAddon.cards:AddEnemyCard(message)
+		--GwentAddon:ChangeState(GwentAddon.states.playerTurn)
 	end
 	
 	if string.find(message, GwentAddon.messages.roundWon) then
@@ -1639,7 +1748,6 @@ local function slashcmd(msg, editbox)
 		GwentAddon:DEBUGToggleFrame()
 		
 	elseif msg == 'deck' then
-		GwentAddon.lists.baseDeck:PrintDeck()
 		
 	elseif msg == 'duel' then
 		
@@ -1653,13 +1761,7 @@ local function slashcmd(msg, editbox)
 		GwentAddon:ChangeChallenger(name)
 		--GwentAddon.cards:DrawStartHand()
 		
-		for i = 1, 10 do
-			table.insert(GwentAddon.lists.playerHand ,GwentAddon.lists.baseDeck:DrawCard())
-		end
-		
-		GwentAddon:PlaceAllCards()
-		
-		GwentAddon:ChangeState(GwentAddon.states.playerDiscard)
+		StartGame(name)
 		
 		GwentAddon:DEBUGMessageSent("duelling "..GwentAddon.challengerName, GwentAddon.challengerName)
 	
@@ -1688,7 +1790,7 @@ local function slashcmd(msg, editbox)
 	elseif msg == 'log' then
 		SendAddonMessage(addonName, GwentAddon.messages.logout, "whisper" , GwentAddon.challengerName)
 	elseif msg == 'center' then
-		print("centering")
+		--print("centering")
 		GwentAddon.playFrame:ClearAllPoints()
 		GwentAddon.playFrame:SetPoint("center", UIParent)
 		GwentAddon.playFrame:Show()

@@ -68,10 +68,8 @@ end
 --
 -- Place next to card card with the same name to double the strength of both cards.
 local function AbilityTightBond(card, list, pos)
-	print("checking card " .. card.frame:GetName());
 	local left = CountSameNameOnLeft(card, list, pos);
 	local right = CountSameNameOnRight(card, list, pos);
-	print(left .. " - " .. right);
 	local count = left + right;
 	
 	card.data.calcStrength = card.data.calcStrength + (card.data.strength * count);
@@ -96,13 +94,13 @@ function GwentAddon:CreateAbilitieList()
 
 	GwentAddon.Abilities = {}
 
-	table.insert(GwentAddon.Abilities, Ability("Spy", false, "AbilitySpy", function(card, list, pos) print("NYI Spy") end));
+	table.insert(GwentAddon.Abilities, Ability("Spy", false, "AbilitySpy", function(card, list, pos)  end)); -- NYI
 	table.insert(GwentAddon.Abilities, Ability("Tight Bond", false, "AbilityBond", function(card, list, pos) AbilityTightBond(card, list, pos) end));
 	table.insert(GwentAddon.Abilities, Ability("Morale Boost", false, "AbilityBoost", function(card, list, pos) AbilityMoraleBoost(card, list) end));
-	table.insert(GwentAddon.Abilities, Ability("Medic", false, "AbilityMedic", function(card, list, pos) print("NYI Medic") end));
-	table.insert(GwentAddon.Abilities, Ability("Muster", false, "AbilityMuster", function(card, list, pos) print("NYI Muster") end));
-	table.insert(GwentAddon.Abilities, Ability("Agile", false, "AbilityAgile", function(card, list, pos) print("NYI Agile") end));
-	table.insert(GwentAddon.Abilities, Ability("Scorch", false, "AbilityScorch", function(card, list, pos) print("NYI Scorch") end));
+	table.insert(GwentAddon.Abilities, Ability("Medic", false, "AbilityMedic", function(card, list, pos) end)); -- NYI
+	table.insert(GwentAddon.Abilities, Ability("Muster", false, "AbilityMuster", function(card, list, pos)  end)); -- NYI
+	table.insert(GwentAddon.Abilities, Ability("Agile", false, "AbilityAgile", function(card, list, pos)  end)); -- NYI
+	table.insert(GwentAddon.Abilities, Ability("Scorch", false, "AbilityScorch", function(card, list, pos)  end)); -- NYI
 	
 	-- table.insert(GwentAddon.Abilities, {
 				-- name = "Spy"
