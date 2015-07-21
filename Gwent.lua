@@ -61,7 +61,7 @@ GwentAddon.messages = {["placeInArea"] = "#%s#%d#%d"
 	local TEXT_RANGED = "ranged"
 	local TEXT_MELEE = "melee"
 
-local _CardPool = {}
+GwentAddon.cardPool = {}
 
 GwentAddon.challengerName = nil
 --local GwentAddon.playFrame = {}
@@ -202,7 +202,7 @@ function GwentAddon:PlaceCardsOnFrame(list, frame)
 
 	for k, card in ipairs(list) do
 		card.frame:ClearAllPoints()
-		
+		card.frame:SetParent(frame)
 		-- reset spacing when not draggin a card around
 		if GwentAddon.cards.draggedCard == nil then 
 			card.leftSpacing = 0
@@ -228,10 +228,10 @@ function GwentAddon:PlaceCardsOnFrame(list, frame)
 		card:UpdateCardStrength()
 	end
 	
-	-- use abilities but not when it's the player's hand
-	if list ~= GwentAddon.lists.playerHand then
+	-- use abilities but not when it's the player's hand or graveyard
+	if list ~= GwentAddon.lists.playerHand and list ~= GwentAddon.lists.graveyard then
 		for k, card in ipairs(list) do
-			if card.data.ability then
+			if card.data.ability and not card.data.ability.isOnPlay then
 				--print(k)
 				card.data.ability.funct(card, list, k)
 			end
@@ -281,7 +281,7 @@ end
 -- Places card frames in a list into the card pool, removing them from the game
 function GwentAddon:DestroyCardsInList(list)
 	for k, card in pairs(list) do
-		table.insert(_CardPool, card.frame)
+		table.insert(GwentAddon.cardPool, card.frame)
 		card.frame:Hide()
 		list[k] = nil
 	end
@@ -291,11 +291,13 @@ end
 
 -- Takes all the cards in a list and add it to the player's graveyard
 function GwentAddon:DiscardCardsInList(list)
+
 	for k, card in pairs(list) do
 		GwentAddon.cards:AddCardToNewList(card, "graveyard")
-		--table.insert(_CardPool, card.frame)
+		GwentAddon:ChangeGraveyardDisplay(card.data.texture)
+		--table.insert(GwentAddon.cardPool, card.frame)
 		--card.frame:Hide()
-		--list[k] = nil
+		list[k] = nil
 	end
 	
 	list = {}
@@ -481,6 +483,18 @@ function GwentAddon:GetCardlistMouseOver()
 	end
 	
 	return nil
+end
+
+-- Set a new texture for the graveyard of a player
+function GwentAddon:ChangeGraveyardDisplay(texture, target)
+	local pTarget = "player"
+	pTarget = target
+	
+	if pTarget == "enemy" then
+		GwentAddon.playFrame.enemy.graveyardTex:SetTexture(TEXTURE_CUSTOM_PATH..texture)
+	else
+		GwentAddon.playFrame.player.graveyardTex:SetTexture(TEXTURE_CUSTOM_PATH..texture)
+	end
 end
 
 -- Get the card the from a list the mouse is currently hovering over
@@ -1193,9 +1207,35 @@ local function CreatePlayFrame()
 	
 	PlayFrame.player.graveyard = CreateFrame("frame", addonName.."playerGY", playfield)
 	PlayFrame.player.graveyard:SetPoint("right", PlayFrame.player.deck, "left", -30, 0)
+	PlayFrame.player.graveyard:SetFrameLevel(fbl+2)
 	PlayFrame.player.graveyard:SetHeight(GwentAddon.NUM_CARD_HEIGHT)
 	PlayFrame.player.graveyard:SetWidth(GwentAddon.NUM_CARD_WIDTH)
-	GwentAddon:CreateInnerShadow(PlayFrame.player.graveyard, 0.5)
+	PlayFrame.player.graveyard:SetScript("OnMouseUp", function(c) 
+					if PlayFrame.graveyard:IsShown() then
+						PlayFrame.graveyard:Hide()
+					else
+						PlayFrame.graveyard:Show()
+					end
+				end)
+	--GwentAddon:CreateInnerShadow(PlayFrame.player.graveyard, 0.5)
+	GwentAddon:CreateOuterCardShadow(PlayFrame.player.graveyard)
+	
+	-- PlayFrame.player.graveyardCard = CreateFrame("frame", addonName.."playerGYCard", PlayFrame.player.graveyard)
+	-- PlayFrame.player.graveyardCard:SetPoint("topleft", PlayFrame.player.graveyard)
+	-- PlayFrame.player.graveyardCard:SetPoint("bottomright", PlayFrame.player.graveyard)
+	-- PlayFrame.player.graveyardCard:SetFrameLevel(fbl+2)
+	-- GwentAddon:CreateOuterCardShadow(PlayFrame.player.graveyardCard)
+	-- PlayFrame.player.graveyardCard:Hide()
+	
+	PlayFrame.player.graveyardTex = PlayFrame.player.graveyard:CreateTexture(addonName.."playerGYTex")
+	PlayFrame.player.graveyardTex:SetDrawLayer("ARTWORK", 3)
+	PlayFrame.player.graveyardTex:SetTexture(TEXTURE_CUSTOM_PATH.."Graveyard")
+	PlayFrame.player.graveyardTex:SetTexCoord(0, 1, 0, 464/512)
+	PlayFrame.player.graveyardTex:SetVertexColor(1, 1, 1)
+	PlayFrame.player.graveyardTex:SetPoint("topleft", PlayFrame.player.graveyard)
+	PlayFrame.player.graveyardTex:SetPoint("bottomright", PlayFrame.player.graveyard)
+	
+	--PlayFrame.player.graveyardTex:Hide()
 	  
 	-- player siege
 	PlayFrame.playerSiege = CreateCardArea("playerSiege", PlayFrame, TEXTURE_TYPE_SIEGE, TEXTURE_WEATHER_RAIN)
@@ -1287,7 +1327,15 @@ local function CreatePlayFrame()
 	PlayFrame.enemy.graveyard:SetPoint("right", PlayFrame.enemy.deck, "left", -30, 0)
 	PlayFrame.enemy.graveyard:SetHeight(GwentAddon.NUM_CARD_HEIGHT)
 	PlayFrame.enemy.graveyard:SetWidth(GwentAddon.NUM_CARD_WIDTH)
-	GwentAddon:CreateInnerShadow(PlayFrame.enemy.graveyard, 0.5)
+	GwentAddon:CreateOuterCardShadow(PlayFrame.enemy.graveyard)
+	
+	PlayFrame.enemy.graveyardTex = PlayFrame.enemy.graveyard:CreateTexture(addonName.."playerGYTex")
+	PlayFrame.enemy.graveyardTex:SetDrawLayer("ARTWORK", 3)
+	PlayFrame.enemy.graveyardTex:SetTexture(TEXTURE_CUSTOM_PATH.."Graveyard")
+	PlayFrame.enemy.graveyardTex:SetTexCoord(0, 1, 0, 464/512)
+	PlayFrame.enemy.graveyardTex:SetVertexColor(1, 1, 1)
+	PlayFrame.enemy.graveyardTex:SetPoint("topleft", PlayFrame.enemy.graveyard)
+	PlayFrame.enemy.graveyardTex:SetPoint("bottomright", PlayFrame.enemy.graveyard)
 	  
 	-- enemy siege
 	PlayFrame.enemySiege = CreateCardArea("enemyRanged", PlayFrame, TEXTURE_TYPE_SIEGE, TEXTURE_WEATHER_RAIN)
@@ -1467,6 +1515,9 @@ function GwentAddon:ResetGame()
 	GwentAddon:ChangeEnemyLeader()
 	GwentAddon.playFrame.player.leaderTex:SetVertexColor(1, 1, 1)
 	GwentAddon.playFrame.player.leaderTex:SetTexture(TEXTURE_CUSTOM_PATH.."BackTotallyLegit")
+	
+	GwentAddon:ChangeGraveyardDisplay("Graveyard")
+	GwentAddon:ChangeGraveyardDisplay("Graveyard", "enemy")
 	
 	GwentAddon.playerLives.count = 2
 	GwentAddon.playerLives.texture1:SetVertexColor(0.8, 0.1, 0.1)
@@ -1732,6 +1783,8 @@ function Gwent_EventFrame:ADDON_LOADED(ADDON_LOADED)
 	if not RegisterAddonMessagePrefix(addonName) then
 		print(addonName ..": Could not register prefix.")
 	end
+	
+	GwentAddon.playFrame:SetScale(0.75)
 end
 
 function Gwent_EventFrame:PLAYER_LOGOUT(ADDON_LOADED)
@@ -1789,6 +1842,10 @@ local function slashcmd(msg, editbox)
 	
 	elseif msg == 'log' then
 		SendAddonMessage(addonName, GwentAddon.messages.logout, "whisper" , GwentAddon.challengerName)
+		
+	elseif msg == 'd' then
+		GetMouseFocus():Hide()
+		
 	elseif msg == 'center' then
 		--print("centering")
 		GwentAddon.playFrame:ClearAllPoints()

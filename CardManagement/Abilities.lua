@@ -27,11 +27,14 @@ setmetatable(Ability, {
   end,
 })
 
-function Ability.new(name, isLeader, texture, abilityFunction)
+function Ability.new(name, isLeader, texture, abilityFunction, onPlay)
 	local self = setmetatable({}, Abilities)
 	
 	self.name = name
 	self.isLeader = false
+	
+	self.isOnPlay = (onPlay == nil and false or onPlay) -- true = ability only triggers when played
+	self.isTriggered = false -- wether on play has been triggered
 	self.texture = TEXTURE_CUSTOM_PATH .. texture
 	self.funct = function(card, list, pos) abilityFunction(card, list, pos) end
 	
@@ -89,6 +92,68 @@ local function AbilityMoraleBoost(card, list)
 	end
 end
 
+local function GetStrongestInList(str, list)
+	for k, v in ipairs(list) do
+		if v.data.calcStrength > str then 
+			str = v.data.calcStrength
+		end
+	end
+	
+	return str
+	
+end
+
+local function DestroyCardInListByStrength(str, list)
+
+	local card = nil
+	for i=#list, 1, -1 do
+		card = list[i]
+		if card.data.calcStrength == str then
+			table.insert(GwentAddon.cardPool, card.frame)
+			card.frame:Hide()
+
+			table.remove(list, i)
+		end
+	end
+end
+
+local function DiscardCardsInListByStrength(str, list)
+	local card = nil
+	for i=#list, 1, -1 do
+		card = list[i]
+		if card.data.calcStrength == str then
+			GwentAddon.cards:AddCardToNewList(card, "graveyard")
+			GwentAddon:ChangeGraveyardDisplay(card.data.texture)
+			table.remove(list, i)
+		end
+	end
+end
+
+-- Scorch
+--
+-- Kill the strongest card(s) on the battlefield
+local function AbilityScorch(card, list)
+	local topStr = 0
+	topStr = GetStrongestInList(topStr, GwentAddon:GetListByName("playerMelee"))
+	topStr = GetStrongestInList(topStr, GwentAddon:GetListByName("playerRanged"))
+	topStr = GetStrongestInList(topStr, GwentAddon:GetListByName("playerSiege"))
+	topStr = GetStrongestInList(topStr, GwentAddon:GetListByName("enemyMelee"))
+	topStr = GetStrongestInList(topStr, GwentAddon:GetListByName("enemyRanged"))
+	topStr = GetStrongestInList(topStr, GwentAddon:GetListByName("enemySiege"))
+	
+	-- discard card from list
+	DiscardCardsInListByStrength(topStr, GwentAddon:GetListByName("playerMelee"))
+	DiscardCardsInListByStrength(topStr, GwentAddon:GetListByName("playerRanged"))
+	DiscardCardsInListByStrength(topStr, GwentAddon:GetListByName("playerSiege"))
+	
+	DestroyCardInListByStrength(topStr, GwentAddon:GetListByName("enemyMelee"))
+	DestroyCardInListByStrength(topStr, GwentAddon:GetListByName("enemyRanged"))
+	DestroyCardInListByStrength(topStr, GwentAddon:GetListByName("enemySiege"))
+	
+	
+	print("Scorch top " .. topStr)
+end
+
 -- Create a list of abilities
 function GwentAddon:CreateAbilitieList()
 
@@ -100,7 +165,7 @@ function GwentAddon:CreateAbilitieList()
 	table.insert(GwentAddon.Abilities, Ability("Medic", false, "AbilityMedic", function(card, list, pos) end)); -- NYI
 	table.insert(GwentAddon.Abilities, Ability("Muster", false, "AbilityMuster", function(card, list, pos)  end)); -- NYI
 	table.insert(GwentAddon.Abilities, Ability("Agile", false, "AbilityAgile", function(card, list, pos)  end)); -- NYI
-	table.insert(GwentAddon.Abilities, Ability("Scorch", false, "AbilityScorch", function(card, list, pos)  end)); -- NYI
+	table.insert(GwentAddon.Abilities, Ability("Scorch", false, "AbilityScorch", function(card, list, pos) AbilityScorch(card, list) end, true)); -- NYI
 	
 	-- table.insert(GwentAddon.Abilities, {
 				-- name = "Spy"

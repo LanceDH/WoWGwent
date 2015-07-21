@@ -1,5 +1,5 @@
 Prevent challenging if already in a game
-Redraw put back in deck, not GY
+
 Deck creation
 - Save deck
 - Add card
@@ -10,9 +10,24 @@ only move cards if hover over right area
 
 Abilities
 - Spy 
-- Tight Bond 
+	place on opponent field and draw 2 cards
+
+x Tight Bond 
+	Place next to same name card to double the strength
+
 x Morale Boost 
+	Adds +1 to all units in the row excluding itself 
+
 - Medic 
+	Chose on card for your discard pile and play instantly (no hero or special)
+
 - Muster 
-- Agile 
+	Find any cards with the same name in your deck and play them instantly
+	
+x Agile 
+	Can be placed in either melee or ranged
+
 - Scorch
+	Kill the strongest card(s) on the battlefield
+	Find highest strength in all rows
+	Kill all cards with that strength

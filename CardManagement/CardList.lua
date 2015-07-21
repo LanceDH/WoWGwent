@@ -260,11 +260,19 @@ function GwentAddon.Card:StopDragging(card)
 		return
 	end
 
-	local success, area, position = GwentAddon:DropCardArea(GwentAddon.cards.draggedCard)
-	if success and GwentAddon.cards.draggedCard  ~= nil then
-		GwentAddon.cards.draggedCard  = nil
+	local drag = GwentAddon.cards.draggedCard
+	
+	local success, area, position = GwentAddon:DropCardArea(drag)
+	if success and drag  ~= nil then
+		
 
 		SendAddonMessage(addonName, GwentAddon.messages.placeCard..string.format(GwentAddon.messages.placeInArea, area, self.data.Id, position), "whisper" , GwentAddon.challengerName)
+		
+		if drag.data.ability ~= nil and drag.data.ability.isOnPlay then
+			drag.data.ability.funct(drag, list)
+		end
+		
+		drag  = nil
 		
 		-- don't end your turn if enemy passed
 		if not GwentAddon.enemyPassed then
@@ -591,8 +599,11 @@ end
 function CardList:AddEnemyCard(message)
 	--print(message, string.match(message, "(%a+)#(%d+)"))
 	local areaType, id, pos = string.match(message, GwentAddon.messages.placeCard.."#(%a+)#(%d+)#(%d+)")
+
 	--GwentAddon:DEBUGMessageSent(message .. " - ".. string.match(message, "(%a+)#(%d+)"))
 	local card = GwentAddon:CreateCard(id, self) --self:CreateCardOfId(id)
+	
+	
 	if areaType == TEXT_SIEGE then
 		self:AddCardToNewList(card, "enemySiege", pos)
 	elseif areaType == TEXT_RANGED then
@@ -606,7 +617,14 @@ function CardList:AddEnemyCard(message)
 	card.frame:SetScript("OnEnter", function(self) GwentAddon:SetCardTooltip(self) end)
 	card.frame:SetScript("OnLeave", function(self) GwentAddon.playFrame.cardTooltip:Hide() end)
 	
+	if card.data.ability ~= nil and card.data.ability.isOnPlay then
+		card.data.ability.funct(card, list)
+	end
+	
 	GwentAddon:PlaceAllCards()
+	
+	-- trigger play abilities
+	
 end
 
 -- Check if a card is being dropped on the left side of the area (for position in list)
