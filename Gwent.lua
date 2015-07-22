@@ -44,6 +44,7 @@ local COORDS_ICON_SIEGE = {["x"]=64*3, ["y"]=64*7}
 local COORDS_SMALLCARD = {["left"]=76/256, ["right"]=244/256, ["top"]=30/512, ["bottom"]=300/512}
 
 GwentAddon.messages = {["placeInArea"] = "#%s#%d#%d"
+						,["scorch"] = "Scorch: "
 						,["challenge"] = "It's time to du du du duel"
 						--,["challenge"] = "fuck"
 						,["logout"] = "logged out"
@@ -233,7 +234,8 @@ function GwentAddon:PlaceCardsOnFrame(list, frame)
 		for k, card in ipairs(list) do
 			if card.data.ability and not card.data.ability.isOnPlay then
 				--print(k)
-				card.data.ability.funct(card, list, k)
+				
+				card.data.ability.funct(card, list, GwentAddon.lists.playDeck, k)
 			end
 		
 		end
@@ -318,6 +320,8 @@ function GwentAddon:SetCardTooltip(card)
 	end
 	
 	tp:Show()
+	tp.strengthBG:Hide()
+	tp.strength:Hide()
 	tp.typeBG:Hide()
 	tp.type:Hide()
 	tp.abilityBG:Hide()
@@ -330,7 +334,10 @@ function GwentAddon:SetCardTooltip(card)
 	tp.strength:SetTextColor(vc, vc, vc)
 	tp.texture:SetTexture(TEXTURE_CUSTOM_PATH..card.data.texture)
 	
-	
+	if not card.data.cardType.leader then
+		tp.strength:Show()
+		tp.strengthBG:Show()
+	end
 	
 	local typeIcon = GwentAddon.cards:GetTypeIcon(card)
 	if typeIcon ~= nil then
@@ -339,13 +346,13 @@ function GwentAddon:SetCardTooltip(card)
 		tp.type:Show()
 	end
 	
-	local ability = GwentAddon:GetAbilitydataByName(card.data.ability)
+	local ability = card.data.ability
 	if ability ~= nil then
 		tp.abilityBG:Show()
 		tp.ability:Show()
 		tp.ability:SetVertexColor(vc, vc, vc)
 		tp.ability:SetTexture(ability.texture)
-		tp.ability:SetTexCoord(ability.coords.left, ability.coords.right, ability.coords.top, ability.coords.bottom)
+		--tp.ability:SetTexCoord(ability.coords.left, ability.coords.right, ability.coords.top, ability.coords.bottom)
 	end
 	
 	
@@ -355,7 +362,7 @@ function GwentAddon:SetCardTooltip(card)
 	tp.faction:SetText(card.data.faction)
 	
 	tp.strength:SetTextColor(0, 0, 0)
-	if card.data.cardType.leader then
+	if card.data.cardType.hero then
 		tp.strength:SetTextColor(1, 1, 1)
 	end
 	
@@ -1404,19 +1411,19 @@ end
 function GwentAddon:DropCardArea(card)
 	if GwentAddon:MouseIsOverFrame(GwentAddon.playFrame.playerSiege) and IsRightTypeForArea(card, TEXT_SIEGE) then
 		
-		local pos = GwentAddon.cards:AddCardToNewList(card, "playerSiege")
+		local pos, list = GwentAddon.cards:AddCardToNewList(card, "playerSiege")
 		GwentAddon.cards:RemoveCardFromHand(card)
-		return true, TEXT_SIEGE, pos
+		return true, TEXT_SIEGE, pos, list
 	elseif GwentAddon:MouseIsOverFrame(GwentAddon.playFrame.playerRanged) and IsRightTypeForArea(card, TEXT_RANGED) then
 		
-		local pos = GwentAddon.cards:AddCardToNewList(card, "playerRanged")
+		local pos, list = GwentAddon.cards:AddCardToNewList(card, "playerRanged")
 		GwentAddon.cards:RemoveCardFromHand(card)
-		return true, TEXT_RANGED, pos
+		return true, TEXT_RANGED, pos, list
 	elseif GwentAddon:MouseIsOverFrame(GwentAddon.playFrame.playerMelee) and IsRightTypeForArea(card, TEXT_MELEE) then
 		
-		local pos = GwentAddon.cards:AddCardToNewList(card, "playerMelee")
+		local pos, list = GwentAddon.cards:AddCardToNewList(card, "playerMelee")
 		GwentAddon.cards:RemoveCardFromHand(card)
-		return true, TEXT_MELEE, pos
+		return true, TEXT_MELEE, pos, list
 	end
 	return false
 end
@@ -1433,13 +1440,9 @@ function GwentAddon:NumberInList(card, list)
 end
 
 -- Change the current challengers
-function GwentAddon:ChangeChallenger(sender, race, gender)
-	if sender == nil then
-		sender = ""
-	end
-		
+function GwentAddon:ChangeChallenger(sender, race, gender)		
 	GwentAddon.challengerName = sender
-	GwentAddon.playFrame.enemy.nametag:SetText(GwentAddon.challengerName)
+	GwentAddon.playFrame.enemy.nametag:SetText((GwentAddon.challengerName == nil and "" or GwentAddon.challengerName))
 	
 	local challenger = GetUnitName("target", true)	
 	if race ~= nil and gender ~= nil then
@@ -1539,6 +1542,7 @@ local function StartGame(opponent)
 	for i = 1, 10 do
 		table.insert(GwentAddon.lists.playerHand ,GwentAddon.lists.playDeck:DrawCard())
 	end
+	
 	SendAddonMessage(addonName, ""..GwentAddon.messages.leader..GwentAddon.lists.playDeck.leader.data.Id.."#0", "whisper" , opponent)
 	
 	GwentAddon:PlaceAllCards()
@@ -1662,6 +1666,14 @@ function Gwent_EventFrame:CHAT_MSG_ADDON(prefix, message, channel, sender)
 		return
 	end
 	
+	-- Scorch
+	if string.find(message, GwentAddon.messages.scorch) then
+		local str = string.match(message,  GwentAddon.messages.scorch.."(%d+)")
+		print(str)
+		GwentAddon:ScorchCards(str)
+	end
+	
+	-- Challenge
 	if string.find(message, GwentAddon.messages.challenge) then
 		
 		local race, gender = string.match(message, GwentAddon.messages.challenge.."#(%a+)#(%d+)")
@@ -1670,11 +1682,13 @@ function Gwent_EventFrame:CHAT_MSG_ADDON(prefix, message, channel, sender)
 		StartGame(sender)
 	end
 	
+	-- Logout
 	if message == GwentAddon.messages.logout then
 		
 		GwentAddon:ResetGame()
 	end
 	
+	-- Discard
 	if message == GwentAddon.messages.discarded then
 		if GwentAddon.currentState == GwentAddon.states.waitEnemyDiscard then
 			GwentAddon:ChangeState(GwentAddon.states.determinStart)
@@ -1694,6 +1708,7 @@ function Gwent_EventFrame:CHAT_MSG_ADDON(prefix, message, channel, sender)
 		end
 	end
 	
+	-- Pass
 	if message == GwentAddon.messages.pass then
 		
 		GwentAddon.enemyPassed = true
@@ -1710,14 +1725,13 @@ function Gwent_EventFrame:CHAT_MSG_ADDON(prefix, message, channel, sender)
 		GwentAddon:ChangeState(GwentAddon.states.playerTurn)
 	end
 	
-	
+	-- Leader
 	if string.find(message, GwentAddon.messages.leader) then
 		local id, used = string.match(message, GwentAddon.messages.leader.."(%d+)#(%d+)")
 		GwentAddon:ChangeEnemyLeader(id, (tonumber(used) == 1 and true or false))
-		--GwentAddon.cards:AddEnemyCard(message)
-		--GwentAddon:ChangeState(GwentAddon.states.playerTurn)
 	end
 	
+	-- Round result
 	if string.find(message, GwentAddon.messages.roundWon) then
 		local playerWon = tonumber(string.match(message, GwentAddon.messages.roundWon.."(%d+)")) == 1 and true or false
 		if playerWon then
@@ -1734,6 +1748,7 @@ function Gwent_EventFrame:CHAT_MSG_ADDON(prefix, message, channel, sender)
 		GwentAddon:CheckBattleWinner()
 	end
 	
+	-- Battle result
 	if string.find(message, GwentAddon.messages.battleWon) then
 		local playerWon = tonumber(string.match(message, GwentAddon.messages.battleWon.."(%d+)")) == 1 and true or false
 		if playerWon then
@@ -1743,7 +1758,8 @@ function Gwent_EventFrame:CHAT_MSG_ADDON(prefix, message, channel, sender)
 		end
 		GwentAddon:ChangeState(GwentAddon.states.gameEnd)
 	end
-		
+	
+	-- round tie
 	if message == GwentAddon.messages.roundTie then
 		GwentAddon:DeductLife(GwentAddon.enemyLives)
 		GwentAddon:DeductLife(GwentAddon.playerLives)
@@ -1752,11 +1768,13 @@ function Gwent_EventFrame:CHAT_MSG_ADDON(prefix, message, channel, sender)
 		GwentAddon:CheckBattleWinner()
 	end
 	
+	-- battle tie
 	if message == GwentAddon.messages.battleTie then
 		GwentAddon.popup:ShowButtonMessage("The battle tied", "End game", function() GwentAddon:ResetGame() end)
 		GwentAddon:ChangeState(GwentAddon.states.gameEnd)
 	end
 	
+	-- who starts
 	if string.find(message, GwentAddon.messages.start) then
 		local playerStart = tonumber(string.match(message, GwentAddon.messages.start.."(%d+)")) == 1 and true or false
 		if playerStart then
@@ -1778,7 +1796,13 @@ function Gwent_EventFrame:ADDON_LOADED(ADDON_LOADED)
 	GwentAddon:CreateCardsClass()
 	--GwentAddon:CreateCardsList()
 	
-	GwentAddon.lists.baseDeck = GwentAddon:CreateTestDeck()
+	
+	if GetUnitName("player", false) == "Gortoch" then
+		-- GwentAddon.lists.baseDeck = GwentAddon:CreateTestDeck("Scoia’tael")
+		GwentAddon.lists.baseDeck = GwentAddon:CreateTestDeck("Monster")
+	else
+		GwentAddon.lists.baseDeck = GwentAddon:CreateTestDeck("Northern Realms")
+	end
 	
 	if not RegisterAddonMessagePrefix(addonName) then
 		print(addonName ..": Could not register prefix.")
@@ -1788,9 +1812,10 @@ function Gwent_EventFrame:ADDON_LOADED(ADDON_LOADED)
 end
 
 function Gwent_EventFrame:PLAYER_LOGOUT(ADDON_LOADED)
-	--if ADDON_LOADED ~= addonName then return end
-	
-	SendAddonMessage(addonName, GwentAddon.messages.logout, "whisper" , GwentAddon.challengerName)
+
+	if GwentAddon.challengerName ~= nil then
+		SendAddonMessage(addonName, GwentAddon.messages.logout, "whisper" , GwentAddon.challengerName)
+	end
 
 end
 
@@ -1799,9 +1824,7 @@ local function slashcmd(msg, editbox)
 	if msg == 'debug' then
 	
 		GwentAddon:DEBUGToggleFrame()
-		
-	elseif msg == 'deck' then
-		
+
 	elseif msg == 'duel' then
 		
 		name = GetUnitName("target", true)
@@ -1837,6 +1860,11 @@ local function slashcmd(msg, editbox)
 	
 	elseif string.find(msg, "scale") then
 		local scale = string.match(msg, "scale (%d*%.?%d*)")
+		
+		GwentAddon.playFrame:SetScale(scale)
+		
+	elseif string.find(msg, "deck") then
+		local scale = string.match(msg, "deck (%d+)")
 		
 		GwentAddon.playFrame:SetScale(scale)
 	

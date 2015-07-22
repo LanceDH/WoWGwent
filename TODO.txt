@@ -4,10 +4,27 @@ Deck creation
 - Save deck
 - Add card
 - Remove card
-Add more cards
+
+Add Special cards
+
 only move cards if hover over right area
 
 
+Weather effects
+- Biting Frost
+	Set strength of all melee to 1
+	
+- Impenetrable Fog
+	Set strength of all ranged to 1
+	
+- Torrential Rain
+	Set strength of all siege to 1
+	
+- Clear Weather
+	Remove all weather cards
+
+	
+	
 Abilities
 - Spy 
 	place on opponent field and draw 2 cards
@@ -21,13 +38,13 @@ x Morale Boost
 - Medic 
 	Chose on card for your discard pile and play instantly (no hero or special)
 
-- Muster 
+x Muster 
 	Find any cards with the same name in your deck and play them instantly
 	
 x Agile 
 	Can be placed in either melee or ranged
 
-- Scorch
+x Scorch
 	Kill the strongest card(s) on the battlefield
 	Find highest strength in all rows
 	Kill all cards with that strength

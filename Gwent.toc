@@ -2,7 +2,7 @@
 ## Title: Gwent
 ## Notes: Play the card game from the Witcher series with your friends.
 ## Author: LanceDH
-## Version: 0.29
+## Version: 0.31
 ## OptionalDeps: Ace3
 ## SavedVariablesPerCharacter:
 

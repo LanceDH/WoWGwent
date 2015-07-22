@@ -88,14 +88,29 @@ function GwentAddon.DeckB:DrawCard()
 	return card
 end
 
-function GwentAddon:CreateTestDeck()
-	local pDeck = GwentAddon.DeckB(1)
+function GwentAddon:CreateTestDeck(faction)
 	local factions = GwentAddon.cards.factions
-
+	local id = 1
+	if faction == factions.scoiatael then
+		id = 54
+	elseif faction == factions.nilf then
+		id = 87
+	elseif faction == factions.monster then
+		id = 126
+	end 
+	local pDeck = GwentAddon.DeckB(id)
 	
+	
+	
+	
+	
+
+	-- "Northern Realms"
+	-- "Neutral"
+	-- "Scoia’tael"
 	
 	for k, v in ipairs(GwentAddon.cards.list) do
-		if (v.faction == factions.north or v.faction == factions.neutral) and not v.cardType.leader then
+		if (v.faction == faction or v.faction == "Neutral") and not v.cardType.leader then
 			pDeck:AddCardById(v.Id)
 			--table.insert(deck, v)
 		end

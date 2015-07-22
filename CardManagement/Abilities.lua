@@ -36,7 +36,7 @@ function Ability.new(name, isLeader, texture, abilityFunction, onPlay)
 	self.isOnPlay = (onPlay == nil and false or onPlay) -- true = ability only triggers when played
 	self.isTriggered = false -- wether on play has been triggered
 	self.texture = TEXTURE_CUSTOM_PATH .. texture
-	self.funct = function(card, list, pos) abilityFunction(card, list, pos) end
+	self.funct = function(card, list, deck, pos, extra) abilityFunction(card, list, deck, pos, extra) end
 	
 	return self
 end
@@ -104,11 +104,10 @@ local function GetStrongestInList(str, list)
 end
 
 local function DestroyCardInListByStrength(str, list)
-
 	local card = nil
 	for i=#list, 1, -1 do
 		card = list[i]
-		if card.data.calcStrength == str then
+		if card.data.calcStrength == tonumber(str) then
 			table.insert(GwentAddon.cardPool, card.frame)
 			card.frame:Hide()
 
@@ -121,12 +120,25 @@ local function DiscardCardsInListByStrength(str, list)
 	local card = nil
 	for i=#list, 1, -1 do
 		card = list[i]
-		if card.data.calcStrength == str then
+		if card.data.calcStrength == tonumber(str) then
 			GwentAddon.cards:AddCardToNewList(card, "graveyard")
 			GwentAddon:ChangeGraveyardDisplay(card.data.texture)
 			table.remove(list, i)
 		end
 	end
+end
+
+
+function GwentAddon:ScorchCards(str)
+	DiscardCardsInListByStrength(str, GwentAddon:GetListByName("playerMelee"))
+	DiscardCardsInListByStrength(str, GwentAddon:GetListByName("playerRanged"))
+	DiscardCardsInListByStrength(str, GwentAddon:GetListByName("playerSiege"))
+	
+	DestroyCardInListByStrength(str, GwentAddon:GetListByName("enemyMelee"))
+	DestroyCardInListByStrength(str, GwentAddon:GetListByName("enemyRanged"))
+	DestroyCardInListByStrength(str, GwentAddon:GetListByName("enemySiege"))
+	
+	GwentAddon:PlaceAllCards()
 end
 
 -- Scorch
@@ -142,16 +154,29 @@ local function AbilityScorch(card, list)
 	topStr = GetStrongestInList(topStr, GwentAddon:GetListByName("enemySiege"))
 	
 	-- discard card from list
-	DiscardCardsInListByStrength(topStr, GwentAddon:GetListByName("playerMelee"))
-	DiscardCardsInListByStrength(topStr, GwentAddon:GetListByName("playerRanged"))
-	DiscardCardsInListByStrength(topStr, GwentAddon:GetListByName("playerSiege"))
+	GwentAddon:ScorchCards(topStr)
 	
-	DestroyCardInListByStrength(topStr, GwentAddon:GetListByName("enemyMelee"))
-	DestroyCardInListByStrength(topStr, GwentAddon:GetListByName("enemyRanged"))
-	DestroyCardInListByStrength(topStr, GwentAddon:GetListByName("enemySiege"))
+	SendAddonMessage(addonName, GwentAddon.messages.scorch.. topStr, "whisper" , GwentAddon.challengerName)
+end
+
+-- Muster
+--
+-- Find any cards with the same name in your deck and play them instantly
+local function AbilityMuster(card, list, deck, pos, area)
+	local c = nil
+	for i = #deck.cards, 1, -1 do
+		c = deck.cards[i]
+		
+		local prefix = string.match(card.data.name, "(%a+):")
+		
+		if c.name == card.data.name or (prefix and string.find(c.name, prefix)) then
+			pos = pos + 1
+			table.insert(list, pos, GwentAddon.Card.new(c.Id, GwentAddon.cards))
+			SendAddonMessage(addonName, GwentAddon.messages.placeCard..string.format(GwentAddon.messages.placeInArea, area, c.Id, pos), "whisper" , GwentAddon.challengerName)
+			table.remove(deck.cards, i)
+		end
+	end
 	
-	
-	print("Scorch top " .. topStr)
 end
 
 -- Create a list of abilities
@@ -159,84 +184,14 @@ function GwentAddon:CreateAbilitieList()
 
 	GwentAddon.Abilities = {}
 
-	table.insert(GwentAddon.Abilities, Ability("Spy", false, "AbilitySpy", function(card, list, pos)  end)); -- NYI
-	table.insert(GwentAddon.Abilities, Ability("Tight Bond", false, "AbilityBond", function(card, list, pos) AbilityTightBond(card, list, pos) end));
-	table.insert(GwentAddon.Abilities, Ability("Morale Boost", false, "AbilityBoost", function(card, list, pos) AbilityMoraleBoost(card, list) end));
-	table.insert(GwentAddon.Abilities, Ability("Medic", false, "AbilityMedic", function(card, list, pos) end)); -- NYI
-	table.insert(GwentAddon.Abilities, Ability("Muster", false, "AbilityMuster", function(card, list, pos)  end)); -- NYI
-	table.insert(GwentAddon.Abilities, Ability("Agile", false, "AbilityAgile", function(card, list, pos)  end)); -- NYI
-	table.insert(GwentAddon.Abilities, Ability("Scorch", false, "AbilityScorch", function(card, list, pos) AbilityScorch(card, list) end, true)); -- NYI
-	
-	-- table.insert(GwentAddon.Abilities, {
-				-- name = "Spy"
-				-- ,isLeader = false
-				-- ,texture = "Interface\\AddOns\\Gwent\\CardTextures\\AbilitySpy"
-				-- ,coords = {left = 0
-							-- ,right = 1
-							-- ,top = 0
-							-- ,bottom = 1}
-			-- })
-			
-	-- table.insert(GwentAddon.Abilities, {
-				-- name = "Tight Bond"
-				-- ,isLeader = false
-				-- ,texture = "Interface\\AddOns\\Gwent\\CardTextures\\AbilityBond"
-				-- ,coords = {left = 0
-							-- ,right = 1
-							-- ,top = 0
-							-- ,bottom = 1}
-			-- })
-			
-	-- table.insert(GwentAddon.Abilities, {
-				-- name = "Morale Boost"
-				-- ,isLeader = false
-				-- ,texture = "Interface\\AddOns\\Gwent\\CardTextures\\AbilityBoost"
-				-- ,coords = {left = 0
-							-- ,right = 1
-							-- ,top = 0
-							-- ,bottom = 1}
-			-- })
-			
-	-- table.insert(GwentAddon.Abilities, {
-				-- name = "Medic"
-				-- ,isLeader = false
-				-- ,texture = "Interface\\AddOns\\Gwent\\CardTextures\\AbilityMedic"
-				-- ,coords = {left = 0
-							-- ,right = 1
-							-- ,top = 0
-							-- ,bottom = 1}
-			-- })
-			
-	-- table.insert(GwentAddon.Abilities, {
-				-- name = "Muster"
-				-- ,isLeader = false
-				-- ,texture = "Interface\\AddOns\\Gwent\\CardTextures\\AbilityMuster"
-				-- ,coords = {left = 0
-							-- ,right = 1
-							-- ,top = 0
-							-- ,bottom = 1}
-			-- })
-			
-	-- table.insert(GwentAddon.Abilities, {
-				-- name = "Agile"
-				-- ,isLeader = false
-				-- ,texture = "Interface\\AddOns\\Gwent\\CardTextures\\AbilityAgile"
-				-- ,coords = {left = 0
-							-- ,right = 1
-							-- ,top = 0
-							-- ,bottom = 1}
-			-- })
-	
-	-- table.insert(GwentAddon.Abilities, {
-				-- name = "Scorch"
-				-- ,isLeader = false
-				-- ,texture = "Interface\\AddOns\\Gwent\\CardTextures\\AbilityScorch"
-				-- ,coords = {left = 0
-							-- ,right = 1
-							-- ,top = 0
-							-- ,bottom = 1}
-			-- })
-			
+	table.insert(GwentAddon.Abilities, Ability("Spy", false, "AbilitySpy", function(card, list, deck)  end)); -- NYI
+	table.insert(GwentAddon.Abilities, Ability("Tight Bond", false, "AbilityBond", function(card, list, deck, pos) AbilityTightBond(card, list, pos) end));
+	table.insert(GwentAddon.Abilities, Ability("Morale Boost", false, "AbilityBoost", function(card, list, deck) AbilityMoraleBoost(card, list) end));
+	table.insert(GwentAddon.Abilities, Ability("Medic", false, "AbilityMedic", function(card, list, deck) end)); -- NYI
+	table.insert(GwentAddon.Abilities, Ability("Muster", false, "AbilityMuster", function(card, list, deck, pos, area) AbilityMuster(card, list, deck, pos, area) end, true)); -- NYI
+	table.insert(GwentAddon.Abilities, Ability("Agile", false, "AbilityAgile", function(card, list, deck)  end));
+	table.insert(GwentAddon.Abilities, Ability("Scorch", false, "AbilityScorch", function(card, list, deck) AbilityScorch(card, list) end, true));
+		
 	for k, v in ipairs(GwentAddon.Abilities) do
 		v.Id = k
 	end
