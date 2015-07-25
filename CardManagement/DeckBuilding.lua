@@ -99,11 +99,7 @@ function GwentAddon:CreateTestDeck(faction)
 		id = 126
 	end 
 	local pDeck = GwentAddon.DeckB(id)
-	
-	
-	
-	
-	
+
 
 	-- "Northern Realms"
 	-- "Neutral"

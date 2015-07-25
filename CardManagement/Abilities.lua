@@ -75,7 +75,7 @@ local function AbilityTightBond(card, list, pos)
 	local right = CountSameNameOnRight(card, list, pos);
 	local count = left + right;
 	
-	card.data.calcStrength = card.data.calcStrength + (card.data.strength * count);
+	card.data.calcStrength = card.data.calcStrength + (card.data.weatherStrength * count);
 	card:UpdateCardStrength();
 end
 
@@ -86,7 +86,7 @@ local function AbilityMoraleBoost(card, list)
 	for k, lCard in pairs(list) do
 		-- exlude self and hero characters
 		if lCard.data.Id ~= card.data.Id and not lCard.data.cardType.hero then
-			lCard.data.calcStrength = lCard.data.calcStrength + 1
+			lCard.data.calcStrength = lCard.data.weatherStrength + 1
 			lCard:UpdateCardStrength()
 		end
 	end
@@ -179,6 +179,61 @@ local function AbilityMuster(card, list, deck, pos, area)
 	
 end
 
+-- Weather Biting Frost
+--
+-- Set strength of all melee to 1
+local function AbilityBitingFrost(card, list, deck, pos, area)
+	GwentAddon:ChangeWeatherOverlay("melee", true)
+	
+	if card ~= nil then
+		SendAddonMessage(addonName, GwentAddon.messages.ability.."Biting Frost", "whisper" , GwentAddon.challengerName)
+	end
+end
+
+-- Weather Impenetrable Fog
+--
+-- Set strength of all ranged to 1
+local function AbilityImpenetrableFog(card, list, deck, pos, area)
+	GwentAddon:ChangeWeatherOverlay("ranged", true)
+	
+	if card ~= nil then
+		SendAddonMessage(addonName, GwentAddon.messages.ability.."Impenetrable Fog", "whisper" , GwentAddon.challengerName)
+	end
+end
+
+-- Weather Torrential Rain
+--
+-- Set strength of all ranged to 1
+local function AbilityTorrentialRain(card, list, deck, pos, area)
+	GwentAddon:ChangeWeatherOverlay("siege", true)
+	
+	if card ~= nil then
+		SendAddonMessage(addonName, GwentAddon.messages.ability.."Torrential Rain", "whisper" , GwentAddon.challengerName)
+	end
+end
+
+-- Clear Weather
+--
+-- Remove all weather cards in play
+local function AbilityClearWeather(card, list, deck, pos, area)
+	GwentAddon:ChangeWeatherOverlay("melee", false)
+	GwentAddon:ChangeWeatherOverlay("ranged", false)
+	GwentAddon:ChangeWeatherOverlay("siege", false)
+	
+	local list = GwentAddon:GetListByName("weather")
+	local card = nil
+	for i = #list, 1, -1 do
+		card = list[i]
+		table.insert(GwentAddon.cardPool, card.frame)
+		card.frame:Hide()
+		table.remove(list, i)
+	end
+	
+	if card ~= nil then
+		SendAddonMessage(addonName, GwentAddon.messages.ability.."Clear Weather", "whisper" , GwentAddon.challengerName)
+	end
+end
+
 -- Create a list of abilities
 function GwentAddon:CreateAbilitieList()
 
@@ -191,6 +246,10 @@ function GwentAddon:CreateAbilitieList()
 	table.insert(GwentAddon.Abilities, Ability("Muster", false, "AbilityMuster", function(card, list, deck, pos, area) AbilityMuster(card, list, deck, pos, area) end, true)); -- NYI
 	table.insert(GwentAddon.Abilities, Ability("Agile", false, "AbilityAgile", function(card, list, deck)  end));
 	table.insert(GwentAddon.Abilities, Ability("Scorch", false, "AbilityScorch", function(card, list, deck) AbilityScorch(card, list) end, true));
+	table.insert(GwentAddon.Abilities, Ability("Biting Frost", false, "AbilityBitingFrost", function(card, list, deck) AbilityBitingFrost(card, list, deck) end, true));
+	table.insert(GwentAddon.Abilities, Ability("Impenetrable Fog", false, "AbilityImpenetrableFog", function(card, list, deck) AbilityImpenetrableFog(card, list, deck) end, true));
+	table.insert(GwentAddon.Abilities, Ability("Torrential Rain", false, "AbilityTorrentialRain", function(card, list, deck) AbilityTorrentialRain(card, list, deck) end, true));
+	table.insert(GwentAddon.Abilities, Ability("Clear Weather", false, "AbilityClearWeather", function(card, list, deck) AbilityClearWeather(card, list, deck) end, true));
 		
 	for k, v in ipairs(GwentAddon.Abilities) do
 		v.Id = k

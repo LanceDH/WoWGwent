@@ -11,18 +11,21 @@ only move cards if hover over right area
 
 
 Weather effects
-- Biting Frost
+x Biting Frost
 	Set strength of all melee to 1
 	
-- Impenetrable Fog
+x Impenetrable Fog
 	Set strength of all ranged to 1
 	
-- Torrential Rain
+x Torrential Rain
 	Set strength of all siege to 1
 	
-- Clear Weather
+x Clear Weather
 	Remove all weather cards
 
+Prevent playing a weather cards when the same one is already active
+Prevent weather effecting hero cards
+Change card display for special cards
 	
 	
 Abilities
@@ -48,3 +51,5 @@ x Scorch
 	Kill the strongest card(s) on the battlefield
 	Find highest strength in all rows
 	Kill all cards with that strength
+
+Prevent abilities from effecting hero cards

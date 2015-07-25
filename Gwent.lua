@@ -45,6 +45,7 @@ local COORDS_SMALLCARD = {["left"]=76/256, ["right"]=244/256, ["top"]=30/512, ["
 
 GwentAddon.messages = {["placeInArea"] = "#%s#%d#%d"
 						,["scorch"] = "Scorch: "
+						,["ability"] = "Ability: "
 						,["challenge"] = "It's time to du du du duel"
 						--,["challenge"] = "fuck"
 						,["logout"] = "logged out"
@@ -61,6 +62,7 @@ GwentAddon.messages = {["placeInArea"] = "#%s#%d#%d"
 	local TEXT_SIEGE = "siege"
 	local TEXT_RANGED = "ranged"
 	local TEXT_MELEE = "melee"
+	local TEXT_WEATHER = "weather"
 
 GwentAddon.cardPool = {}
 
@@ -76,7 +78,8 @@ GwentAddon.lists = {["playerHand"] = {}
 					,["enemyHand"] = {}
 					,["enemySiege"] = {}
 					,["enemyRanged"] = {}
-					,["enemyMelee"] = {}}
+					,["enemyMelee"] = {}
+					,["weather"] = {}}
 					
 GwentAddon.areas = {["playerHand"] = {}
 					,["playerSiege"] = {}
@@ -87,7 +90,8 @@ GwentAddon.areas = {["playerHand"] = {}
 					,["enemyHand"] = {}
 					,["enemySiege"] = {}
 					,["enemyRanged"] = {}
-					,["enemyMelee"] = {}}
+					,["enemyMelee"] = {}
+					,["weather"] = {}}
 
 --local _PlayerGraveyard = {}
 local _DraggedCard = nil
@@ -202,6 +206,8 @@ function GwentAddon:PlaceCardsOnFrame(list, frame)
 	frame.cardContainer:SetWidth(0)
 
 	for k, card in ipairs(list) do
+		
+	
 		card.frame:ClearAllPoints()
 		card.frame:SetParent(frame)
 		-- reset spacing when not draggin a card around
@@ -210,14 +216,11 @@ function GwentAddon:PlaceCardsOnFrame(list, frame)
 			card.rightSpacing = 0
 		end
 		
-		--(k-1)*GwentAddon.NUM_CARD_WIDTH
-		
 		if card.leftSpacing > 0 then distance = distance + card.leftSpacing end
 		card.frame:SetPoint("left", frame.cardContainer , "left",distance , 0)
 		if card.rightSpacing > 0 then distance = distance + card.rightSpacing end
 		-- Change inset for mouseover
 		card.frame:SetHitRectInsets(-card.leftSpacing, -card.rightSpacing, 0, 0)
-		--print(card.frame:GetName(), card.frame:GetHitRectInsets())
 		
 		card.frame:SetWidth(GwentAddon.NUM_CARD_WIDTH)
 		card.frame:SetHeight(GwentAddon.NUM_CARD_HEIGHT)
@@ -226,14 +229,26 @@ function GwentAddon:PlaceCardsOnFrame(list, frame)
 
 		-- reset the strength
 		card.data.calcStrength = card.data.strength
+		card.data.weatherStrength = card.data.strength
 		card:UpdateCardStrength()
 	end
+	
+	-- change strength if there is weather active
+	if list ~= GwentAddon.lists.playerHand and list ~= GwentAddon.lists.graveyard 
+			and frame.weather ~= nil and frame.weather:IsShown() then
+		for k, card in ipairs(list) do
+			card.data.calcStrength = 1
+			card.data.weatherStrength = 1
+			card:UpdateCardStrength()
+		end
+	end
+			
 	
 	-- use abilities but not when it's the player's hand or graveyard
 	if list ~= GwentAddon.lists.playerHand and list ~= GwentAddon.lists.graveyard then
 		for k, card in ipairs(list) do
+		
 			if card.data.ability and not card.data.ability.isOnPlay then
-				--print(k)
 				
 				card.data.ability.funct(card, list, GwentAddon.lists.playDeck, k)
 			end
@@ -371,7 +386,7 @@ function GwentAddon:SetCardTooltip(card)
 	if ( card.data.calcStrength > card.data.strength ) then -- buffed
 		tp.strength:SetTextColor(0.2, 1, 0.2)
 	elseif ( card.data.calcStrength < card.data.strength ) then -- nerfed
-		tp.strength:SetTextColor(1, 0.7, 0.7)
+		tp.strength:SetTextColor(1, 0.0, 0.0)
 	end
 	
 	
@@ -793,6 +808,10 @@ local function CreatePlayField(parent)
 	return parent.playField
 end
 
+local function CreateBorderTextures(parent)
+
+end
+
 -- Create a frame for a players' portair, total point, name, faction and live points
 local function CreatePlayerDisplay(parent, xPos, yPos, name)
 	local collection = {}
@@ -1126,8 +1145,10 @@ local function CreatePlayFrame()
 	PlayFrame.weather = CreateFrame("frame", addonName.."Weather", playfield)
 	--GwentAddon.areas.playerHand = PlayFrame.playerHand
 	PlayFrame.weather:SetPoint("right", sidebar, "right", -30, 0)
-	PlayFrame.weather:SetHeight(GwentAddon.NUM_CARD_HEIGHT)
-	PlayFrame.weather:SetWidth(GwentAddon.NUM_CARD_WIDTH * 3)
+	PlayFrame.weather:SetHeight(GwentAddon.NUM_CARD_HEIGHT+4)
+	PlayFrame.weather:SetWidth(GwentAddon.NUM_CARD_WIDTH * 3+4)
+	
+	GwentAddon.areas.weather = PlayFrame.weather
 	
 	PlayFrame.weather.bg = PlayFrame.weather:CreateTexture(addonName.."WeatherBG")
 	PlayFrame.weather.bg:SetTexture(TEXTURE_CARD_BG)
@@ -1136,11 +1157,6 @@ local function CreatePlayFrame()
 	PlayFrame.weather.bg:SetPoint("bottomright", PlayFrame.weather)
 	
 	GwentAddon:CreateInnerShadow(PlayFrame.weather, 0.5)
-	-- PlayFrame.playerHand:SetBackdrop({bgFile = TEXTURE_CARD_DARKEN,
-      -- edgeFile = nil,
-	  -- tileSize = 0, edgeSize = 16,
-      -- insets = { left = 0, right = 0, top = 0, bottom = 0 }
-	  -- })
 	  
 	PlayFrame.weather.cardContainer = CreateFrame("frame", addonName.."WeatherContainer", PlayFrame.weather)
 	PlayFrame.weather.cardContainer:SetPoint("center", PlayFrame.weather)
@@ -1360,6 +1376,35 @@ local function CreatePlayFrame()
 	return PlayFrame
 end
 
+-- Show or hide weather overlays
+function GwentAddon:ChangeWeatherOverlay(name, show)	
+	if name == TEXT_MELEE then
+		if show then
+			GwentAddon:GetAreaByName("playerMelee").weather:Show()
+			GwentAddon:GetAreaByName("enemyMelee").weather:Show()
+		else
+			GwentAddon:GetAreaByName("playerMelee").weather:Hide()
+			GwentAddon:GetAreaByName("enemyMelee").weather:Hide()
+		end
+	elseif name == TEXT_RANGED then
+		if show then
+			GwentAddon:GetAreaByName("playerRanged").weather:Show()
+			GwentAddon:GetAreaByName("enemyRanged").weather:Show()
+		else
+			GwentAddon:GetAreaByName("playerRanged").weather:Hide()
+			GwentAddon:GetAreaByName("enemyRanged").weather:Hide()
+		end
+	elseif name == TEXT_SIEGE then
+		if show then
+			GwentAddon:GetAreaByName("playerSiege").weather:Show()
+			GwentAddon:GetAreaByName("enemySiege").weather:Show()
+		else
+			GwentAddon:GetAreaByName("playerSiege").weather:Hide()
+			GwentAddon:GetAreaByName("enemySiege").weather:Hide()
+		end
+	end
+end
+
 local function IsRightTypeForArea(card, areaType)
 	for k, v in pairs(card.data.cardType) do
 		if k == areaType then
@@ -1376,10 +1421,11 @@ function GwentAddon:MouseIsOverFrame(frame)
 	local s = frame:GetEffectiveScale();
 	mouseX, mouseY = mouseX/s, mouseY/s
 
+	
+	
 	if mouseX > left and mouseX < left + width and mouseY > bottom and mouseY < bottom + height then
 		return true
 	end
-	
 	return false
 	
 end
@@ -1409,21 +1455,26 @@ end
 -- Tries to drop a card.
 -- If successful returns true, the name of the area and the position in list it was added
 function GwentAddon:DropCardArea(card)
+	
 	if GwentAddon:MouseIsOverFrame(GwentAddon.playFrame.playerSiege) and IsRightTypeForArea(card, TEXT_SIEGE) then
-		
 		local pos, list = GwentAddon.cards:AddCardToNewList(card, "playerSiege")
 		GwentAddon.cards:RemoveCardFromHand(card)
 		return true, TEXT_SIEGE, pos, list
-	elseif GwentAddon:MouseIsOverFrame(GwentAddon.playFrame.playerRanged) and IsRightTypeForArea(card, TEXT_RANGED) then
 		
+	elseif GwentAddon:MouseIsOverFrame(GwentAddon.playFrame.playerRanged) and IsRightTypeForArea(card, TEXT_RANGED) then
 		local pos, list = GwentAddon.cards:AddCardToNewList(card, "playerRanged")
 		GwentAddon.cards:RemoveCardFromHand(card)
 		return true, TEXT_RANGED, pos, list
 	elseif GwentAddon:MouseIsOverFrame(GwentAddon.playFrame.playerMelee) and IsRightTypeForArea(card, TEXT_MELEE) then
-		
 		local pos, list = GwentAddon.cards:AddCardToNewList(card, "playerMelee")
 		GwentAddon.cards:RemoveCardFromHand(card)
 		return true, TEXT_MELEE, pos, list
+	
+	elseif GwentAddon:MouseIsOverFrame(GwentAddon.playFrame.weather) and IsRightTypeForArea(card, TEXT_WEATHER) then
+		local pos, list = GwentAddon.cards:AddCardToNewList(card, "weather")
+		GwentAddon.cards:RemoveCardFromHand(card)
+		return true, TEXT_WEATHER, pos, list	
+	
 	end
 	return false
 end
@@ -1499,7 +1550,10 @@ function GwentAddon:ResetGame()
 	
 	
 	GwentAddon:ChangeState(GwentAddon.states.noGame)
-	
+	GwentAddon:ChangeWeatherOverlay("melee", false)
+	GwentAddon:ChangeWeatherOverlay("ranged", false)
+	GwentAddon:ChangeWeatherOverlay("siege", false)
+	GwentAddon:DestroyCardsInList(GwentAddon.lists.weather)
 	
 
 	local pf = GwentAddon.playFrame
@@ -1564,6 +1618,12 @@ function GwentAddon:StartNewRound()
 	GwentAddon:PlaceAllCards()
 	_DraggedCard = nil
 	_DragginOverFrame = nil
+	
+	
+	GwentAddon:ChangeWeatherOverlay("melee", false)
+	GwentAddon:ChangeWeatherOverlay("ranged", false)
+	GwentAddon:ChangeWeatherOverlay("siege", false)
+	GwentAddon:DestroyCardsInList(GwentAddon.lists.weather)
 	
 	-- Get a new deck of cards
 	--GwentAddon.lists.playDeck = GwentAddon.DeckB(GwentAddon.lists.baseDeck.leader.Id,  GwentAddon.lists.baseDeck.cards)
@@ -1657,11 +1717,6 @@ function Gwent_EventFrame:CHAT_MSG_ADDON(prefix, message, channel, sender)
 		return
 	end
 	
-	--print(message)
-	--print(GwentAddon.messages.challenge)
-	--print(string.find(message, GwentAddon.messages.challenge))
-	--GwentAddon:DEBUGMessageSent(message, sender)
-	
 	if message == TEXT_ADDONMSG_RECIEVED then
 		return
 	end
@@ -1669,7 +1724,6 @@ function Gwent_EventFrame:CHAT_MSG_ADDON(prefix, message, channel, sender)
 	-- Scorch
 	if string.find(message, GwentAddon.messages.scorch) then
 		local str = string.match(message,  GwentAddon.messages.scorch.."(%d+)")
-		print(str)
 		GwentAddon:ScorchCards(str)
 	end
 	
@@ -1784,6 +1838,13 @@ function Gwent_EventFrame:CHAT_MSG_ADDON(prefix, message, channel, sender)
 		end
 	end
 	
+	-- ability
+	if string.find(message, GwentAddon.messages.ability) then
+		local name = string.sub(message, select(2, string.find(message, GwentAddon.messages.ability))+1, string.len(message))
+		GwentAddon:GetAbilitydataByName(name).funct()
+		GwentAddon:PlaceAllCards()
+	end
+	
 end
 
 function Gwent_EventFrame:ADDON_LOADED(ADDON_LOADED)
@@ -1799,7 +1860,7 @@ function Gwent_EventFrame:ADDON_LOADED(ADDON_LOADED)
 	
 	if GetUnitName("player", false) == "Gortoch" then
 		-- GwentAddon.lists.baseDeck = GwentAddon:CreateTestDeck("Scoia’tael")
-		GwentAddon.lists.baseDeck = GwentAddon:CreateTestDeck("Monster")
+		GwentAddon.lists.baseDeck = GwentAddon:CreateTestDeck("Northern Realms")
 	else
 		GwentAddon.lists.baseDeck = GwentAddon:CreateTestDeck("Northern Realms")
 	end
