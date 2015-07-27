@@ -1,3 +1,5 @@
+Current # cards: 189
+
 Prevent challenging if already in a game
 
 Deck creation
@@ -5,9 +7,14 @@ Deck creation
 - Add card
 - Remove card
 
+
+Leader cards
+
 Add Special cards
 
-only move cards if hover over right area
+
+x only move cards if hover over right area
+
 
 
 Weather effects
@@ -24,13 +31,18 @@ x Clear Weather
 	Remove all weather cards
 
 Prevent playing a weather cards when the same one is already active
-Prevent weather effecting hero cards
+x Prevent weather effecting hero cards
 Change card display for special cards
 	
 	
 Abilities
 - Spy 
 	place on opponent field and draw 2 cards
+	x draw 2 cards
+	x remove card on your end
+	x put card on opponent end
+	- card on your end destroyed = put in enemy graveyard
+	x If enemy plays a spy and you play the same one things fuck up because same id
 
 x Tight Bond 
 	Place next to same name card to double the strength
@@ -53,3 +65,5 @@ x Scorch
 	Kill all cards with that strength
 
 Prevent abilities from effecting hero cards
+x morale boost
+x scorch

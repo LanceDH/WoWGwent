@@ -237,9 +237,12 @@ function GwentAddon:PlaceCardsOnFrame(list, frame)
 	if list ~= GwentAddon.lists.playerHand and list ~= GwentAddon.lists.graveyard 
 			and frame.weather ~= nil and frame.weather:IsShown() then
 		for k, card in ipairs(list) do
-			card.data.calcStrength = 1
-			card.data.weatherStrength = 1
-			card:UpdateCardStrength()
+			if not card.data.cardType.hero then
+				card.data.calcStrength = 1
+				card.data.weatherStrength = 1
+				card:UpdateCardStrength()
+			end
+
 		end
 	end
 			
@@ -272,16 +275,12 @@ end
 
 -- Updates to borders of player's total points depending on highest total
 function GwentAddon:UpdateTotalBorders(playerPoints, enemyPoints)
-	-- GwentAddon.playFrame.playerTotal:SetTexture(TEXTURE_TOTAL_BORDERNORMAL)
-	-- GwentAddon.playFrame.enemyTotal:SetTexture(TEXTURE_TOTAL_BORDERNORMAL)
 	GwentAddon.playFrame.player.total.border:Hide()
 	GwentAddon.playFrame.enemy.total.border:Hide()
 	
 	if playerPoints > enemyPoints  then
-		-- GwentAddon.playFrame.playerTotal:SetTexture(TEXTURE_TOTAL_BORDERWINNING)
 		GwentAddon.playFrame.player.total.border:Show()
 	elseif enemyPoints > playerPoints then
-		-- GwentAddon.playFrame.enemyTotal:SetTexture(TEXTURE_TOTAL_BORDERWINNING)
 		GwentAddon.playFrame.enemy.total.border:Show()
 	end
 	
@@ -502,6 +501,12 @@ function GwentAddon:GetCardlistMouseOver()
 		return GwentAddon.lists.playerRanged, GwentPlayFrame.playerRanged
 	elseif GwentAddon:MouseIsOverFrame(GwentPlayFrame.playerMelee) then
 		return GwentAddon.lists.playerMelee, GwentPlayFrame.playerMelee
+	elseif GwentAddon:MouseIsOverFrame(GwentPlayFrame.enemySiege) then
+		return GwentAddon.lists.enemySiege, GwentPlayFrame.enemySiege
+	elseif GwentAddon:MouseIsOverFrame(GwentPlayFrame.enemyRanged) then
+		return GwentAddon.lists.enemyRanged, GwentPlayFrame.enemyRanged
+	elseif GwentAddon:MouseIsOverFrame(GwentPlayFrame.enemyMelee) then
+		return GwentAddon.lists.enemyMelee, GwentPlayFrame.enemyMelee
 	end
 	
 	return nil
@@ -920,6 +925,12 @@ local function CreatePlayerDisplay(parent, xPos, yPos, name)
 	return collection
 end
 
+local function IsSpyArea(ability, area)
+	if not ability or ability.name ~= "Spy" then return not area.isEnemy end
+
+	return area.isEnemy
+end
+
 local function CreatePlayFrame()
 
 	GwentAddon.draggingOver.timer = 0
@@ -938,9 +949,14 @@ local function CreatePlayFrame()
 		GwentAddon.draggingOver.mouseX, GwentAddon.draggingOver.mouseY = 0, 0
 			
 			GwentAddon.draggingOver.list, GwentAddon.draggingOver.area = GwentAddon:GetCardlistMouseOver()
-			--GwentAddon.draggingOver.card = GwentAddon:GetCardMouseOverInLisT(GwentAddon.draggingOver.list)
 			GwentAddon.draggingOver.mouseX, GwentAddon.draggingOver.mouseY = GetCursorPosition()
-			if GwentAddon.draggingOver.list ~= nil then
+			
+			if GwentAddon.draggingOver.area == nil then 
+				GwentAddon.draggingOver.timer = 0
+				return
+			end
+
+			if GwentAddon:IsRightTypeForArea(GwentAddon.cards.draggedCard, GwentAddon.draggingOver.area.type) and IsSpyArea(GwentAddon.cards.draggedCard.data.ability, GwentAddon.draggingOver.area)	then
 				for k, card in pairs(GwentAddon.draggingOver.list) do
 					if GwentAddon.cards:UpdateCardSpaceing(card, GwentAddon.draggingOver.mouseX, GwentAddon.draggingOver.mouseY) then
 						GwentAddon.draggingOver.card = card
@@ -948,11 +964,6 @@ local function CreatePlayFrame()
 				end
 				GwentAddon:PlaceCardsOnFrame(GwentAddon.draggingOver.list, GwentAddon.draggingOver.area)
 			end
-			-- safety to not lose card
-			-- if overCard ~= nil then
-				-- GwentAddon.cards:UpdateCardSpaceing(GwentAddon.draggingOver.card, GwentAddon.draggingOver.mouseX, GwentAddon.draggingOver.mouseY)
-				-- GwentAddon:PlaceCardsOnFrame(GwentAddon.draggingOver.list, GwentAddon.draggingOver.area)
-			-- end
 			GwentAddon.draggingOver.timer = 0
 		end
 		end)
@@ -1262,14 +1273,20 @@ local function CreatePlayFrame()
 	  
 	-- player siege
 	PlayFrame.playerSiege = CreateCardArea("playerSiege", PlayFrame, TEXTURE_TYPE_SIEGE, TEXTURE_WEATHER_RAIN)
+	PlayFrame.playerSiege.type = "siege"
+	PlayFrame.playerSiege.isEnemy = false
 	GwentAddon.areas.playerSiege = PlayFrame.playerSiege
 	PlayFrame.playerSiege:SetPoint("bottom", PlayFrame.playerHand, "top", 0, 6) 
 	-- player ranged
 	PlayFrame.playerRanged = CreateCardArea("playerRanged", PlayFrame, TEXTURE_TYPE_RANGED, TEXTURE_WEATHER_FOG)
+	PlayFrame.playerRanged.type = "ranged"
+	PlayFrame.playerRanged.isEnemy = false
 	GwentAddon.areas.playerRanged = PlayFrame.playerRanged
 	PlayFrame.playerRanged:SetPoint("bottom", PlayFrame.playerSiege, "top", 0, 6)  
 	-- player melee
 	PlayFrame.playerMelee = CreateCardArea("playerMelee", PlayFrame, TEXTURE_TYPE_MELEE, TEXTURE_WEATHER_FROST)
+	PlayFrame.playerMelee.type = "melee"
+	PlayFrame.playerMelee.isEnemy = false
 	GwentAddon.areas.playerMelee = PlayFrame.playerMelee
 	PlayFrame.playerMelee:SetPoint("bottom", PlayFrame.playerRanged, "top", 0, 6)
 	
@@ -1362,14 +1379,20 @@ local function CreatePlayFrame()
 	  
 	-- enemy siege
 	PlayFrame.enemySiege = CreateCardArea("enemyRanged", PlayFrame, TEXTURE_TYPE_SIEGE, TEXTURE_WEATHER_RAIN)
+	PlayFrame.enemySiege.type = "siege"
+	PlayFrame.enemySiege.isEnemy = true
 	GwentAddon.areas.enemySiege = PlayFrame.enemySiege
 	PlayFrame.enemySiege:SetPoint("top", PlayFrame.enemyHand, "bottom", 0, -6) 
 	-- enemy ranged
 	PlayFrame.enemyRanged = CreateCardArea("enemyRanged", PlayFrame, TEXTURE_TYPE_RANGED, TEXTURE_WEATHER_FOG)
+	PlayFrame.enemyRanged.type = "ranged"
+	PlayFrame.enemyRanged.isEnemy = true
 	GwentAddon.areas.enemyRanged = PlayFrame.enemyRanged
 	PlayFrame.enemyRanged:SetPoint("top", PlayFrame.enemySiege, "bottom", 0, -6)  
 	-- enemy melee
 	PlayFrame.enemyMelee = CreateCardArea("enemyMelee", PlayFrame, TEXTURE_TYPE_MELEE, TEXTURE_WEATHER_FROST)
+	PlayFrame.enemyMelee.type = "melee"
+	PlayFrame.enemyMelee.isEnemy = true
 	GwentAddon.areas.enemyMelee = PlayFrame.enemyMelee
 	PlayFrame.enemyMelee:SetPoint("top", PlayFrame.enemyRanged, "bottom", 0, -6)
 
@@ -1405,7 +1428,7 @@ function GwentAddon:ChangeWeatherOverlay(name, show)
 	end
 end
 
-local function IsRightTypeForArea(card, areaType)
+function GwentAddon:IsRightTypeForArea(card, areaType)
 	for k, v in pairs(card.data.cardType) do
 		if k == areaType then
 			return v
@@ -1433,7 +1456,7 @@ end
 -- Get a list by name
 function GwentAddon:GetListByName(name)
 	for k, v in pairs(GwentAddon.lists) do
-		if k == name then
+		if k:lower() == name:lower() then
 			return v
 		end
 	end
@@ -1444,7 +1467,7 @@ end
 -- Get a play area by name
 function GwentAddon:GetAreaByName(name)
 	for k, v in pairs(GwentAddon.areas) do
-		if k == name then
+		if k:lower() == name:lower() then
 			return v
 		end
 	end
@@ -1456,25 +1479,45 @@ end
 -- If successful returns true, the name of the area and the position in list it was added
 function GwentAddon:DropCardArea(card)
 	
-	if GwentAddon:MouseIsOverFrame(GwentAddon.playFrame.playerSiege) and IsRightTypeForArea(card, TEXT_SIEGE) then
-		local pos, list = GwentAddon.cards:AddCardToNewList(card, "playerSiege")
-		GwentAddon.cards:RemoveCardFromHand(card)
-		return true, TEXT_SIEGE, pos, list
+	-- Check spy cards over enemy areas first
+	if card.data.ability ~= nil and card.data.ability.name == "Spy" then
+		if GwentAddon:MouseIsOverFrame(GwentAddon.playFrame.enemySiege) and GwentAddon:IsRightTypeForArea(card, TEXT_SIEGE) then
+			local pos, list = GwentAddon.cards:AddCardToNewList(card, "enemySiege")
+			GwentAddon.cards:RemoveCardFromHand(card)
+			return true, TEXT_SIEGE, pos, list	
+		elseif GwentAddon:MouseIsOverFrame(GwentAddon.playFrame.enemyRanged) and GwentAddon:IsRightTypeForArea(card, TEXT_RANGED) then
+			local pos, list = GwentAddon.cards:AddCardToNewList(card, "enemyRanged")
+			GwentAddon.cards:RemoveCardFromHand(card)
+			return true, TEXT_RANGED, pos, list	
+		elseif GwentAddon:MouseIsOverFrame(GwentAddon.playFrame.enemyMelee) and GwentAddon:IsRightTypeForArea(card, TEXT_MELEE) then
+			local pos, list = GwentAddon.cards:AddCardToNewList(card, "enemyMelee")
+			GwentAddon.cards:RemoveCardFromHand(card)
+			return true, TEXT_MELEE, pos, list	
+		end
+	
+	-- If not a spy card check player ares
+	else
+		if GwentAddon:MouseIsOverFrame(GwentAddon.playFrame.playerSiege) and GwentAddon:IsRightTypeForArea(card, TEXT_SIEGE) then
+			local pos, list = GwentAddon.cards:AddCardToNewList(card, "playerSiege")
+			GwentAddon.cards:RemoveCardFromHand(card)
+			return true, TEXT_SIEGE, pos, list
+			
+		elseif GwentAddon:MouseIsOverFrame(GwentAddon.playFrame.playerRanged) and GwentAddon:IsRightTypeForArea(card, TEXT_RANGED) then
+			local pos, list = GwentAddon.cards:AddCardToNewList(card, "playerRanged")
+			GwentAddon.cards:RemoveCardFromHand(card)
+			return true, TEXT_RANGED, pos, list
+		elseif GwentAddon:MouseIsOverFrame(GwentAddon.playFrame.playerMelee) and GwentAddon:IsRightTypeForArea(card, TEXT_MELEE) then
+			local pos, list = GwentAddon.cards:AddCardToNewList(card, "playerMelee")
+			GwentAddon.cards:RemoveCardFromHand(card)
+			return true, TEXT_MELEE, pos, list
 		
-	elseif GwentAddon:MouseIsOverFrame(GwentAddon.playFrame.playerRanged) and IsRightTypeForArea(card, TEXT_RANGED) then
-		local pos, list = GwentAddon.cards:AddCardToNewList(card, "playerRanged")
-		GwentAddon.cards:RemoveCardFromHand(card)
-		return true, TEXT_RANGED, pos, list
-	elseif GwentAddon:MouseIsOverFrame(GwentAddon.playFrame.playerMelee) and IsRightTypeForArea(card, TEXT_MELEE) then
-		local pos, list = GwentAddon.cards:AddCardToNewList(card, "playerMelee")
-		GwentAddon.cards:RemoveCardFromHand(card)
-		return true, TEXT_MELEE, pos, list
-	
-	elseif GwentAddon:MouseIsOverFrame(GwentAddon.playFrame.weather) and IsRightTypeForArea(card, TEXT_WEATHER) then
-		local pos, list = GwentAddon.cards:AddCardToNewList(card, "weather")
-		GwentAddon.cards:RemoveCardFromHand(card)
-		return true, TEXT_WEATHER, pos, list	
-	
+		elseif GwentAddon:MouseIsOverFrame(GwentAddon.playFrame.weather) and GwentAddon:IsRightTypeForArea(card, TEXT_WEATHER) then
+			local pos, list = GwentAddon.cards:AddCardToNewList(card, "weather")
+			GwentAddon.cards:RemoveCardFromHand(card)
+			return true, TEXT_WEATHER, pos, list	
+			
+		
+		end
 	end
 	return false
 end
@@ -1840,8 +1883,13 @@ function Gwent_EventFrame:CHAT_MSG_ADDON(prefix, message, channel, sender)
 	
 	-- ability
 	if string.find(message, GwentAddon.messages.ability) then
-		local name = string.sub(message, select(2, string.find(message, GwentAddon.messages.ability))+1, string.len(message))
-		GwentAddon:GetAbilitydataByName(name).funct()
+		local name = string.match(message, "Ability: (%a+)#?")
+		
+		if name == "Spy" then
+			GwentAddon:ChangeState(GwentAddon.states.playerTurn)
+		end
+		-- local name = string.sub(message, select(2, string.find(message, GwentAddon.messages.ability))+1, string.len(message))
+		GwentAddon:GetAbilitydataByName(name).funct(nil, nil, nil, message)
 		GwentAddon:PlaceAllCards()
 	end
 	

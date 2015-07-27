@@ -150,6 +150,7 @@ local function debug_updatext()
 		text = text .. "player lives: " .. GwentAddon.playerLives.count .."\n"
 		text = text .. "enemy lives: " .. GwentAddon.enemyLives.count .."\n"
 		text = text .. "# mouseover list: \n  " .. (GwentAddon.draggingOver.list == nil and "none" or #GwentAddon.draggingOver.list) .."\n"
+		text = text .. "# cardPool: " .. #GwentAddon.cardPool .."\n"
 		--text = text .. "mouse over card: " .. (GwentAddon.draggingOver.card == nil and "" or GwentAddon.draggingOver.card.nr).."\n  " .. (GwentAddon.draggingOver.card == nil and "none" or  round(GwentAddon.draggingOver.card.leftSpacing, 2) .. " - " .. round(GwentAddon.draggingOver.card.rightSpacing, 2)) .."\n"
 		
 		GwentDEBUGVariables.text:SetText(text)
