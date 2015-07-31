@@ -44,7 +44,6 @@ local COORDS_ICON_SIEGE = {["x"]=64*3, ["y"]=64*7}
 local COORDS_SMALLCARD = {["left"]=76/256, ["right"]=244/256, ["top"]=30/512, ["bottom"]=300/512}
 
 GwentAddon.messages = {["placeInArea"] = "#%s#%d#%d"
-						,["scorch"] = "Scorch: "
 						,["ability"] = "Ability: "
 						,["challenge"] = "It's time to du du du duel"
 						--,["challenge"] = "fuck"
@@ -57,7 +56,8 @@ GwentAddon.messages = {["placeInArea"] = "#%s#%d#%d"
 						,["discarded"] = "Done discarding"
 						,["start"] = "start: "
 						,["placeCard"] = "enemyCard"
-						,["leader"] = "leader: "}
+						,["leader"] = "leader: "
+						,["endTurn"] = "Your turn"}
 
 	local TEXT_SIEGE = "siege"
 	local TEXT_RANGED = "ranged"
@@ -197,6 +197,20 @@ function GwentAddon:CheckBattleWinner()
 	return false
 end    
 
+function GwentAddon:RowHasCommander(list , frame)
+	if frame.commander.card.frame:IsShown() then 
+		return true 
+	end
+
+	for k, c in ipairs(list) do
+		if c.data.ability and c.data.ability.name == "CommandersHorn" then
+			return true
+		end	
+	end
+	
+	return false
+end
+
 -- Place all cards from a list on a frame
 -- TODO: Change to require name
 function GwentAddon:PlaceCardsOnFrame(list, frame)
@@ -237,7 +251,7 @@ function GwentAddon:PlaceCardsOnFrame(list, frame)
 	if list ~= GwentAddon.lists.playerHand and list ~= GwentAddon.lists.graveyard 
 			and frame.weather ~= nil and frame.weather:IsShown() then
 		for k, card in ipairs(list) do
-			if not card.data.cardType.hero then
+			if not card.data.cardType.hero and card.data.calcStrength > 0 then
 				card.data.calcStrength = 1
 				card.data.weatherStrength = 1
 				card:UpdateCardStrength()
@@ -247,17 +261,40 @@ function GwentAddon:PlaceCardsOnFrame(list, frame)
 	end
 			
 	
-	-- use abilities but not when it's the player's hand or graveyard
+	-- Abilities, weather and commander
 	if list ~= GwentAddon.lists.playerHand and list ~= GwentAddon.lists.graveyard then
+	
+		-- change strength if there is weather active
+		if frame.weather ~= nil and frame.weather:IsShown() then
+			for k, card in ipairs(list) do
+				if not card.data.cardType.hero and card.data.calcStrength > 0 then
+					card.data.calcStrength = 1
+					card.data.weatherStrength = 1
+					card:UpdateCardStrength()
+				end
+			end
+		end
+	
+		-- Apply abilities
 		for k, card in ipairs(list) do
-		
 			if card.data.ability and not card.data.ability.isOnPlay then
-				
 				card.data.ability.funct(card, list, GwentAddon.lists.playDeck, k)
 			end
-		
 		end
+		
+		-- Apply Commander's Horn
+		if frame.commander and GwentAddon:RowHasCommander(list, frame) then
+			for k, card in ipairs(list) do
+				if not card.data.cardType.hero then
+					card.data.calcStrength = card.data.calcStrength * 2
+					card:UpdateCardStrength()
+				end
+			end
+		end
+		
 	end
+	
+	
 	
 	-- count row points
 	for k, card in ipairs(list) do
@@ -309,14 +346,37 @@ end
 function GwentAddon:DiscardCardsInList(list)
 
 	for k, card in pairs(list) do
-		GwentAddon.cards:AddCardToNewList(card, "graveyard")
-		GwentAddon:ChangeGraveyardDisplay(card.data.texture)
-		--table.insert(GwentAddon.cardPool, card.frame)
-		--card.frame:Hide()
+		-- if card.data.cardType.hero or card.data.cardType.special or card.data.cardType.weather then
+			-- table.insert(GwentAddon.cardPool, card.frame)
+			-- card.frame:Hide()
+		-- else 
+			GwentAddon.cards:AddCardToNewList(card, "graveyard")
+			GwentAddon:ChangeGraveyardDisplay(card.data.texture)
+		-- end
+
 		list[k] = nil
 	end
 	
 	list = {}
+end
+
+function GwentAddon:DiscardCardFromList(card, name)
+	local list = GwentAddon:GetListByName(name)
+	local lCard = nil
+	for i = #list, 1, -1 do
+		lCard = list[i]
+		if card.data.Id == lCard.data.Id then
+			table.remove(list, i)
+			-- if card.data.cardType.hero or card.data.cardType.special or card.data.cardType.weather then
+				-- table.insert(GwentAddon.cardPool, card.frame)
+				-- card.frame:Hide()
+			-- else 
+				GwentAddon.cards:AddCardToNewList(card, "graveyard")
+				GwentAddon:ChangeGraveyardDisplay(card.data.texture)
+			-- end
+			return
+		end
+	end
 end
 
 -- Show the mouse over tooltip for a card
@@ -348,7 +408,7 @@ function GwentAddon:SetCardTooltip(card)
 	tp.strength:SetTextColor(vc, vc, vc)
 	tp.texture:SetTexture(TEXTURE_CUSTOM_PATH..card.data.texture)
 	
-	if not card.data.cardType.leader then
+	if not card.data.cardType.leader and not card.data.cardType.weather and not card.data.cardType.special then
 		tp.strength:Show()
 		tp.strengthBG:Show()
 	end
@@ -496,17 +556,17 @@ end
 -- Get the list and area the mouse is currently hovering over
 function GwentAddon:GetCardlistMouseOver()
 	if GwentAddon:MouseIsOverFrame(GwentPlayFrame.playerSiege) then
-		return GwentAddon.lists.playerSiege, GwentPlayFrame.playerSiege
+		return GwentAddon.lists.playerSiege, GwentPlayFrame.playerSiege, "playerSiege"
 	elseif GwentAddon:MouseIsOverFrame(GwentPlayFrame.playerRanged) then
-		return GwentAddon.lists.playerRanged, GwentPlayFrame.playerRanged
+		return GwentAddon.lists.playerRanged, GwentPlayFrame.playerRanged, "playerRanged"
 	elseif GwentAddon:MouseIsOverFrame(GwentPlayFrame.playerMelee) then
-		return GwentAddon.lists.playerMelee, GwentPlayFrame.playerMelee
+		return GwentAddon.lists.playerMelee, GwentPlayFrame.playerMelee, "playerMelee"
 	elseif GwentAddon:MouseIsOverFrame(GwentPlayFrame.enemySiege) then
-		return GwentAddon.lists.enemySiege, GwentPlayFrame.enemySiege
+		return GwentAddon.lists.enemySiege, GwentPlayFrame.enemySiege, "enemySiege"
 	elseif GwentAddon:MouseIsOverFrame(GwentPlayFrame.enemyRanged) then
-		return GwentAddon.lists.enemyRanged, GwentPlayFrame.enemyRanged
+		return GwentAddon.lists.enemyRanged, GwentPlayFrame.enemyRanged, "enemyRanged"
 	elseif GwentAddon:MouseIsOverFrame(GwentPlayFrame.enemyMelee) then
-		return GwentAddon.lists.enemyMelee, GwentPlayFrame.enemyMelee
+		return GwentAddon.lists.enemyMelee, GwentPlayFrame.enemyMelee, "enemyMelee"
 	end
 	
 	return nil
@@ -711,7 +771,7 @@ local function CreateCardArea(name, parent, texture, weatherTex)
 	frame.cardContainer:SetHeight(GwentAddon.NUM_CARD_HEIGHT)
 	 
 	frame.commander = CreateFrame("frame", addonName.."PlayFrame_" .. name .."_Commander", parent)
-	frame.commander:SetHeight(GwentAddon.NUM_CARD_HEIGHT)
+	frame.commander:SetHeight(GwentAddon.NUM_CARD_HEIGHT+4)
 	frame.commander:SetWidth(GwentAddon.NUM_CARD_HEIGHT)
 	frame.commander:SetPoint("right", frame, "left", -5, 0)
 	-- frame.commander:SetBackdrop({bgFile = TEXTURE_CARD_BG,
@@ -734,12 +794,16 @@ local function CreateCardArea(name, parent, texture, weatherTex)
 	frame.commander.icon:SetWidth(GwentAddon.NUM_CARD_HEIGHT)
 	frame.commander.icon:SetHeight(GwentAddon.NUM_CARD_HEIGHT)
 	frame.commander.icon:SetPoint("center", frame.commander)
-	  
+	
+	frame.commander.card = GwentAddon:CreateCard(193, GwentAddon.cards)
+	frame.commander.card.frame:ClearAllPoints()
+	frame.commander.card.frame:Hide()
+	frame.commander.card.frame:SetPoint("center", frame.commander)
+	frame.commander.card.frame:SetFrameLevel(frame.commander:GetFrameLevel() + 1) 
+	frame.commander.card.frame:SetScript("OnMouseDown", function(c)  end)
 	frame.points = frame:CreateFontString(nil, nil, "GameFontNormal")
 	frame.points:SetPoint("right", frame.commander, "left", -20, 0)
 	frame.points:SetText(0)
-	
-	
 	
 	frame.icon = frame:CreateTexture(addonName.."PlayFrame_"..name.."_ICON", "art")
 	frame.icon:SetTexture(texture)
@@ -766,13 +830,6 @@ local function CreateSidebar(parent)
 	parent.sideBar = CreateFrame("frame", addonName.."SideBar", parent)
 	parent.sideBar:SetPoint("topleft", parent, "topleft", 23, -22)
 	parent.sideBar:SetPoint("bottomright", parent, "bottomleft", 259, 23)
-	--parent.playerHand:SetHeight(GwentAddon.NUM_CARD_HEIGHT)
-	--parent.playerHand:SetWidth(GwentAddon.NUM_CARD_WIDTH * 10)
-	-- parent.playerHand:SetBackdrop({bgFile = TEXTURE_CARD_DARKEN,
-      -- edgeFile = nil,
-	  -- tileSize = 0, edgeSize = 16,
-      -- insets = { left = 0, right = 0, top = 0, bottom = 0 }
-	  -- })
 	  
 	parent.sideBar.tex = parent.sideBar:CreateTexture(addonName.."SideBarBG", "BACKGROUND")
 	-- parent.sideBar.tex:SetTexture("Interface\\ACHIEVEMENTFRAME\\UI-GuildAchievement-Parchment")
@@ -797,14 +854,10 @@ local function CreatePlayField(parent)
 	parent.playField:SetPoint("bottomright", parent, "bottomright", -23, 23)
 
 	parent.playField.tex = parent.playField:CreateTexture(addonName.."SideBarBG", "BACKGROUND")
-	--parent.playField.tex:SetTexture("Interface\\ACHIEVEMENTFRAME\\UI-GuildAchievement-Parchment")
-	--parent.playField.tex:SetTexture("Interface\\HELPFRAME\\HELPFRAME-BOTTOM", true)
 	parent.playField.tex:SetTexture("Interface\\Garrison\\GarrisonLandingPageMiddleTile", true)
 
-	-- parent.sideBar.tex:SetTexture("Interface\\PETBATTLES\\MountJournal-BG")
 	parent.playField.tex:SetTexCoord(0, 5, 0, 4)
 	parent.playField.tex:SetVertexColor(175/255, 135/255, 90/255)
-	-- parent.playField.tex:SetVertexColor(135/255, 105/255, 70/255)
 	parent.playField.tex:SetPoint("topleft", parent.playField)
 	parent.playField.tex:SetPoint("bottomright", parent.playField)
 	
@@ -1272,23 +1325,23 @@ local function CreatePlayFrame()
 	--PlayFrame.player.graveyardTex:Hide()
 	  
 	-- player siege
-	PlayFrame.playerSiege = CreateCardArea("playerSiege", PlayFrame, TEXTURE_TYPE_SIEGE, TEXTURE_WEATHER_RAIN)
-	PlayFrame.playerSiege.type = "siege"
-	PlayFrame.playerSiege.isEnemy = false
-	GwentAddon.areas.playerSiege = PlayFrame.playerSiege
-	PlayFrame.playerSiege:SetPoint("bottom", PlayFrame.playerHand, "top", 0, 6) 
+	-- PlayFrame.playerSiege = CreateCardArea("playerSiege", PlayFrame, TEXTURE_TYPE_SIEGE, TEXTURE_WEATHER_RAIN)
+	-- PlayFrame.playerSiege.type = "siege"
+	-- PlayFrame.playerSiege.isEnemy = false
+	-- GwentAddon.areas.playerSiege = PlayFrame.playerSiege
+	-- PlayFrame.playerSiege:SetPoint("bottom", PlayFrame.playerHand, "top", 0, 6) 
 	-- player ranged
-	PlayFrame.playerRanged = CreateCardArea("playerRanged", PlayFrame, TEXTURE_TYPE_RANGED, TEXTURE_WEATHER_FOG)
-	PlayFrame.playerRanged.type = "ranged"
-	PlayFrame.playerRanged.isEnemy = false
-	GwentAddon.areas.playerRanged = PlayFrame.playerRanged
-	PlayFrame.playerRanged:SetPoint("bottom", PlayFrame.playerSiege, "top", 0, 6)  
+	-- PlayFrame.playerRanged = CreateCardArea("playerRanged", PlayFrame, TEXTURE_TYPE_RANGED, TEXTURE_WEATHER_FOG)
+	-- PlayFrame.playerRanged.type = "ranged"
+	-- PlayFrame.playerRanged.isEnemy = false
+	-- GwentAddon.areas.playerRanged = PlayFrame.playerRanged
+	-- PlayFrame.playerRanged:SetPoint("bottom", PlayFrame.playerSiege, "top", 0, 6)  
 	-- player melee
-	PlayFrame.playerMelee = CreateCardArea("playerMelee", PlayFrame, TEXTURE_TYPE_MELEE, TEXTURE_WEATHER_FROST)
-	PlayFrame.playerMelee.type = "melee"
-	PlayFrame.playerMelee.isEnemy = false
-	GwentAddon.areas.playerMelee = PlayFrame.playerMelee
-	PlayFrame.playerMelee:SetPoint("bottom", PlayFrame.playerRanged, "top", 0, 6)
+	-- PlayFrame.playerMelee = CreateCardArea("playerMelee", PlayFrame, TEXTURE_TYPE_MELEE, TEXTURE_WEATHER_FROST)
+	-- PlayFrame.playerMelee.type = "melee"
+	-- PlayFrame.playerMelee.isEnemy = false
+	-- GwentAddon.areas.playerMelee = PlayFrame.playerMelee
+	-- PlayFrame.playerMelee:SetPoint("bottom", PlayFrame.playerRanged, "top", 0, 6)
 	
 	
 	
@@ -1377,7 +1430,32 @@ local function CreatePlayFrame()
 	PlayFrame.enemy.graveyardTex:SetPoint("topleft", PlayFrame.enemy.graveyard)
 	PlayFrame.enemy.graveyardTex:SetPoint("bottomright", PlayFrame.enemy.graveyard)
 	  
-	-- enemy siege
+
+
+	return PlayFrame
+end
+
+local function CreateRows(PlayFrame)
+	-- player siege
+	PlayFrame.playerSiege = CreateCardArea("playerSiege", PlayFrame, TEXTURE_TYPE_SIEGE, TEXTURE_WEATHER_RAIN)
+	PlayFrame.playerSiege.type = "siege"
+	PlayFrame.playerSiege.isEnemy = false
+	GwentAddon.areas.playerSiege = PlayFrame.playerSiege
+	PlayFrame.playerSiege:SetPoint("bottom", PlayFrame.playerHand, "top", 0, 6) 
+	-- player ranged
+	PlayFrame.playerRanged = CreateCardArea("playerRanged", PlayFrame, TEXTURE_TYPE_RANGED, TEXTURE_WEATHER_FOG)
+	PlayFrame.playerRanged.type = "ranged"
+	PlayFrame.playerRanged.isEnemy = false
+	GwentAddon.areas.playerRanged = PlayFrame.playerRanged
+	PlayFrame.playerRanged:SetPoint("bottom", PlayFrame.playerSiege, "top", 0, 6)  
+	-- player melee
+	PlayFrame.playerMelee = CreateCardArea("playerMelee", PlayFrame, TEXTURE_TYPE_MELEE, TEXTURE_WEATHER_FROST)
+	PlayFrame.playerMelee.type = "melee"
+	PlayFrame.playerMelee.isEnemy = false
+	GwentAddon.areas.playerMelee = PlayFrame.playerMelee
+	PlayFrame.playerMelee:SetPoint("bottom", PlayFrame.playerRanged, "top", 0, 6)
+	
+		-- enemy siege
 	PlayFrame.enemySiege = CreateCardArea("enemyRanged", PlayFrame, TEXTURE_TYPE_SIEGE, TEXTURE_WEATHER_RAIN)
 	PlayFrame.enemySiege.type = "siege"
 	PlayFrame.enemySiege.isEnemy = true
@@ -1395,8 +1473,6 @@ local function CreatePlayFrame()
 	PlayFrame.enemyMelee.isEnemy = true
 	GwentAddon.areas.enemyMelee = PlayFrame.enemyMelee
 	PlayFrame.enemyMelee:SetPoint("top", PlayFrame.enemyRanged, "bottom", 0, -6)
-
-	return PlayFrame
 end
 
 -- Show or hide weather overlays
@@ -1478,6 +1554,16 @@ end
 -- Tries to drop a card.
 -- If successful returns true, the name of the area and the position in list it was added
 function GwentAddon:DropCardArea(card)
+
+	local list, area, name = GwentAddon:GetCardlistMouseOver()
+	
+	if card.data.cardType.special and string.find(name, "player") then 
+		card.data.ability.funct(card, name)
+		SendAddonMessage(addonName, GwentAddon.messages.endTurn, "whisper" , GwentAddon.challengerName)
+		GwentAddon:DiscardCardFromList(card, "playerHand")
+		GwentAddon:ChangeState(GwentAddon.states.enemyTurn)
+		return
+	end
 	
 	-- Check spy cards over enemy areas first
 	if card.data.ability ~= nil and card.data.ability.name == "Spy" then
@@ -1765,10 +1851,10 @@ function Gwent_EventFrame:CHAT_MSG_ADDON(prefix, message, channel, sender)
 	end
 	
 	-- Scorch
-	if string.find(message, GwentAddon.messages.scorch) then
-		local str = string.match(message,  GwentAddon.messages.scorch.."(%d+)")
-		GwentAddon:ScorchCards(str)
-	end
+	-- if string.find(message, GwentAddon.messages.scorch) then
+		-- local str = string.match(message,  GwentAddon.messages.scorch.."(%d+)")
+		-- GwentAddon:ScorchCards(str)
+	-- end
 	
 	-- Challenge
 	if string.find(message, GwentAddon.messages.challenge) then
@@ -1893,22 +1979,29 @@ function Gwent_EventFrame:CHAT_MSG_ADDON(prefix, message, channel, sender)
 		GwentAddon:PlaceAllCards()
 	end
 	
+	-- opponent ended turn (due to special card)
+	if message == GwentAddon.messages.endTurn then
+		GwentAddon:ChangeState(GwentAddon.states.playerTurn)
+	end
+	
 end
 
 function Gwent_EventFrame:ADDON_LOADED(ADDON_LOADED)
 	if ADDON_LOADED ~= addonName then return end
 	
 	GwentAddon.playFrame = CreatePlayFrame()
-	
-	GwentAddon:CreatePopupClass(GwentAddon.playFrame)
 	GwentAddon:CreateAbilitieList()
 	GwentAddon:CreateCardsClass()
+	CreateRows(GwentAddon.playFrame)
+	
+	GwentAddon:CreatePopupClass(GwentAddon.playFrame)
+	
 	--GwentAddon:CreateCardsList()
 	
 	
 	if GetUnitName("player", false) == "Gortoch" then
 		-- GwentAddon.lists.baseDeck = GwentAddon:CreateTestDeck("Scoia’tael")
-		GwentAddon.lists.baseDeck = GwentAddon:CreateTestDeck("Northern Realms")
+		GwentAddon.lists.baseDeck = GwentAddon:CreateTestDeck("Monster")
 	else
 		GwentAddon.lists.baseDeck = GwentAddon:CreateTestDeck("Northern Realms")
 	end

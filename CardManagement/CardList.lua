@@ -38,7 +38,7 @@ local ABILITY_Morale = "MoraleBoost"
 local ABILITY_Medic = "Medic"
 local ABILITY_Muster = "Muster"
 local ABILITY_Agile = "Agile"
-local ABILITY_Command = "Commander'sHorn"
+local ABILITY_Command = "CommandersHorn"
 local ABILITY_SCORCH = "Scorch"
 local ABILITY_Hero = "Immune to special CardList"
 
@@ -128,6 +128,22 @@ function GwentAddon.Card:CreateFrame()
 	card.strengthBG:SetHeight(GwentAddon.NUM_CARD_WIDTH/2)
 	card.strengthBG:SetWidth(GwentAddon.NUM_CARD_WIDTH/2)
 	
+	card.strength = card:CreateFontString(nil, nil, font)
+	--card.strength:SetDrawLayer("ARTWORK", 1)
+	card.strength:SetPoint("topleft", card.strengthBG)
+	card.strength:SetPoint("bottomright", card.strengthBG)
+	--card.strength:SetPoint("bottomright", card, "bottomright", -2, -7)
+	card.strength:SetJustifyH("center")
+	card.strength:SetJustifyV("middle")
+	card.strength:SetText(cardData.calcStrength)
+	--card.strength:SetTextColor(0,0,0)
+	
+	if cardData.cardType.weather or cardData.cardType.special then
+		card.strengthBG:Hide()
+		card.strength:Hide()
+	end
+	
+	
 	card.abilityBG = card:CreateTexture(addonName.."_Card_".._CardNr.."_AbilityBG", "ARTWORK")
 	card.abilityBG:SetDrawLayer("ARTWORK", 1)
 	card.abilityBG:SetTexture(TEXTURE_CARD_ICONBG)
@@ -152,15 +168,7 @@ function GwentAddon.Card:CreateFrame()
 	
 	--card.strengthBG:SetPoint("bottomright", card, -2, 2)
 	
-	card.strength = card:CreateFontString(nil, nil, font)
-	--card.strength:SetDrawLayer("ARTWORK", 1)
-	card.strength:SetPoint("topleft", card.strengthBG)
-	card.strength:SetPoint("bottomright", card.strengthBG)
-	--card.strength:SetPoint("bottomright", card, "bottomright", -2, -7)
-	card.strength:SetJustifyH("center")
-	card.strength:SetJustifyV("middle")
-	card.strength:SetText(cardData.calcStrength)
-	--card.strength:SetTextColor(0,0,0)
+	
 	if self.data.cardType.hero then
 		--card.strength:SetTextColor(1,1,1)
 	end
@@ -183,6 +191,7 @@ function GwentAddon.Card:CreateCardTypeIcons(card)
 		vcBG = 0
 		vc = 1
 	end
+	local iconTex = self.cardList:GetTypeIcon(self)
 	
 	card.iconTypeBG = card:CreateTexture(addonName.."_Card_".._CardNr.."_TypeBG", "ARTWORK")
 	card.iconTypeBG:SetDrawLayer("ARTWORK", 1)
@@ -193,15 +202,23 @@ function GwentAddon.Card:CreateCardTypeIcons(card)
 	card.iconTypeBG:SetPoint("left", card)
 	card.iconTypeBG:SetHeight(GwentAddon.NUM_CARD_WIDTH/2)
 	card.iconTypeBG:SetWidth(GwentAddon.NUM_CARD_WIDTH/2)
+	
+	
 		
 	card.iconType = card:CreateTexture(addonName.."_Card_".._CardNr.."_Type", "art")
 	card.iconType:SetDrawLayer("ARTWORK", 2)
-	card.iconType:SetTexture(self.cardList:GetTypeIcon(self))
+	card.iconType:SetTexture(iconTex)
 	card.iconType:SetVertexColor(vc, vc, vc)
 	card.iconType:SetWidth(GwentAddon.NUM_CARD_WIDTH*0.5)
 	card.iconType:SetHeight(GwentAddon.NUM_CARD_WIDTH*0.5)
 	card.iconType:SetPoint("center", card.iconTypeBG)
 		-- card.iconMelee:SetPoint("bottomleft", card, "bottomleft", (GwentAddon.NUM_CARD_WIDTH/2)*count, 0)
+	
+	if iconTex == nil then
+		card.iconTypeBG:Hide()
+		card.iconType:Hide()
+	end
+		
 	count = count + 1
 
 end
@@ -615,16 +632,22 @@ function CardList:AddSpecialCards()
 	local f = self.factions.neutral
 	local t = "Blank"
 	
-	table.insert(self.list, self:CreateCardsDatalist(180, "Biting Frost", f, 0, {["special"] = true, ["weather"] = true}, GwentAddon:GetAbilitydataByName("BitingFrost"), t, "1/3"))
-	table.insert(self.list, self:CreateCardsDatalist(181, "Biting Frost", f, 0, {["special"] = true, ["weather"] = true}, GwentAddon:GetAbilitydataByName("BitingFrost"), t, "2/3"))
-	table.insert(self.list, self:CreateCardsDatalist(182, "Biting Frost", f, 0, {["special"] = true, ["weather"] = true}, GwentAddon:GetAbilitydataByName("BitingFrost"), t, "3/3"))
-	table.insert(self.list, self:CreateCardsDatalist(183, "Impenetrable Fog", f, 0, {["special"] = true, ["weather"] = true}, GwentAddon:GetAbilitydataByName("ImpenetrableFog"), t, "1/3"))
-	table.insert(self.list, self:CreateCardsDatalist(184, "Impenetrable Fog", f, 0, {["special"] = true, ["weather"] = true}, GwentAddon:GetAbilitydataByName("ImpenetrableFog"), t, "2/3"))
-	table.insert(self.list, self:CreateCardsDatalist(185, "Impenetrable Fog", f, 0, {["special"] = true, ["weather"] = true}, GwentAddon:GetAbilitydataByName("ImpenetrableFog"), t, "3/3"))
-	table.insert(self.list, self:CreateCardsDatalist(186, "Torrential Rain", f, 0, {["special"] = true, ["weather"] = true}, GwentAddon:GetAbilitydataByName("TorrentialRain"), t, "1/2"))
-	table.insert(self.list, self:CreateCardsDatalist(187, "Torrential Rain", f, 0, {["special"] = true, ["weather"] = true}, GwentAddon:GetAbilitydataByName("TorrentialRain"), t, "2/2"))
-	table.insert(self.list, self:CreateCardsDatalist(188, "Clear Weather", f, 0, {["special"] = true, ["weather"] = true}, GwentAddon:GetAbilitydataByName("ClearWeather"), t, "1/2"))
-	table.insert(self.list, self:CreateCardsDatalist(189, "Clear Weather", f, 0, {["special"] = true, ["weather"] = true}, GwentAddon:GetAbilitydataByName("ClearWeather"), t, "2/2"))
+	table.insert(self.list, self:CreateCardsDatalist(180, "Biting Frost", f, 0, {["weather"] = true}, GwentAddon:GetAbilitydataByName("BitingFrost"), t, "1/3"))
+	table.insert(self.list, self:CreateCardsDatalist(181, "Biting Frost", f, 0, {["weather"] = true}, GwentAddon:GetAbilitydataByName("BitingFrost"), t, "2/3"))
+	table.insert(self.list, self:CreateCardsDatalist(182, "Biting Frost", f, 0, {["weather"] = true}, GwentAddon:GetAbilitydataByName("BitingFrost"), t, "3/3"))
+	table.insert(self.list, self:CreateCardsDatalist(183, "Impenetrable Fog", f, 0, {["weather"] = true}, GwentAddon:GetAbilitydataByName("ImpenetrableFog"), t, "1/3"))
+	table.insert(self.list, self:CreateCardsDatalist(184, "Impenetrable Fog", f, 0, {["weather"] = true}, GwentAddon:GetAbilitydataByName("ImpenetrableFog"), t, "2/3"))
+	table.insert(self.list, self:CreateCardsDatalist(185, "Impenetrable Fog", f, 0, {["weather"] = true}, GwentAddon:GetAbilitydataByName("ImpenetrableFog"), t, "3/3"))
+	table.insert(self.list, self:CreateCardsDatalist(186, "Torrential Rain", f, 0, {["weather"] = true}, GwentAddon:GetAbilitydataByName("TorrentialRain"), t, "1/2"))
+	table.insert(self.list, self:CreateCardsDatalist(187, "Torrential Rain", f, 0, {["weather"] = true}, GwentAddon:GetAbilitydataByName("TorrentialRain"), t, "2/2"))
+	table.insert(self.list, self:CreateCardsDatalist(188, "Clear Weather", f, 0, {["weather"] = true}, GwentAddon:GetAbilitydataByName("ClearWeather"), t, "1/2"))
+	table.insert(self.list, self:CreateCardsDatalist(189, "Clear Weather", f, 0, {["weather"] = true}, GwentAddon:GetAbilitydataByName("ClearWeather"), t, "2/2"))
+	table.insert(self.list, self:CreateCardsDatalist(190, "Scorch", f, 0, {["special"] = true}, GwentAddon:GetAbilitydataByName("Scorch"), t, "1/3"))
+	table.insert(self.list, self:CreateCardsDatalist(191, "Scorch", f, 0, {["special"] = true}, GwentAddon:GetAbilitydataByName("Scorch"), t, "2/3"))
+	table.insert(self.list, self:CreateCardsDatalist(192, "Scorch", f, 0, {["special"] = true}, GwentAddon:GetAbilitydataByName("Scorch"), t, "3/3"))
+	table.insert(self.list, self:CreateCardsDatalist(193, "Commander's Horn", f, 0, {["special"] = true}, GwentAddon:GetAbilitydataByName("CommandersHorn"), t, "1/3"))
+	table.insert(self.list, self:CreateCardsDatalist(194, "Commander's Horn", f, 0, {["special"] = true}, GwentAddon:GetAbilitydataByName("CommandersHorn"), t, "2/3"))
+	table.insert(self.list, self:CreateCardsDatalist(195, "Commander's Horn", f, 0, {["special"] = true}, GwentAddon:GetAbilitydataByName("CommandersHorn"), t, "3/3"))
 	
 end
 
@@ -854,7 +877,6 @@ end
 
 -- Add a card to a new list in a specific position
 function CardList:AddCardToNewList(card, name, position)
-	
 	local list = GwentAddon:GetListByName(name)
 	local area = GwentAddon:GetAreaByName(name)
 	

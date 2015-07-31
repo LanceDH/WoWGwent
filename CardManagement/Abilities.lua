@@ -149,22 +149,6 @@ local function AbilitySpy(card, list, deck, pos, area)
 	table.insert(GwentAddon.lists.playerHand, deck:DrawCard())
 	table.insert(GwentAddon.lists.playerHand, deck:DrawCard())
 	
-	-- remove spy card
-	-- local lCard = nil 
-	-- for i=#list, 1, -1 do
-		-- lCard = list[i]
-		-- if not lCard.data.isEnemyCard and lCard.data.Id == card.data.Id then
-			-- table.remove(list, i)
-			-- table.insert(GwentAddon.cardPool, card.frame)
-			-- card.frame:Hide()
-		-- end
-	-- end
-	
-	-- add card to enemy
-	-- local cSpy = GwentAddon.cards:AddEnemyCard(GwentAddon.messages.placeCard..string.format(GwentAddon.messages.placeInArea, area, card.data.Id, pos))
-	-- cSpy.data.isEnemyCard = true
-	
-	-- send message to effect oppenet's end
 	SendAddonMessage(addonName, GwentAddon.messages.ability.. "Spy#"..card.data.Id.."#"..area.."#"..pos.."#", "whisper" , GwentAddon.challengerName)
 	
 end
@@ -172,25 +156,11 @@ end
 local function AbilitySpyCreate(card, list, deck, message)
 
 	local id, area, pos = string.match(message, "#(%d+)#(%a+)#(%d+)#")
-	--area = area:gsub("^%l", string.upper)
-	
-	-- remeove card from opponent area
-	-- local lEnemy = GwentAddon:GetListByName("enemy"..area)
-	-- local lCard = nil
-	-- for i=#lEnemy, 1, -1 do
-		-- lCard = lEnemy[i]
-		-- if not lCard.data.isEnemyCard and lCard.data.Id == tonumber(id) then
-			-- table.remove(lEnemy, i)
-			-- table.insert(GwentAddon.cardPool, lCard.frame)
-			-- lCard.frame:Hide()
-		-- end
-	-- end
+
 	local cSpy = GwentAddon.Card(id, GwentAddon.cards)
-	-- cSpy.data.isEnemyCard = true
-	
+
 	table.insert(GwentAddon:GetListByName("player"..area), pos, cSpy)
 	
-	--GwentAddon:PlaceAllCards()
 end
 
 -- Scorch
@@ -213,15 +183,16 @@ local function AbilityScorch(card, list)
 	end
 end
 
+
 -- Muster
 --
 -- Find any cards with the same name in your deck and play them instantly
 local function AbilityMuster(card, list, deck, pos, area)
+	local prefix = string.match(card.data.name, "(%a+):")
+	
 	local c = nil
 	for i = #deck.cards, 1, -1 do
 		c = deck.cards[i]
-		
-		local prefix = string.match(card.data.name, "(%a+):")
 		
 		if c.name == card.data.name or (prefix and string.find(c.name, prefix)) then
 			pos = pos + 1
@@ -230,6 +201,20 @@ local function AbilityMuster(card, list, deck, pos, area)
 			table.remove(deck.cards, i)
 		end
 	end
+	
+	local hand = GwentAddon:GetListByName("playerHand")
+	
+	for i = #hand, 1, -1 do
+		c = hand[i]
+		
+		if c.data.name == card.data.name or (prefix and string.find(c.data.name, prefix)) then
+			pos = pos + 1
+			table.insert(list, pos, c)
+			SendAddonMessage(addonName, GwentAddon.messages.placeCard..string.format(GwentAddon.messages.placeInArea, area, c.data.Id, pos), "whisper" , GwentAddon.challengerName)
+			table.remove(hand, i)
+		end
+	end
+	
 	
 end
 
@@ -288,6 +273,28 @@ local function AbilityClearWeather(card, list, deck, pos, area)
 	end
 end
 
+local function AbilityCommandersHorn(card, name, deck, message)
+	if card then
+		-- player side
+		-- function only for special cards
+		if not card.data.cardType.special then return end 
+		
+		local area = GwentAddon:GetAreaByName(name)
+		
+		area.commander.card.frame:Show()
+	
+		SendAddonMessage(addonName, GwentAddon.messages.ability.."CommandersHorn#"..name, "whisper" , GwentAddon.challengerName)
+	else 
+		-- enemy side
+		local name = string.match("Ability: CommandersHorn#playerMelee", "Ability: CommandersHorn#(%a+)")
+		name = string.gsub(name, "player", "enemy")
+		local area = GwentAddon:GetAreaByName(name)
+		
+		area.commander.card.frame:Show()
+	
+	end
+end
+
 -- Create a list of abilities
 function GwentAddon:CreateAbilitieList()
 
@@ -304,6 +311,7 @@ function GwentAddon:CreateAbilitieList()
 	table.insert(GwentAddon.Abilities, Ability("Medic", false, "AbilityMedic", function(card, list, deck) end)); -- NYI
 	table.insert(GwentAddon.Abilities, Ability("Muster", false, "AbilityMuster", function(card, list, deck, pos, area) AbilityMuster(card, list, deck, pos, area) end, true));
 	table.insert(GwentAddon.Abilities, Ability("Agile", false, "AbilityAgile", function(card, list, deck)  end));
+	table.insert(GwentAddon.Abilities, Ability("CommandersHorn", false, "AbilityCommander", function(card, list, deck, pos) AbilityCommandersHorn(card, list, deck, pos) end));
 	table.insert(GwentAddon.Abilities, Ability("Scorch", false, "AbilityScorch", function(card, list, deck) AbilityScorch(card, list) end, true));
 	table.insert(GwentAddon.Abilities, Ability("BitingFrost", false, "AbilityBitingFrost", function(card, list, deck) AbilityBitingFrost(card, list, deck) end, true));
 	table.insert(GwentAddon.Abilities, Ability("ImpenetrableFog", false, "AbilityImpenetrableFog", function(card, list, deck) AbilityImpenetrableFog(card, list, deck) end, true));
